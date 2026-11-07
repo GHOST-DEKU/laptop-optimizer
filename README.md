@@ -30,21 +30,6 @@ Unlike traditional batch or PowerShell scripts that require command terminal cop
 
 ---
 
-## 📐 Included Reusable Template: Neo-Brutalist Technical Studio
-
-As part of our modular design system, this repository also preserves and packages the complete **Neo-Brutalist Technical Studio** UI template for future dashboards, settings panels, or dev tools:
-
-* **Interactive Web Template**: Located at [`templates/concept3_neobrutalist_template.html`](templates/concept3_neobrutalist_template.html).
-  * High-contrast architectural monochrome (`#FAFAFA` / `#121212`) with Canary Yellow (`#FFE600`) badges.
-  * 2.5D solid hard drop shadows (`shadow-[4px_4px_0px_#000]`) with spring pop hover transitions.
-  * 4-Badge Diagnostic Cluster with instant color inversion on hover.
-  * Animated hazard-striped progress modal.
-  * Procedurally synthesized haptic mechanical switch sounds via Web Audio API.
-  * Easy JSON schema configuration (`TEMPLATE_CONFIG`) for rapid adaptation.
-* **Native C++ Brutalist Theme**: Located at [`src/themes/brutalist_theme.h`](src/themes/brutalist_theme.h) for any native Win32/GDI+ desktop window project.
-
----
-
 ## 🚀 Key Performance Modules
 
 | # | Module | What It Does | Technical Mechanism & Impact |
