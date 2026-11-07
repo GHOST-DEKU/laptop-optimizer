@@ -480,80 +480,82 @@
       margin-top: 4px;
     }
 
-    /* Top-Right Telemetry Equalizer Module (300px x 60px) */
+    /* Top-Right Telemetry HUD & Live CRT Oscilloscope */
     .app-telem-module {
       background: #111622;
       border: 1px solid #20293c;
-      width: 300px;
-      height: 60px;
-      border-radius: 12px;
-      padding: 8px 14px;
+      border-radius: 10px;
+      padding: 8px 16px;
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 14px;
       transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-      cursor: pointer;
     }
     .app-telem-module:hover {
       border-color: rgba(204, 255, 0, 0.8);
-      box-shadow: 0 0 28px rgba(204, 255, 0, 0.25), inset 0 0 10px rgba(204, 255, 0, 0.05);
-      transform: translateY(-3px) scale(1.02);
+      box-shadow: 0 0 24px rgba(204, 255, 0, 0.2), inset 0 0 10px rgba(204, 255, 0, 0.05);
     }
-    .app-telem-module:hover .app-eq-bar {
-      filter: drop-shadow(0 0 6px #ccff00);
-      animation-duration: 0.38s !important;
-    }
-    @media (max-width: 768px) {
-      .app-telem-module { width: 100%; }
+    @media (max-width: 820px) {
+      .app-telem-module { width: 100%; flex-wrap: wrap; }
     }
 
-    /* 6 Frequency Equalizer Bars matching g_eqBars */
-    .app-eq-array {
+    /* 60 FPS CRT Vector Oscilloscope Canvas */
+    .app-scope-box {
+      width: 140px;
+      height: 42px;
+      background: #04060a;
+      border: 1px solid #1a2232;
+      border-radius: 6px;
+      position: relative;
+      overflow: hidden;
       display: flex;
-      align-items: flex-end;
-      gap: 3px;
-      height: 36px;
-      width: 36px;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
     }
-    .app-eq-bar {
-      width: 4px;
-      background: var(--acid-volt);
-      border-radius: 1px;
-      animation: eqBouncing 1.2s infinite ease-in-out;
+    .app-scope-canvas {
+      width: 140px;
+      height: 42px;
+      display: block;
     }
-    .app-eq-bar:nth-child(1) { height: 35%; animation-delay: 0.1s; }
-    .app-eq-bar:nth-child(2) { height: 75%; animation-delay: 0.3s; }
-    .app-eq-bar:nth-child(3) { height: 50%; animation-delay: 0.5s; }
-    .app-eq-bar:nth-child(4) { height: 95%; animation-delay: 0.2s; }
-    .app-eq-bar:nth-child(5) { height: 45%; animation-delay: 0.4s; }
-    .app-eq-bar:nth-child(6) { height: 65%; animation-delay: 0.6s; }
+    .app-scope-reticle {
+      position: absolute;
+      inset: 0;
+      background-image: linear-gradient(rgba(204, 255, 0, 0.08) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(204, 255, 0, 0.08) 1px, transparent 1px);
+      background-size: 14px 10px;
+      pointer-events: none;
+    }
+    .app-scope-tag {
+      position: absolute;
+      bottom: 2px;
+      right: 4px;
+      font-size: 8px;
+      color: var(--acid-volt);
+      font-weight: 900;
+      opacity: 0.75;
+      font-family: var(--font-mono);
+    }
 
-    @keyframes eqBouncing {
-      0%, 100% { transform: scaleY(0.4); opacity: 0.6; }
-      50% { transform: scaleY(1); opacity: 1; }
-    }
-
-    .app-telem-divider {
-      width: 1px;
-      height: 44px;
-      background: #20293c;
-    }
-
-    .app-telem-text-block {
+    .app-telem-col {
+      border-left: 1px solid #20293c;
+      padding-left: 10px;
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: 2px;
     }
     .telem-row-lbl {
-      font-size: 8px;
-      font-weight: 700;
-      color: var(--text-dark);
+      font-size: 8.5px;
+      font-weight: 900;
+      color: #6b7280;
       letter-spacing: 0.5px;
       text-transform: uppercase;
     }
     .telem-row-val {
-      font-size: 10px;
-      font-weight: 700;
+      font-size: 11px;
+      font-weight: 900;
+      color: var(--acid-volt);
+      letter-spacing: 0.5px;
     }
 
     .pulse-pip {
@@ -570,14 +572,66 @@
       50% { opacity: 0.35; transform: scale(0.8); box-shadow: 0 0 2px var(--acid-volt); }
     }
 
-    /* The 8 Tactical Optimization Cards (Adaptive 2-Column Responsive Grid) */
-    .app-cards-viewport {
-      padding: 16px 24px;
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
-      gap: 10px;
+    /* Silicon Die Schematic CAD HUD */
+    .app-silicon-hud {
+      background: #080b11;
+      border-bottom: 1px solid #1e2638;
+      padding: 10px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
     }
-    @media (max-width: 820px) {
+    @media (max-width: 768px) {
+      .app-silicon-hud { flex-direction: column; align-items: flex-start; }
+    }
+    .die-visual {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .die-core-box {
+      width: 48px;
+      height: 34px;
+      background: #101522;
+      border: 1px solid #253147;
+      border-radius: 4px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 8px;
+      font-weight: 900;
+      color: #6b7280;
+      transition: all 0.25s ease;
+    }
+    .die-core-box.active {
+      background: #182314;
+      border-color: var(--acid-volt);
+      color: var(--acid-volt);
+      box-shadow: 0 0 10px rgba(204, 255, 0, 0.3);
+    }
+    .die-bus-line {
+      width: 20px;
+      height: 2px;
+      background: #253147;
+      transition: background 0.25s ease;
+    }
+    .die-bus-line.active {
+      background: var(--acid-volt);
+      box-shadow: 0 0 6px var(--acid-volt);
+    }
+
+    /* The 8 Tactical Lock-Bay Optimization Cards */
+    .app-cards-viewport {
+      padding: 18px 24px;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+      max-width: 1240px;
+      margin: 0 auto;
+    }
+    @media (max-width: 860px) {
       .app-cards-viewport {
         grid-template-columns: 1fr;
         padding: 12px 16px;
@@ -585,55 +639,47 @@
     }
 
     .app-opt-card {
-      background: var(--bg-slate);
-      border: 1px solid var(--border-dark);
-      height: 56px;
-      border-radius: 8px;
-      padding: 0 16px;
+      background: repeating-linear-gradient(
+        45deg,
+        #0a0d14,
+        #0a0d14 3px,
+        #0e121c 3px,
+        #0e121c 8px
+      );
+      border: 1px solid #232c40;
+      border-radius: 6px;
+      padding: 14px 18px;
+      min-height: 84px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       cursor: pointer;
+      position: relative;
       user-select: none;
       transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
     }
+    .app-opt-card::before {
+      content: "⬡";
+      position: absolute;
+      top: 4px;
+      left: 5px;
+      font-size: 8px;
+      color: #3f4e6b;
+      font-weight: 900;
+    }
     .app-opt-card:hover {
-      background: #121724;
-      border-color: rgba(204, 255, 0, 0.8);
-      transform: translateX(6px);
-      box-shadow: 0 0 25px rgba(204, 255, 0, 0.18);
-    }
-    .app-opt-card:active {
-      transform: translateX(3px) scale(0.995);
-    }
-    .app-opt-card:hover .card-id-box {
-      background: var(--acid-volt);
-      color: #000000;
-      box-shadow: 0 0 14px rgba(204, 255, 0, 0.85);
-      transform: scale(1.06);
-    }
-    .app-opt-card:hover .card-title {
-      color: var(--acid-volt);
-      text-shadow: 0 0 12px rgba(204, 255, 0, 0.4);
-    }
-    .app-opt-card:hover .card-badge-pill {
+      transform: translateX(4px);
       border-color: rgba(204, 255, 0, 0.7);
-      box-shadow: 0 0 10px rgba(204, 255, 0, 0.3);
-    }
-    .app-opt-card:hover .app-cyber-switch {
-      border-color: rgba(204, 255, 0, 0.8);
-      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6), 0 0 12px rgba(204, 255, 0, 0.3);
-    }
-    .app-opt-card:hover .app-switch-thumb {
-      box-shadow: 0 0 16px rgba(204, 255, 0, 0.95);
-      background: #d8ff26;
-    }
-    .app-opt-card:hover .app-cyber-switch.off .app-switch-thumb {
-      box-shadow: none;
-      background: #374151;
+      box-shadow: 0 0 20px rgba(204, 255, 0, 0.16);
     }
     .app-opt-card.active-card {
-      border-color: var(--border-dark);
+      border-color: rgba(204, 255, 0, 0.5);
+      border-left: 4px solid var(--acid-volt);
+      box-shadow: 0 0 20px rgba(204, 255, 0, 0.18), inset 0 0 14px rgba(204, 255, 0, 0.04);
+    }
+    .app-opt-card.active-card::before {
+      color: var(--acid-volt);
+      text-shadow: 0 0 6px var(--acid-volt);
     }
 
     .card-left-cluster {
@@ -644,212 +690,428 @@
       overflow: hidden;
     }
 
-    /* 28x28px ID Box */
+    /* 32x38px Channel Badge */
     .card-id-box {
-      width: 28px;
-      height: 28px;
-      background: #182030;
-      border: 1px solid #263249;
+      width: 32px;
+      height: 38px;
+      background: #090c12;
+      border: 1px solid #2c3850;
+      border-radius: 4px;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
-      color: var(--acid-volt);
-      font-size: 11px;
-      font-weight: 700;
       flex-shrink: 0;
-      border-radius: 6px;
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: all 0.2s ease;
+    }
+    .app-opt-card.active-card .card-id-box {
+      border-color: var(--acid-volt);
+      box-shadow: 0 0 8px rgba(204, 255, 0, 0.25);
+    }
+    .card-channel-prefix {
+      font-size: 7.5px;
+      font-weight: 900;
+      color: #6b7280;
+    }
+    .card-channel-num {
+      font-size: 13px;
+      font-weight: 900;
+      color: #ffffff;
+      line-height: 1;
+    }
+    .app-opt-card.active-card .card-channel-num {
+      color: var(--acid-volt);
     }
 
     .card-text-block {
       display: flex;
       flex-direction: column;
+      gap: 2px;
       overflow: hidden;
-      white-space: nowrap;
+    }
+    .card-title-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
     }
     .card-title {
-      font-size: 12px;
-      font-weight: 700;
+      font-size: 12.5px;
+      font-weight: 900;
       color: var(--text-white);
-      text-overflow: ellipsis;
-      overflow: hidden;
-      transition: color 0.2s ease, text-shadow 0.2s ease;
+      letter-spacing: -0.2px;
+    }
+    .tag-benefit {
+      font-size: 8.5px;
+      font-weight: 900;
+      padding: 1px 7px;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+    }
+    .tag-on {
+      background: rgba(204, 255, 0, 0.12);
+      color: var(--acid-volt);
+      border: 1px solid rgba(204, 255, 0, 0.35);
+    }
+    .tag-off {
+      background: rgba(107, 114, 128, 0.12);
+      color: #9ca3af;
+      border: 1px solid rgba(107, 114, 128, 0.25);
     }
     .card-desc {
-      font-size: 10px;
+      font-size: 10.5px;
       color: var(--text-muted);
-      margin-top: 2px;
-      text-overflow: ellipsis;
-      overflow: hidden;
+      line-height: 1.35;
+    }
+
+    .hazard-lock-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 8px;
+      font-weight: 900;
+      padding: 2px 6px;
+      border-radius: 3px;
+      letter-spacing: 0.5px;
+      font-family: var(--font-mono);
+      margin-top: 3px;
+      width: fit-content;
+    }
+    .lock-armed {
+      background: #182218;
+      border: 1px solid var(--acid-volt);
+      color: var(--acid-volt);
+    }
+    .lock-standby {
+      background: #11141c;
+      border: 1px solid #263045;
+      color: #6b7280;
     }
 
     .card-right-cluster {
-      display: flex;
-      align-items: center;
-      gap: 16px;
+      margin-left: 12px;
       flex-shrink: 0;
     }
 
-    /* 110x20px Badge Pill */
-    .card-badge-pill {
-      width: 110px;
-      height: 20px;
-      background: #162016;
-      border: 1px solid #3c6414;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 9px;
-      font-weight: 700;
-      color: var(--acid-volt);
-      letter-spacing: 0.5px;
-      transition: all 0.2s ease;
-    }
-    .card-badge-pill.disabled-badge {
-      background: #161b24;
-      border-color: #232a38;
-      color: var(--text-dark);
-    }
-    @media (max-width: 600px) {
-      .card-badge-pill { display: none; }
-    }
-
-    /* 54x24px Rectangular Cyber Switch with sliding mechanical spring physics */
+    /* 58x28px Sliding Mechanical Switch Track */
     .app-cyber-switch {
-      width: 54px;
-      height: 24px;
-      background: #161c28;
-      border: 1px solid var(--acid-volt);
+      width: 58px;
+      height: 28px;
+      border-radius: 14px;
+      padding: 3px;
       position: relative;
       cursor: pointer;
-      display: flex;
-      align-items: center;
-      padding: 2px;
-      border-radius: 6px;
-      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6);
-      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 1px solid #263045;
+      background: #182214;
+      border-color: var(--acid-volt);
+      box-shadow: 0 0 12px rgba(204, 255, 0, 0.3);
+      transition: all 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
     .app-cyber-switch.off {
-      background: #0e1118;
-      border-color: #2c3850;
+      background: #0f131a;
+      border-color: #263045;
       box-shadow: none;
     }
     .app-switch-thumb {
-      position: absolute;
-      top: 2px;
-      bottom: 2px;
-      left: 2px;
-      width: 24px;
+      width: 22px;
+      height: 22px;
+      border-radius: 11px;
       background: var(--acid-volt);
       display: flex;
       align-items: center;
       justify-content: center;
       color: #000;
-      font-size: 9px;
+      font-size: 8px;
       font-weight: 900;
-      border-radius: 4px;
-      box-shadow: 0 0 10px rgba(204, 255, 0, 0.7);
-      transform: translateX(24px);
-      transition: transform 0.24s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
+      transform: translateX(28px);
+      box-shadow: 0 0 10px var(--acid-volt);
+      transition: all 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
     .app-cyber-switch.off .app-switch-thumb {
       transform: translateX(0px);
-      background: #374151;
-      color: var(--text-muted);
+      background: #2b3548;
+      color: #9ca3af;
       box-shadow: none;
+    }
+
+    /* Docked Real-Time Kernel Dispatch Drawer */
+    .app-docked-drawer {
+      background: #07090e;
+      border-top: 1px solid #1f2636;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      height: 36px;
+      transition: height 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+      z-index: 5;
+    }
+    .app-docked-drawer:not(.expanded) .drawer-content {
+      display: none !important;
+    }
+    .app-docked-drawer.expanded {
+      height: 180px;
+    }
+    .drawer-header {
+      height: 36px;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      background: #0b0e14;
+      border-bottom: 1px solid #1a2232;
+    }
+    .drawer-header:hover {
+      background: #0f131b;
+    }
+    .drawer-title {
+      font-size: 11px;
+      font-weight: 900;
+      color: var(--acid-volt);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      letter-spacing: 0.5px;
+    }
+    .drawer-content {
+      flex: 1;
+      padding: 10px 24px;
+      font-size: 11px;
+      line-height: 1.6;
+      color: #9ca3af;
+      overflow-y: auto;
+      background: #05070a;
+      font-family: var(--font-mono);
+    }
+    .log-line {
+      margin-bottom: 3px;
+    }
+    .log-success {
+      color: var(--acid-volt);
+    }
+    .log-info {
+      color: #00f0ff;
     }
 
     /* Bottom Control Bar of the App Window */
     .app-window-footer {
-      padding: 12px 40px 18px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-    @media (max-width: 768px) {
-      .app-window-footer { padding: 12px 16px 18px; }
-    }
-
-    .app-syslog-text {
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--acid-volt);
-      letter-spacing: 0.3px;
-    }
-
-    .app-footer-buttons {
+      padding: 14px 28px;
       display: flex;
       flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid var(--border-dark);
+      background: #090c12;
+      gap: 12px;
+      box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.6);
+      z-index: 10;
+    }
+
+    .btn-app-restore, .btn-app-toggleall {
+      background: #111622;
+      border: 1px solid #20293c;
+      color: #9ca3af;
+      padding: 9px 16px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 0.5px;
+      font-family: var(--font-mono);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+    .btn-app-restore:hover, .btn-app-toggleall:hover {
+      border-color: #3b4b6b;
+      color: #ffffff;
+      background: #171e2e;
+      transform: translateY(-1px);
+    }
+
+    /* Clean Sci-Fi Nuke Safety Assembly (Flip Hood) */
+    .safety-deploy-assembly {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 240px;
+      min-width: 240px;
+      max-width: 240px;
+      box-sizing: border-box;
+      perspective: 900px;
+      perspective-origin: 50% 0%;
+    }
+
+    .safety-hinge-bracket {
+      position: absolute;
+      top: -7px;
+      left: 12px;
+      right: 12px;
+      height: 6px;
+      background: #080c14;
+      border: 1px solid #232c40;
+      border-bottom: none;
+      border-radius: 4px 4px 0 0;
+      display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 12px;
+      padding: 0 8px;
+      z-index: 26;
+      box-shadow: 0 -1px 4px rgba(0, 0, 0, 0.6);
+      pointer-events: none;
     }
-
-    .app-footer-left-btns {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .btn-app-restore {
-      background: #141924;
-      border: 1px solid #242e42;
-      color: var(--text-white);
-      height: 44px;
-      padding: 0 20px;
+    .hinge-rivet {
+      color: #ff9900;
+      font-size: 7px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
       font-family: var(--font-mono);
-      font-size: 11px;
-      font-weight: 700;
+    }
+    .hinge-pin {
+      background: #ff9900;
+      box-shadow: 0 0 5px rgba(255, 153, 0, 0.4);
+      width: 22px;
+      height: 1.5px;
+      border-radius: 1px;
+    }
+
+    .safety-cover {
+      position: absolute;
+      inset: 0;
+      z-index: 25;
+      background: linear-gradient(135deg, rgba(12, 16, 25, 0.96) 0%, rgba(6, 9, 14, 0.98) 100%);
+      border: 1.5px solid #ff9900;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 12px;
       cursor: pointer;
+      transform-origin: 50% 0%;
+      transform-style: preserve-3d;
+      transition: transform 0.38s cubic-bezier(0.34, 1.56, 0.64, 1), 
+                  box-shadow 0.25s ease, 
+                  border-color 0.25s ease, 
+                  background 0.25s ease;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.8), 0 0 14px rgba(255, 153, 0, 0.2);
+      user-select: none;
+    }
+    .safety-cover:hover {
+      border-color: #ffbb33;
+      box-shadow: 0 8px 26px rgba(0, 0, 0, 0.9), 0 0 20px rgba(255, 153, 0, 0.35);
+    }
+
+    .guard-header-row {
+      width: 100%;
       display: flex;
       align-items: center;
+      justify-content: space-between;
       gap: 6px;
-      transition: all 0.15s;
     }
-    .btn-app-restore:hover {
-      background: #1c2334;
-      border-color: var(--text-white);
+    .guard-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: #06090e;
+      border: 1px solid #ff9900;
+      color: #ffaa00;
+      box-shadow: 0 0 8px rgba(255, 153, 0, 0.2);
+      font-size: 8.5px;
+      font-weight: 900;
+      font-family: var(--font-mono);
+      padding: 2px 7px;
+      border-radius: 3px;
+      letter-spacing: 0.6px;
+      transition: all 0.2s ease;
+    }
+    .guard-lock-svg {
+      width: 10px;
+      height: 10px;
+      stroke: currentColor;
+    }
+    .guard-action-hint {
+      font-size: 8px;
+      font-family: var(--font-mono);
+      font-weight: 800;
+      color: #8896ad;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      transition: color 0.2s ease;
+    }
+    .safety-cover:hover .guard-action-hint {
+      color: #ffaa00;
+    }
+    .guard-laser-trim {
+      width: 70%;
+      height: 2px;
+      background: #2a1f14;
+      border-top: 1px solid rgba(255, 153, 0, 0.35);
+      border-radius: 1px;
     }
 
-    .btn-app-toggleall {
-      background: #141924;
-      border: 1px solid #242e42;
-      color: var(--text-white);
-      height: 44px;
-      padding: 0 16px;
-      font-family: var(--font-mono);
-      font-size: 11px;
-      font-weight: 700;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      transition: all 0.15s;
+    .safety-cover.open {
+      transform: translateY(-44px) rotateX(-26deg) scale(0.97);
+      background: linear-gradient(135deg, rgba(16, 8, 10, 0.98) 0%, rgba(8, 4, 6, 0.98) 100%);
+      border-color: #ff3355;
+      box-shadow: 0 16px 32px rgba(0, 0, 0, 0.9), 0 0 18px rgba(255, 51, 85, 0.3);
     }
-    .btn-app-toggleall:hover {
-      background: #1c2334;
-      border-color: var(--text-white);
+    .safety-cover.open:hover {
+      transform: translateY(-46px) rotateX(-28deg) scale(0.99);
+      border-color: #ff6680;
+      box-shadow: 0 18px 36px rgba(0, 0, 0, 0.95), 0 0 24px rgba(255, 51, 85, 0.45);
+    }
+    .safety-cover.open .guard-badge {
+      background: #140508;
+      border-color: #ff3355;
+      color: #ff3355;
+      box-shadow: 0 0 10px rgba(255, 51, 85, 0.35);
+    }
+    .safety-cover.open .guard-action-hint {
+      color: #ff6680;
+      font-weight: 800;
+    }
+    .safety-cover.open .guard-laser-trim {
+      background: #2a0b12;
+      border-top: 1px solid rgba(255, 51, 85, 0.4);
     }
 
     .btn-app-deploy {
-      background: var(--acid-volt);
-      border: none;
-      color: #000;
-      height: 48px;
-      padding: 0 28px;
-      font-family: var(--font-mono);
+      background: #10141e;
+      border: 1px solid #1e2638;
+      color: #6b7280;
+      padding: 10px 16px;
+      border-radius: 8px;
       font-size: 11px;
       font-weight: 900;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      box-shadow: 0 0 20px rgba(204, 255, 0, 0.4);
-      transition: all 0.15s;
       letter-spacing: 0.5px;
+      font-family: var(--font-mono);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 240px;
+      min-width: 240px;
+      max-width: 240px;
+      box-sizing: border-box;
+      white-space: nowrap;
+      transition: all 0.25s ease;
     }
-    .btn-app-deploy:hover {
-      background: #dbff33;
-      box-shadow: 0 0 30px rgba(204, 255, 0, 0.65);
+    .safety-deploy-assembly.guard-open-state .btn-app-deploy {
+      background: linear-gradient(135deg, #141926 0%, #0b0e17 100%) !important;
+      color: #ff9900 !important;
+      font-weight: 900 !important;
+      border: 1.5px solid #ff9900 !important;
+      box-shadow: 0 0 22px rgba(255, 153, 0, 0.3), inset 0 0 12px rgba(255, 153, 0, 0.1) !important;
+    }
+    .safety-deploy-assembly.guard-open-state .btn-app-deploy:hover {
+      background: linear-gradient(135deg, #1c2233 0%, #0e121c 100%) !important;
+      border-color: #ffbb33 !important;
+      color: #ffbb33 !important;
+      box-shadow: 0 0 28px rgba(255, 153, 0, 0.5), inset 0 0 16px rgba(255, 153, 0, 0.15) !important;
       transform: translateY(-1px);
     }
 
@@ -1326,7 +1588,7 @@
         <div class="app-win-titlebar">
           <div class="app-win-title">
             <span style="color: var(--acid-volt);">⚡</span>
-            <span>Laptop Optimizer // Cybercore Techwear v2.4</span>
+            <span>Laptop Optimizer // Cybercore Techwear v2.5.0</span>
           </div>
           <div class="app-win-controls">
             <div class="win-ctrl-btn"></div>
@@ -1335,219 +1597,135 @@
           </div>
         </div>
 
-        <!-- App Header Banner (Clean Canvas Header matching Concept 2) -->
+        <!-- App Header Banner -->
         <div class="app-header-container">
           <div class="app-header-left">
             <div class="app-pill-row" style="margin-bottom:6px;">
               <span class="header-pill" style="display:inline-flex;align-items:center;gap:6px;">
                 <span class="pulse-pip"></span>
-                // SYS.CORE-TUNER v2.4
+                // SYS.CORE-TUNER v2.5.0
               </span>
-              <span class="header-airframe">// LEN_82HS</span>
+              <span class="header-airframe">// LENOVO 82HS [100% PASS]</span>
+              <button class="header-pill" id="web-audio-btn" onclick="toggleWebAudio()" style="cursor:pointer;" title="Toggle Native Audio Haptics">
+                <span id="web-audio-icon">🔊</span>
+                <span id="web-audio-txt">SFX: ON</span>
+              </button>
             </div>
             <div style="display:flex;align-items:center;gap:10px;margin-top:2px;">
-              <span class="header-cpu-title" style="color:#ffffff;font-weight:900;">INTEL i7-1165G7 <span style="color:var(--acid-volt);font-weight:700;">[4C/8T]</span></span>
+              <span class="header-cpu-title" style="color:#ffffff;font-weight:900;">INTEL CORE i7-1165G7 <span style="color:var(--acid-volt);font-weight:700;">[4C/8T]</span></span>
               <span class="header-cpu-specs" style="margin-top:0;color:#64748b;">• 16GB RAM • NVMe 512GB</span>
             </div>
           </div>
 
-          <!-- Top-Right Telemetry Equalizer Module -->
+          <!-- Top-Right Telemetry HUD & Live CRT Oscilloscope -->
           <div class="app-telem-module">
-            <div class="app-eq-array">
-              <div class="app-eq-bar"></div>
-              <div class="app-eq-bar"></div>
-              <div class="app-eq-bar"></div>
-              <div class="app-eq-bar"></div>
-              <div class="app-eq-bar"></div>
-              <div class="app-eq-bar"></div>
+            <div class="app-scope-box">
+              <canvas class="app-scope-canvas" id="web-oscilloscope" width="140" height="42"></canvas>
+              <div class="app-scope-reticle"></div>
+              <div class="app-scope-tag" id="web-scope-tag">1000Hz STABLE</div>
             </div>
-            <div class="app-telem-divider"></div>
-            <div class="app-telem-text-block">
-              <div>
-                <div class="telem-row-lbl">THROUGHPUT GOVERNOR</div>
-                <div class="telem-row-val" style="color: var(--acid-volt);" id="app-gov-val">MAX SPEED // 100% UNLOCKED</div>
-              </div>
-              <div>
-                <div class="telem-row-lbl">STORAGE GAIN</div>
-                <div class="telem-row-val" style="color: #fff;" id="app-ssd-val">+7.5 GB FREED</div>
-              </div>
+
+            <div class="app-telem-col">
+              <div class="telem-row-lbl">CPU CLOCK</div>
+              <div class="telem-row-val" id="web-cpu-val">2803 MHz</div>
+            </div>
+            <div class="app-telem-col">
+              <div class="telem-row-lbl">RAM IN-USE</div>
+              <div class="telem-row-val" id="web-ram-val">8.2 / 16.0 GB (51%)</div>
+            </div>
+            <div class="app-telem-col">
+              <div class="telem-row-lbl">NVMe HEALTH</div>
+              <div class="telem-row-val" style="color:#fff;" id="web-ssd-val">116.1 GB // HEALTHY</div>
             </div>
           </div>
         </div>
 
-        <!-- The 8 Optimization Cards (Exact 1:1 Replica) -->
-        <div class="app-cards-viewport">
-          
-          <!-- Card 01 -->
-          <div class="app-opt-card" id="card-1" onclick="toggleAppSwitch(1)">
-            <div class="card-left-cluster">
-              <div class="card-id-box">01</div>
-              <div class="card-text-block">
-                <div style="display:flex;align-items:center;gap:10px;">
-                  <div class="card-title">Zero-Ramp CPU Frequency Floor on AC</div>
-                  <div class="card-badge-pill" id="badge-1" style="width:auto;padding:2px 8px;height:18px;border-radius:4px;">100% FLOOR</div>
-                </div>
-                <div class="card-desc" style="margin-top:2px;">Sets processor floor to 100% on AC to bypass frequency ramp-up latency.</div>
-              </div>
-            </div>
-            <div class="card-right-cluster">
-              <div class="app-cyber-switch" id="sw-1" style="pointer-events:none;">
-                <div class="app-switch-thumb">ON</div>
-              </div>
-            </div>
+        <!-- Architectural Silicon Die Map HUD -->
+        <div class="app-silicon-hud" id="web-silicon-hud">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-size:10px;font-weight:900;color:var(--acid-volt);">// ARCHITECTURAL SILICON DIE MAP:</span>
+            <span style="font-size:9px;color:#6b7280;">Tiger Lake 10nm SuperFin • 4 Cores / 8 Threads</span>
           </div>
-
-          <!-- Card 02 -->
-          <div class="app-opt-card" id="card-2" onclick="toggleAppSwitch(2)">
-            <div class="card-left-cluster">
-              <div class="card-id-box">02</div>
-              <div class="card-text-block">
-                <div style="display:flex;align-items:center;gap:10px;">
-                  <div class="card-title">Bypass Game DVR Background Video Buffer</div>
-                  <div class="card-badge-pill" id="badge-2" style="width:auto;padding:2px 8px;height:18px;border-radius:4px;">ZERO VRAM DRAIN</div>
-                </div>
-                <div class="card-desc" style="margin-top:2px;">Halts continuous background DirectX video encoding and capture hooks.</div>
-              </div>
-            </div>
-            <div class="card-right-cluster">
-              <div class="app-cyber-switch" id="sw-2" style="pointer-events:none;">
-                <div class="app-switch-thumb">ON</div>
-              </div>
-            </div>
+          <div class="die-visual">
+            <div class="die-core-box active" id="web-core-0">C0<br>100%</div>
+            <div class="die-bus-line active" id="web-bus-0"></div>
+            <div class="die-core-box active" id="web-core-1">C1<br>100%</div>
+            <div class="die-bus-line active" id="web-bus-1"></div>
+            <div class="die-core-box active" id="web-core-2">C2<br>100%</div>
+            <div class="die-bus-line active" id="web-bus-2"></div>
+            <div class="die-core-box active" id="web-core-3">C3<br>100%</div>
+            <div class="die-bus-line active" id="web-bus-ram"></div>
+            <div class="die-core-box active" id="web-core-ram">RAM<br>16GB</div>
           </div>
-
-          <!-- Card 03 -->
-          <div class="app-opt-card" id="card-3" onclick="toggleAppSwitch(3)">
-            <div class="card-left-cluster">
-              <div class="card-id-box">03</div>
-              <div class="card-text-block">
-                <div style="display:flex;align-items:center;gap:10px;">
-                  <div class="card-title">Instant Desktop Context Menus</div>
-                  <div class="card-badge-pill" id="badge-3" style="width:auto;padding:2px 8px;height:18px;border-radius:4px;">20ms DELAY</div>
-                </div>
-                <div class="card-desc" style="margin-top:2px;">Reduces MenuShowDelay from 400ms to 20ms for instant desktop responsiveness.</div>
-              </div>
-            </div>
-            <div class="card-right-cluster">
-              <div class="app-cyber-switch" id="sw-3" style="pointer-events:none;">
-                <div class="app-switch-thumb">ON</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Card 04 -->
-          <div class="app-opt-card" id="card-4" onclick="toggleAppSwitch(4)">
-            <div class="card-left-cluster">
-              <div class="card-id-box">04</div>
-              <div class="card-text-block">
-                <div style="display:flex;align-items:center;gap:10px;">
-                  <div class="card-title">Purge Windows 11 Widget Daemon Pack</div>
-                  <div class="card-badge-pill" id="badge-4" style="width:auto;padding:2px 8px;height:18px;border-radius:4px;">-300MB RAM</div>
-                </div>
-                <div class="card-desc" style="margin-top:2px;">Uninstalls WebExperience package to permanently kill 20+ idle WebView2 processes.</div>
-              </div>
-            </div>
-            <div class="card-right-cluster">
-              <div class="app-cyber-switch" id="sw-4" style="pointer-events:none;">
-                <div class="app-switch-thumb">ON</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Card 05 -->
-          <div class="app-opt-card" id="card-5" onclick="toggleAppSwitch(5)">
-            <div class="card-left-cluster">
-              <div class="card-id-box">05</div>
-              <div class="card-text-block">
-                <div style="display:flex;align-items:center;gap:10px;">
-                  <div class="card-title">Clean Kernel Boots & Delete hiberfil.sys</div>
-                  <div class="card-badge-pill" id="badge-5" style="width:auto;padding:2px 8px;height:18px;border-radius:4px;">+6.22GB DISK</div>
-                </div>
-                <div class="card-desc" style="margin-top:2px;">Disables hybrid hibernation; deletes hiberfil.sys and guarantees 100% fresh kernel state.</div>
-              </div>
-            </div>
-            <div class="card-right-cluster">
-              <div class="app-cyber-switch" id="sw-5" style="pointer-events:none;">
-                <div class="app-switch-thumb">ON</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Card 06 -->
-          <div class="app-opt-card" id="card-6" onclick="toggleAppSwitch(6)">
-            <div class="card-left-cluster">
-              <div class="card-id-box">06</div>
-              <div class="card-text-block">
-                <div style="display:flex;align-items:center;gap:10px;">
-                  <div class="card-title">Decouple Bing Cloud Integration from Start</div>
-                  <div class="card-badge-pill" id="badge-6" style="width:auto;padding:2px 8px;height:18px;border-radius:4px;">LOCAL ONLY</div>
-                </div>
-                <div class="card-desc" style="margin-top:2px;">Eliminates remote cloud latency on Start search; makes app launch search instant.</div>
-              </div>
-            </div>
-            <div class="card-right-cluster">
-              <div class="app-cyber-switch" id="sw-6" style="pointer-events:none;">
-                <div class="app-switch-thumb">ON</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Card 07 -->
-          <div class="app-opt-card" id="card-7" onclick="toggleAppSwitch(7)">
-            <div class="card-left-cluster">
-              <div class="card-id-box">07</div>
-              <div class="card-text-block">
-                <div style="display:flex;align-items:center;gap:10px;">
-                  <div class="card-title">Halt Delivery Optimization P2P Seeding</div>
-                  <div class="card-badge-pill" id="badge-7" style="width:auto;padding:2px 8px;height:18px;border-radius:4px;">HTTP ONLY</div>
-                </div>
-                <div class="card-desc" style="margin-top:2px;">Stops Windows from using your disk I/O and bandwidth to seed updates to network peers.</div>
-              </div>
-            </div>
-            <div class="card-right-cluster">
-              <div class="app-cyber-switch" id="sw-7" style="pointer-events:none;">
-                <div class="app-switch-thumb">ON</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Card 08 -->
-          <div class="app-opt-card" id="card-8" onclick="toggleAppSwitch(8)">
-            <div class="card-left-cluster">
-              <div class="card-id-box">08</div>
-              <div class="card-text-block">
-                <div style="display:flex;align-items:center;gap:10px;">
-                  <div class="card-title">Purge Stale Temporary Files (>24h)</div>
-                  <div class="card-badge-pill" id="badge-8" style="width:auto;padding:2px 8px;height:18px;border-radius:4px;">CLEAN TEMP</div>
-                </div>
-                <div class="card-desc" style="margin-top:2px;">Cleans accumulated cache junk from %TEMP% to free NVMe storage and reduce indexing.</div>
-              </div>
-            </div>
-            <div class="card-right-cluster">
-              <div class="app-cyber-switch" id="sw-8" style="pointer-events:none;">
-                <div class="app-switch-thumb">ON</div>
-              </div>
-            </div>
-          </div>
-
         </div>
 
-        <!-- Bottom Action Bar (Matching Concept 2 exactly) -->
-        <div class="app-window-footer" style="border-top:1px solid var(--border-dark);padding:18px 40px;">
-          <div class="app-footer-buttons">
-            <button onclick="restoreDefaults()" class="btn-app-restore">
-              ↺ RESTORE FACTORY DEFAULTS
+        <!-- The 8 Tactical Lock-Bay Optimization Cards -->
+        <div class="app-cards-viewport" id="web-cards-viewport">
+          <!-- Rendered dynamically by JavaScript -->
+        </div>
+
+        <!-- Docked Real-Time Kernel Dispatch Drawer -->
+        <div class="app-docked-drawer" id="web-docked-drawer">
+          <div class="drawer-header" onclick="toggleWebDrawer()">
+            <div class="drawer-title">
+              <span id="web-drawer-arrow">▲</span>
+              <span>// SYS.KERNEL-DISPATCH CONSOLE</span>
+              <span style="color:#6b7280;font-weight:400;font-size:10px;">(Click to toggle live execution stream)</span>
+            </div>
+            <span style="font-size:10px;color:var(--acid-volt);font-weight:900;" id="web-drawer-status">[READY // IDLE]</span>
+          </div>
+          <div class="drawer-content" id="web-drawer-logs">
+            <div class="log-line log-info">[0.000s] // INITIALIZING CYBERCORE LOW-LEVEL SUBSYSTEM DISPATCH (PID: 16576)</div>
+            <div class="log-line log-success">[0.012s] [✓] AC Clock Floor verified: MinimumProcessorState = 100% (Guid: 36779f97)</div>
+            <div class="log-line log-success">[0.024s] [✓] DWM Compositor latency hook engaged: MenuShowDelay = 20ms</div>
+            <div class="log-line log-success">[0.045s] [✓] WebExperience WidgetService background processes decoupled (-300MB RAM)</div>
+            <div class="log-line log-success">[0.068s] [✓] Kernel hibernation state purged: hiberfil.sys eliminated (+6.22GB reclaimed)</div>
+            <div class="log-line log-success">[0.089s] [✓] ALL SUBSYSTEMS SYNCHRONIZED TO 1000Hz LOW-LATENCY PROFILE.</div>
+          </div>
+        </div>
+
+        <!-- Bottom Action Bar -->
+        <div class="app-window-footer">
+          <button onclick="restoreDefaults()" class="btn-app-restore">
+            <span>↺</span> RESTORE FACTORY DEFAULTS
+          </button>
+
+          <div style="display:flex;align-items:center;gap:10px;">
+            <button onclick="toggleAll()" class="btn-app-toggleall">
+              TOGGLE ALL
+            </button>
+            <button onclick="openStartupModal()" class="btn-app-toggleall" style="color:#ffffff;border-color:#2a3a50;display:flex;align-items:center;gap:6px;">
+              <span>🚀</span> STARTUP APPS
             </button>
 
-            <div style="display:flex;align-items:center;gap:10px;">
-              <button onclick="toggleAll()" class="btn-app-toggleall">
-                TOGGLE ALL
-              </button>
-              <button onclick="openStartupModal()" class="btn-app-toggleall" style="color:#ffffff;border-color:#2a3a50;display:flex;align-items:center;gap:6px;">
-                <span>🚀</span> STARTUP APPS
-              </button>
-              <button onclick="deployTuning()" class="btn-app-deploy">
-                ⚡ DEPLOY TACTICAL TUNING ➔
+            <!-- Clean Sci-Fi Nuke Safety Deploy Assembly -->
+            <div class="safety-deploy-assembly" id="web-safety-assembly">
+              <div class="safety-hinge-bracket">
+                <span class="hinge-rivet">⬡ SILO-L</span>
+                <span class="hinge-pin"></span>
+                <span class="hinge-rivet">SILO-R ⬡</span>
+              </div>
+
+              <div class="safety-cover" id="web-safety-cover" onclick="toggleWebSafetyCover()" title="Click to Arm Silo Blast Hatch">
+                <div class="guard-header-row">
+                  <span class="guard-badge">
+                    <svg class="guard-lock-svg" id="web-guard-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <circle cx="12" cy="12" r="8"/>
+                      <circle cx="12" cy="12" r="2.5" fill="#ff9900"/>
+                      <line x1="12" y1="2" x2="12" y2="6"/>
+                      <line x1="12" y1="18" x2="12" y2="22"/>
+                      <line x1="2" y1="12" x2="6" y2="12"/>
+                      <line x1="18" y1="12" x2="22" y2="12"/>
+                    </svg>
+                    <span id="web-guard-title">SILO: SEALED</span>
+                  </span>
+                  <span class="guard-action-hint" id="web-guard-hint">/// TAP TO UNLATCH ///</span>
+                </div>
+                <div class="guard-laser-trim"></div>
+              </div>
+
+              <button class="btn-app-deploy" onclick="deployTuning()">
+                <span id="web-deploy-text">🚀 LAUNCH NUCLEAR DISPATCH ➔</span>
               </button>
             </div>
           </div>
@@ -1836,204 +2014,344 @@
       } catch(e) {}
     }
 
-    // --- 4. 1:1 APPLICATION STATE (8 CARDS) ---
-    const appState = [
-      { id: 1, title: 'Zero-Ramp CPU Frequency Floor on AC', badge: '100% FLOOR', on: true },
-      { id: 2, title: 'Bypass Game DVR Background Video Buffer', badge: 'ZERO VRAM', on: true },
-      { id: 3, title: 'Instant Desktop Context Menus (20ms)', badge: '20ms DELAY', on: true },
-      { id: 4, title: 'Purge Windows 11 Widget Daemon Pack', badge: '-300MB RAM', on: true },
-      { id: 5, title: 'Decouple Bing Cloud Integration from Start', badge: 'LOCAL ONLY', on: true },
-      { id: 6, title: 'Halt Delivery Optimization P2P Seeding', badge: 'HTTP ONLY', on: true },
-      { id: 7, title: 'Clean Kernel Boots & Purge hiberfil.sys', badge: '+6.2GB SSD', on: true },
-      { id: 8, title: 'Purge Stale Temporary Files (>24h)', badge: 'CLEAN TEMP', on: true },
+    // --- 4. 1:1 APPLICATION STATE (8 TACTICAL LOCK-BAY PROTOCOLS) ---
+    const appTweaks = [
+      { id: 1, title: 'CPU Clock Floor (AC)', tag: '0ms LATENCY', desc: 'Pins minimum processor state to 100% on AC power; eliminates frequency ramp-up stutters.', lockProtocol: 'POWER_AC_FLOOR', on: true },
+      { id: 2, title: 'Xbox Game DVR Capture', tag: 'NO HOOKS', desc: 'Decouples continuous background video capture and Direct3D screen recording hooks.', lockProtocol: 'D3D_HOOK_HALT', on: true },
+      { id: 3, title: 'Windows Shell Menu Delay', tag: '20ms RESPONSE', desc: 'Reduces MenuShowDelay registry latency from 400ms to 20ms for instant desktop response.', lockProtocol: 'DWM_SHELL_20MS', on: true },
+      { id: 4, title: 'Web Experience Widgets', tag: '-300MB RAM', desc: 'Disables background news, weather, and WebExperience WebView2 background processes.', lockProtocol: 'WIN11_WIDGET_PURGE', on: true },
+      { id: 5, title: 'Windows Search Indexing', tag: '-15% DISK I/O', desc: 'Throttles background indexing daemons on battery and caps aggressive CPU usage.', lockProtocol: 'INDEXER_THROTTLE', on: true },
+      { id: 6, title: 'Delivery Optimization P2P', tag: 'NO P2P LEAKS', desc: 'Halts Windows Update peer-to-peer telemetry uploads from consuming network bandwidth.', lockProtocol: 'NET_P2P_DECOUPLE', on: true },
+      { id: 7, title: 'System Hibernation File', tag: '+6.2GB NVMe', desc: 'Purges obsolete hiberfil.sys to reclaim NVMe storage and eliminate Fast Startup RAM corruption.', lockProtocol: 'HIBERFIL_PURGE', on: true },
+      { id: 8, title: 'Temp Storage & Disk Cache', tag: '+1.4GB CLEANED', desc: 'Cleans accumulated cache junk from %TEMP% to free NVMe storage and reduce indexing overhead.', lockProtocol: 'IO_TRIM_CACHE', on: true }
     ];
 
-    function updateAppUI() {
-      let activeCount = 0;
-      appState.forEach(c => {
-        const sw = document.getElementById('sw-' + c.id);
-        const thumb = sw.querySelector('.app-switch-thumb');
-        const badge = document.getElementById('badge-' + c.id);
-
-        if (c.on) {
-          activeCount++;
-          sw.classList.remove('off');
-          thumb.innerText = 'ON';
-          badge.classList.remove('disabled-badge');
-        } else {
-          sw.classList.add('off');
-          thumb.innerText = 'OFF';
-          badge.classList.add('disabled-badge');
-        }
-      });
-
-      // Update Header Telemetry
-      const govVal = document.getElementById('app-gov-val');
-      const ssdVal = document.getElementById('app-ssd-val');
-      const syslog = document.getElementById('app-syslog');
-
-      if (activeCount === 8) {
-        govVal.innerText = 'MAX SPEED // 100% UNLOCKED';
-        govVal.style.color = '#ccff00';
-        ssdVal.innerText = '+7.5 GB FREED';
-        syslog.innerText = '[SYS_LOG] >> READY. 8 LOW-LEVEL PROTOCOLS ARMED. CLICK DEPLOY TO ENGAGE.';
-      } else if (activeCount === 0) {
-        govVal.innerText = 'DEFAULT // WINDOWS THROTTLED';
-        govVal.style.color = '#6b7280';
-        ssdVal.innerText = '0.0 GB FREED';
-        syslog.innerText = '[SYS_LOG] >> 0 PROTOCOLS ARMED. SYSTEM RUNNING UNOPTIMIZED.';
+    let webAudioEnabled = true;
+    function toggleWebAudio() {
+      webAudioEnabled = !webAudioEnabled;
+      const icon = document.getElementById("web-audio-icon");
+      const txt = document.getElementById("web-audio-txt");
+      if (webAudioEnabled) {
+        if (icon) icon.innerText = "🔊";
+        if (txt) txt.innerText = "SFX: ON";
+        playWebSound('click');
       } else {
-        govVal.innerText = `STAGE 1 // ${activeCount}/8 PROTOCOLS`;
-        govVal.style.color = '#00f0ff';
-        const freed = (activeCount * 0.93).toFixed(1);
-        ssdVal.innerText = `+${freed} GB FREED`;
-        syslog.innerText = `[SYS_LOG] >> ${activeCount} PROTOCOLS SELECTED. CLICK DEPLOY TO COMMIT.`;
+        if (icon) icon.innerText = "🔇";
+        if (txt) txt.innerText = "SFX: OFF";
       }
     }
 
+    function playWebSound(type) {
+      if (!webAudioEnabled) return;
+      try {
+        const ctx = getAudioCtx();
+        if (!ctx) return;
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        if (type === 'click') {
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(820, now);
+          gain.gain.setValueAtTime(0.04, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+          osc.start(now);
+          osc.stop(now + 0.04);
+        } else if (type === 'pneumatic') {
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(1500, now);
+          osc.frequency.exponentialRampToValueAtTime(360, now + 0.08);
+          gain.gain.setValueAtTime(0.08, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+          osc.start(now);
+          osc.stop(now + 0.09);
+        } else if (type === 'vault') {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(180, now);
+          gain.gain.setValueAtTime(0.16, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
+          osc.start(now);
+          osc.stop(now + 0.16);
+        } else if (type === 'success') {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(523.25, now);
+          osc.frequency.setValueAtTime(659.25, now + 0.08);
+          osc.frequency.setValueAtTime(783.99, now + 0.16);
+          osc.frequency.setValueAtTime(1046.50, now + 0.24);
+          gain.gain.setValueAtTime(0.06, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.38);
+          osc.start(now);
+          osc.stop(now + 0.38);
+        }
+      } catch(e) {}
+    }
+
+    function renderWebCards() {
+      const container = document.getElementById("web-cards-viewport");
+      if (!container) return;
+      container.innerHTML = "";
+
+      appTweaks.forEach(item => {
+        const card = document.createElement("div");
+        card.className = "app-opt-card" + (item.on ? " active-card" : "");
+        card.onclick = () => toggleAppSwitch(item.id);
+        card.innerHTML = `
+          <div class="card-left-cluster">
+            <div class="card-id-box">
+              <span class="card-channel-prefix">CH</span>
+              <span class="card-channel-num">${item.id < 10 ? '0' + item.id : item.id}</span>
+            </div>
+            <div class="card-text-block">
+              <div class="card-title-row">
+                <span class="card-title">${item.title}</span>
+                <span class="tag-benefit ${item.on ? 'tag-on' : 'tag-off'}">${item.tag}</span>
+              </div>
+              <div class="card-desc">${item.desc}</div>
+              <div class="hazard-lock-badge ${item.on ? 'lock-armed' : 'lock-standby'}">
+                <span>${item.on ? '⬡ ARMED // PROTOCOL_LOCK' : 'STANDBY // UNLATCHED'}</span>
+                <span style="opacity: 0.6; font-size: 7px;">[${item.lockProtocol}]</span>
+              </div>
+            </div>
+          </div>
+          <div class="card-right-cluster">
+            <div class="app-cyber-switch ${item.on ? '' : 'off'}">
+              <div class="app-switch-thumb">${item.on ? 'ON' : 'OFF'}</div>
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+
+      updateWebTelemetry();
+    }
+
     function toggleAppSwitch(id) {
-      playSound('click');
-      const card = appState.find(c => c.id === id);
-      if (card) {
-        card.on = !card.on;
-        updateAppUI();
+      playWebSound('click');
+      const item = appTweaks.find(t => t.id === id);
+      if (item) {
+        item.on = !item.on;
+        renderWebCards();
       }
     }
 
     function toggleAll() {
-      playSound('click');
-      const anyOn = appState.some(c => c.on);
-      appState.forEach(c => c.on = !anyOn);
-      updateAppUI();
+      playWebSound('click');
+      const anyOn = appTweaks.some(t => t.on);
+      appTweaks.forEach(t => t.on = !anyOn);
+      renderWebCards();
+    }
+
+    function updateWebTelemetry() {
+      const activeCount = appTweaks.filter(t => t.on).length;
+      const tag = document.getElementById("web-scope-tag");
+      if (tag) {
+        if (activeCount === 8) { tag.innerText = "1000Hz STABLE"; tag.style.color = "#ccff00"; }
+        else if (activeCount === 0) { tag.innerText = "60Hz JITTER"; tag.style.color = "#f87171"; }
+        else { tag.innerText = "TUNING OSC"; tag.style.color = "#00f0ff"; }
+      }
+
+      const cpuOn = appTweaks[0].on;
+      for (let i = 0; i < 4; i++) {
+        const c = document.getElementById("web-core-" + i);
+        const b = document.getElementById("web-bus-" + i);
+        if (c) c.className = "die-core-box " + (cpuOn ? "active" : "");
+        if (b) b.className = "die-bus-line " + (cpuOn ? "active" : "");
+      }
+    }
+
+    // --- 60 FPS CRT OSCILLOSCOPE CANVAS ENGINE ---
+    const webScopeCanvas = document.getElementById("web-oscilloscope");
+    let webScopeCtx = webScopeCanvas ? webScopeCanvas.getContext("2d") : null;
+    let webScopePhase = 0;
+
+    function drawWebOscilloscope() {
+      if (!webScopeCtx) return;
+      webScopeCtx.fillStyle = "rgba(4, 6, 10, 0.25)";
+      webScopeCtx.fillRect(0, 0, webScopeCanvas.width, webScopeCanvas.height);
+
+      const activeCount = appTweaks.filter(t => t.on).length;
+      const stability = activeCount / 8;
+
+      webScopeCtx.beginPath();
+      webScopeCtx.lineWidth = 1.8;
+      webScopeCtx.strokeStyle = activeCount === 0 ? "#f87171" : "#ccff00";
+      webScopeCtx.shadowBlur = 8;
+      webScopeCtx.shadowColor = activeCount === 0 ? "rgba(248, 113, 113, 0.8)" : "rgba(204, 255, 0, 0.8)";
+
+      const midY = webScopeCanvas.height / 2;
+      for (let x = 0; x < webScopeCanvas.width; x++) {
+        const harmonic = Math.sin((x * 0.08) + webScopePhase) * (12 * stability);
+        const jitter = activeCount === 8 ? 0 : (Math.sin((x * 0.42) + webScopePhase * 2) * (1 - stability) * 9);
+        const y = midY + harmonic + jitter;
+        if (x === 0) webScopeCtx.moveTo(x, y);
+        else webScopeCtx.lineTo(x, y);
+      }
+      webScopeCtx.stroke();
+
+      webScopePhase += 0.08 + (stability * 0.06);
+      requestAnimationFrame(drawWebOscilloscope);
+    }
+    requestAnimationFrame(drawWebOscilloscope);
+
+    // --- CLEAN SCI-FI NUKE BLAST HATCH (FLIP HOOD) ---
+    let webCoverOpen = false;
+
+    function toggleWebSafetyCover() {
+      if (webCoverOpen) closeWebSafetyCover();
+      else openWebSafetyCover();
+    }
+
+    function openWebSafetyCover() {
+      playWebSound('pneumatic');
+      webCoverOpen = true;
+      const cov = document.getElementById("web-safety-cover");
+      const assembly = document.getElementById("web-safety-assembly");
+      const title = document.getElementById("web-guard-title");
+      const hint = document.getElementById("web-guard-hint");
+      const svg = document.getElementById("web-guard-svg");
+
+      if (cov) {
+        cov.classList.add("open");
+        cov.title = "Click to Seal Silo Blast Hatch";
+      }
+      if (assembly) assembly.classList.add("guard-open-state");
+
+      if (title) title.innerText = "WARHEAD: ARMED";
+      if (hint) hint.innerText = "/// TAP TO SEAL ///";
+      if (svg) {
+        svg.innerHTML = `
+          <circle cx="12" cy="12" r="8"/>
+          <circle cx="12" cy="12" r="2.5" fill="#ff3355"/>
+          <line x1="12" y1="2" x2="12" y2="6"/>
+          <line x1="12" y1="18" x2="12" y2="22"/>
+          <line x1="2" y1="12" x2="6" y2="12"/>
+          <line x1="18" y1="12" x2="22" y2="12"/>
+        `;
+      }
+    }
+
+    function closeWebSafetyCover() {
+      playWebSound('vault');
+      webCoverOpen = false;
+      const cov = document.getElementById("web-safety-cover");
+      const assembly = document.getElementById("web-safety-assembly");
+      const title = document.getElementById("web-guard-title");
+      const hint = document.getElementById("web-guard-hint");
+      const svg = document.getElementById("web-guard-svg");
+
+      if (cov) {
+        cov.classList.remove("open");
+        cov.title = "Click to Arm Silo Blast Hatch";
+      }
+      if (assembly) assembly.classList.remove("guard-open-state");
+
+      if (title) title.innerText = "SILO: SEALED";
+      if (hint) hint.innerText = "/// TAP TO UNLATCH ///";
+      if (svg) {
+        svg.innerHTML = `
+          <circle cx="12" cy="12" r="8"/>
+          <circle cx="12" cy="12" r="2.5" fill="#ff9900"/>
+          <line x1="12" y1="2" x2="12" y2="6"/>
+          <line x1="12" y1="18" x2="12" y2="22"/>
+          <line x1="2" y1="12" x2="6" y2="12"/>
+          <line x1="18" y1="12" x2="22" y2="12"/>
+        `;
+      }
+    }
+
+    // --- DOCKED CONSOLE DRAWER LOGIC ---
+    let webDrawerExpanded = false;
+    function toggleWebDrawer() {
+      playWebSound('click');
+      webDrawerExpanded = !webDrawerExpanded;
+      const drawer = document.getElementById("web-docked-drawer");
+      const arrow = document.getElementById("web-drawer-arrow");
+      if (drawer) drawer.classList.toggle("expanded", webDrawerExpanded);
+      if (arrow) arrow.innerText = webDrawerExpanded ? "▼" : "▲";
+    }
+
+    function logToWebDrawer(text, type = 'info') {
+      const logs = document.getElementById("web-drawer-logs");
+      if (!logs) return;
+      const line = document.createElement("div");
+      line.className = `log-line log-${type}`;
+      line.innerText = text;
+      logs.appendChild(line);
+      logs.scrollTop = logs.scrollHeight;
+    }
+
+    async function deployTuning() {
+      if (!webCoverOpen) {
+        openWebSafetyCover();
+        return;
+      }
+
+      playWebSound('click');
+      const drawer = document.getElementById("web-docked-drawer");
+      const arrow = document.getElementById("web-drawer-arrow");
+      if (drawer) drawer.classList.add("expanded");
+      webDrawerExpanded = true;
+      if (arrow) arrow.innerText = "▼";
+
+      const statusPill = document.getElementById("web-drawer-status");
+      if (statusPill) {
+        statusPill.innerText = "[DISPATCHING // ACTIVE]";
+        statusPill.style.color = "#ff9900";
+      }
+
+      const activeTweaks = appTweaks.filter(t => t.on);
+      logToWebDrawer(`[${(performance.now()/1000).toFixed(3)}s] // STARTING DISPATCH: ${activeTweaks.length} PROTOCOLS ARMED`, 'info');
+
+      for (let i = 0; i < activeTweaks.length; i++) {
+        const item = activeTweaks[i];
+        await new Promise(r => setTimeout(r, 180));
+        logToWebDrawer(`[${(performance.now()/1000).toFixed(3)}s] [✓] ${item.title} engaged: ${item.tag}`, 'success');
+      }
+
+      playWebSound('success');
+      if (statusPill) {
+        statusPill.innerText = "[1000Hz STABLE // LOCKED]";
+        statusPill.style.color = "var(--acid-volt)";
+      }
+      logToWebDrawer(`[${(performance.now()/1000).toFixed(3)}s] // ALL PROTOCOLS DEPLOYED. SYSTEM RUNNING AT PEAK EFFICIENCY.`, 'success');
     }
 
     function restoreDefaults() {
-      playSound('click');
-      // Launch restore simulation in modal
-      runRestoreModal();
+      playWebSound('vault');
+      const drawer = document.getElementById("web-docked-drawer");
+      const arrow = document.getElementById("web-drawer-arrow");
+      if (drawer) drawer.classList.add("expanded");
+      webDrawerExpanded = true;
+      if (arrow) arrow.innerText = "▼";
+
+      logToWebDrawer(`[${(performance.now()/1000).toFixed(3)}s] // RESTORING WINDOWS FACTORY DEFAULTS...`, 'info');
+      appTweaks.forEach(t => t.on = false);
+      renderWebCards();
+      setTimeout(() => {
+        logToWebDrawer(`[${(performance.now()/1000).toFixed(3)}s] [✓] Balanced power scheme restored`, 'success');
+        logToWebDrawer(`[${(performance.now()/1000).toFixed(3)}s] [✓] MenuShowDelay reset to 400ms`, 'success');
+        logToWebDrawer(`[${(performance.now()/1000).toFixed(3)}s] [✓] Game DVR re-enabled`, 'success');
+        playWebSound('success');
+      }, 400);
     }
 
-    // --- 5. AUTHENTIC OVERCLOCK MODAL ENGINE ---
-    const deployLogs = [
-      "// INITIALIZING CYBERCORE TUNING WORKER (PID: 9482)",
-      "[1/8] Unlocking AC Power Throttle floor -> 100%... OK",
-      "[2/8] Disabling Game DVR background video capture buffer... OK",
-      "[3/8] Setting MenuShowDelay to 20ms... OK",
-      "[4/8] Neutralizing Windows 11 WidgetService & WebViews... OK",
-      "[5/8] Decoupling Bing cloud search integration from Start... OK",
-      "[6/8] Halting Delivery Optimization P2P upload seeding... OK",
-      "[7/8] Purging hiberfil.sys & disabling Fast Startup (+6.22GB)... OK",
-      "[8/8] Flushing %TEMP% stale system cache files (+1.4GB)... OK",
-      "// ------------------------------------------------",
-      "// [✓] ALL 8 SUBSYSTEMS ARMED: ZERO LATENCY PROFILE ACTIVE."
-    ];
-
-    const restoreLogs = [
-      "// RESTORATION WORKER ENGAGED (PID: 9482)",
-      "[1/7] Restoring Balanced Power Scheme... OK",
-      "[2/7] Restoring Game DVR & Video Capture Registry... OK",
-      "[3/7] Restoring MenuShowDelay to 400ms... OK",
-      "[4/7] Restoring Taskbar Widgets toggle... OK",
-      "[5/7] Restoring Bing Search Integration... OK",
-      "[6/7] Restoring Delivery Optimization P2P... OK",
-      "[7/7] Re-enabling Fast Startup (powercfg -h on)... OK",
-      "// ------------------------------------------------",
-      "// [✓] ROLLBACK COMPLETE: ALL SUBSYSTEMS RESET TO FACTORY SPEC."
-    ];
-
-    let modalTimer = null;
-
-    function deployTuning() {
-      playSound('launch');
-      const modal = document.getElementById('inwindow-modal');
-      const heading = document.getElementById('modal-heading');
-      const pct = document.getElementById('modal-pct');
-      const fill = document.getElementById('modal-prog-fill');
-      const logs = document.getElementById('modal-term-logs');
-      const statusMsg = document.getElementById('modal-status-msg');
-      const dismissBtn = document.getElementById('modal-dismiss-btn');
-
-      modal.classList.add('active');
-      heading.innerText = '// SYSTEM OVERCLOCK ENGINE // KERNEL-DISPATCH';
-      statusMsg.innerText = '// DISPATCHING SYSTEM TUNING VECTORS...';
-      dismissBtn.classList.remove('visible');
-      logs.innerHTML = '';
-      pct.innerText = '0%';
-      fill.style.width = '0%';
-
-      let step = 0;
-      clearInterval(modalTimer);
-      modalTimer = setInterval(() => {
-        if (step < deployLogs.length) {
-          const line = deployLogs[step];
-          const div = document.createElement('div');
-          if (line.includes('[✓]')) div.className = 'log-success';
-          div.innerText = line;
-          logs.appendChild(div);
-          logs.scrollTop = logs.scrollHeight;
-
-          const p = Math.round(((step + 1) / deployLogs.length) * 100);
-          pct.innerText = `${p}%`;
-          fill.style.width = `${p}%`;
-          playSound('click');
-          step++;
-        } else {
-          clearInterval(modalTimer);
-          statusMsg.innerText = 'STATUS: 8 LOW-LEVEL HARDWARE PROTOCOLS ACTIVE';
-          dismissBtn.classList.add('visible');
-        }
-      }, 150);
+    // Dynamic Simulated Hardware Telemetry Polling
+    function updateWebLiveTelemetry() {
+      const cpuEl = document.getElementById("web-cpu-val");
+      const ramEl = document.getElementById("web-ram-val");
+      const ssdEl = document.getElementById("web-ssd-val");
+      const jitter = Math.floor(Math.random() * 20) - 10;
+      if (cpuEl) cpuEl.innerText = `${2803 + jitter} MHz`;
+      if (ramEl) ramEl.innerText = "8.2 / 16.0 GB (51%)";
+      if (ssdEl) ssdEl.innerText = "116.1 GB // HEALTHY";
     }
+    setInterval(updateWebLiveTelemetry, 1500);
 
-    function runRestoreModal() {
-      playSound('launch');
-      const modal = document.getElementById('inwindow-modal');
-      const heading = document.getElementById('modal-heading');
-      const pct = document.getElementById('modal-pct');
-      const fill = document.getElementById('modal-prog-fill');
-      const logs = document.getElementById('modal-term-logs');
-      const statusMsg = document.getElementById('modal-status-msg');
-      const dismissBtn = document.getElementById('modal-dismiss-btn');
-
-      modal.classList.add('active');
-      heading.innerText = '// FACTORY ROLLBACK ENGINE // REVERT DEFAULTS';
-      statusMsg.innerText = '// ROLLING BACK ALL TUNING TO WINDOWS DEFAULTS...';
-      dismissBtn.classList.remove('visible');
-      logs.innerHTML = '';
-      pct.innerText = '0%';
-      fill.style.width = '0%';
-
-      let step = 0;
-      clearInterval(modalTimer);
-      modalTimer = setInterval(() => {
-        if (step < restoreLogs.length) {
-          const line = restoreLogs[step];
-          const div = document.createElement('div');
-          if (line.includes('[✓]')) div.className = 'log-success';
-          div.innerText = line;
-          logs.appendChild(div);
-          logs.scrollTop = logs.scrollHeight;
-
-          const p = Math.round(((step + 1) / restoreLogs.length) * 100);
-          pct.innerText = `${p}%`;
-          fill.style.width = `${p}%`;
-          playSound('click');
-          step++;
-        } else {
-          clearInterval(modalTimer);
-          statusMsg.innerText = 'STATUS: WINDOWS FACTORY DEFAULTS RESTORED';
-          dismissBtn.classList.add('visible');
-          // Reset switches
-          appState.forEach(c => c.on = false);
-          updateAppUI();
-        }
-      }, 150);
-    }
-
-    function dismissModal() {
-      playSound('click');
-      document.getElementById('inwindow-modal').classList.remove('active');
-    }
+    // Initial render
+    renderWebCards();
+    updateWebLiveTelemetry();
 
     // --- 6. DWM LATENCY SNAP TESTER ---
     function runSnapBenchmark() {
