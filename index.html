@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en" class="dark scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Windows Laptop Optimizer // Cybercore Techwear</title>
+  <meta name="description" content="High-performance, standalone Windows GUI utility (.exe) designed to unlock full CPU clock responsiveness, purge bloated WebViews, and reclaim storage.">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: JetBrains Mono & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            obsidian: '#0B0E14',
+            slateDark: '#10141E',
+            slateCard: '#121724',
+            slateBorder: '#1E2330',
+            acidVolt: '#CCFF00',
+            emeraldGreen: '#10B981',
+          },
+          fontFamily: {
+            mono: ['JetBrains Mono', 'Consolas', 'monospace'],
+            sans: ['Inter', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Custom Techwear Dot-Grid Canvas Background */
+    .techwear-bg {
+      background-color: #07090E;
+      background-image: radial-gradient(rgba(30, 35, 48, 0.4) 1px, transparent 1px);
+      background-size: 24px 24px;
+    }
+
+    /* Ambient Cursor Spotlight Glow */
+    #cursor-spotlight {
+      pointer-events: none;
+      position: fixed;
+      width: 600px;
+      height: 600px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(204, 255, 0, 0.045) 0%, rgba(16, 185, 129, 0.02) 40%, transparent 70%);
+      transform: translate(-50%, -50%);
+      transition: width 0.3s ease, height 0.3s ease, opacity 0.3s ease;
+      z-index: 1;
+    }
+
+    /* Equalizer Frequency Dancing Bars */
+    @keyframes bounce1 { 0%, 100% { height: 6px; } 50% { height: 22px; } }
+    @keyframes bounce2 { 0%, 100% { height: 24px; } 50% { height: 10px; } }
+    @keyframes bounce3 { 0%, 100% { height: 14px; } 50% { height: 28px; } }
+    @keyframes bounce4 { 0%, 100% { height: 28px; } 50% { height: 12px; } }
+    @keyframes bounce5 { 0%, 100% { height: 8px; } 50% { height: 20px; } }
+    @keyframes bounce6 { 0%, 100% { height: 18px; } 50% { height: 8px; } }
+
+    .eq-1 { animation: bounce1 0.75s infinite ease-in-out; }
+    .eq-2 { animation: bounce2 1.05s infinite ease-in-out; }
+    .eq-3 { animation: bounce3 0.85s infinite ease-in-out; }
+    .eq-4 { animation: bounce4 1.15s infinite ease-in-out; }
+    .eq-5 { animation: bounce5 0.70s infinite ease-in-out; }
+    .eq-6 { animation: bounce6 0.95s infinite ease-in-out; }
+
+    /* Neo-Brutalist 2.5D Hard Solid Drop Shadow */
+    .shadow-brutalist {
+      box-shadow: 5px 5px 0px #000;
+      transition: all 0.15s cubic-bezier(0.2, 0, 0, 1);
+    }
+    .shadow-brutalist:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 8px 8px 0px #000;
+    }
+    .shadow-brutalist:active {
+      transform: translate(2px, 2px);
+      box-shadow: 1px 1px 0px #000;
+    }
+
+    /* Custom Terminal Scrollbar */
+    .terminal-scroll::-webkit-scrollbar {
+      width: 6px;
+    }
+    .terminal-scroll::-webkit-scrollbar-track {
+      background: #07090e;
+    }
+    .terminal-scroll::-webkit-scrollbar-thumb {
+      background: #1e2330;
+      border-radius: 4px;
+    }
+    .terminal-scroll::-webkit-scrollbar-thumb:hover {
+      background: #ccff00;
+    }
+
+    /* Glow utility */
+    .glow-acid {
+      box-shadow: 0 0 20px rgba(204, 255, 0, 0.4);
+    }
+    .glow-acid-lg {
+      box-shadow: 0 0 35px rgba(204, 255, 0, 0.6);
+    }
+  </style>
+</head>
+<body class="techwear-bg text-[#F3F4F6] font-mono selection:bg-[#CCFF00] selection:text-black min-h-screen relative overflow-x-hidden">
+
+  <!-- Interactive Dynamic Cursor Follower Spotlight -->
+  <div id="cursor-spotlight"></div>
+
+  <!-- ========================================================================= -->
+  <!-- TOP CONTINUITY NAVIGATION BAR                                             -->
+  <!-- ========================================================================= -->
+  <nav class="border-b border-[#1E2330] bg-[#0B0E14]/90 backdrop-blur-md sticky top-0 z-50 px-4 md:px-8 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-8 h-8 rounded-lg bg-[#161B26] border border-[#263045] flex items-center justify-center text-[#CCFF00] font-black text-sm shadow-[0_0_12px_rgba(204,255,0,0.3)]">
+        ⚡
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="font-black text-sm tracking-tight text-white">SYS.CORE-TUNER</span>
+          <span class="px-1.5 py-0.2 rounded bg-[#162016] text-[#CCFF00] border border-[#CCFF00]/40 text-[9px] font-bold">CYBERCORE v2.4</span>
+        </div>
+        <span class="text-[10px] text-gray-500 font-mono hidden sm:block">// PROTOCOL: ZERO_LATENCY</span>
+      </div>
+    </div>
+
+    <!-- Navigation Actions -->
+    <div class="flex items-center gap-2.5 sm:gap-4">
+      <a href="#simulator" class="hidden md:inline-block text-xs font-bold text-gray-300 hover:text-[#CCFF00] transition-colors">
+        Live Simulator
+      </a>
+      <a href="#telemetry" class="hidden md:inline-block text-xs font-bold text-gray-300 hover:text-[#CCFF00] transition-colors">
+        Dynamic Telemetry
+      </a>
+      <a href="#templates" class="hidden sm:inline-block text-xs font-bold text-gray-300 hover:text-[#CCFF00] transition-colors">
+        Templates
+      </a>
+
+      <!-- Sound Toggle -->
+      <button id="sound-btn" onclick="toggleAudio()" class="px-3 py-1.5 rounded-lg bg-[#10141E] border border-[#263045] hover:border-[#CCFF00] text-xs font-bold text-gray-300 hover:text-white transition-all flex items-center gap-1.5">
+        <span id="sound-icon">🔊</span>
+        <span id="sound-label" class="hidden sm:inline">Sound: On</span>
+      </button>
+
+      <!-- GitHub Link -->
+      <a href="https://github.com/GHOST-DEKU/laptop-optimizer" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 rounded-lg border border-[#263045] bg-[#10141E] hover:border-[#CCFF00] hover:text-[#CCFF00] text-xs font-bold transition-all flex items-center gap-1.5">
+        <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+        <span class="hidden sm:inline">Repo</span>
+      </a>
+
+      <!-- Primary Download Button -->
+      <a href="https://github.com/GHOST-DEKU/laptop-optimizer/raw/main/LaptopOptimizer.exe" class="px-4 py-1.5 rounded-lg bg-[#CCFF00] hover:bg-[#b8e600] text-black font-black text-xs shadow-[0_0_15px_rgba(204,255,0,0.4)] hover:shadow-[0_0_25px_rgba(204,255,0,0.65)] hover:scale-105 active:scale-95 transition-all flex items-center gap-1.5">
+        <span>⚡</span>
+        <span>Download .EXE</span>
+      </a>
+    </div>
+  </nav>
+
+  <!-- ========================================================================= -->
+  <!-- HERO SECTION                                                              -->
+  <!-- ========================================================================= -->
+  <header class="max-w-5xl mx-auto px-4 md:px-8 pt-14 pb-12 text-center relative z-10">
+    <!-- Top Stencil Pills -->
+    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#161B26] border border-[#263045] text-[10px] md:text-xs text-[#CCFF00] font-black uppercase tracking-wider mb-6">
+      <span class="w-2 h-2 rounded-full bg-[#CCFF00] animate-ping"></span>
+      <span>NATIVE WIN32/GDI+ STANDALONE APP • ZERO RUNTIME DEPENDENCIES</span>
+    </div>
+
+    <h1 class="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-white mb-5 leading-tight">
+      WINDOWS 11 PERFORMANCE, <br class="hidden sm:inline">
+      <span class="text-[#CCFF00] underline decoration-[#CCFF00]/40 decoration-wavy">UNLEASHED.</span>
+    </h1>
+
+    <p class="max-w-2xl mx-auto text-xs md:text-sm text-gray-400 font-sans leading-relaxed mb-8">
+      A 100% brand-free, standalone desktop executable engineered to lock CPU clock throughput on AC, decouple DirectX Game DVR encoding, terminate idle WebViews, and recover <strong class="text-white">+7.5 GB</strong> NVMe storage with 1-click rollback.
+    </p>
+
+    <!-- Technical Badges Row -->
+    <div class="flex flex-wrap items-center justify-center gap-2 mb-8 text-[11px] font-bold">
+      <span class="px-2.5 py-1 rounded bg-[#10141E] border border-[#20293C] text-gray-300">x64 Native C++</span>
+      <span class="px-2.5 py-1 rounded bg-[#10141E] border border-[#20293C] text-gray-300">808 KB Standalone</span>
+      <span class="px-2.5 py-1 rounded bg-[#10141E] border border-[#20293C] text-gray-300">0% Electron Overhead</span>
+      <span class="px-2.5 py-1 rounded bg-[#10141E] border border-[#20293C] text-gray-300">1-Click Full Rollback</span>
+      <span class="px-2.5 py-1 rounded bg-[#162016] border border-[#CCFF00]/40 text-[#CCFF00]">Theme: Cybercore Techwear</span>
+    </div>
+
+    <!-- Hero CTA Actions -->
+    <div class="flex flex-wrap items-center justify-center gap-4">
+      <a href="https://github.com/GHOST-DEKU/laptop-optimizer/raw/main/LaptopOptimizer.exe" class="px-7 py-3.5 rounded-xl bg-[#CCFF00] hover:bg-[#b8e600] text-black font-black text-xs md:text-sm uppercase tracking-wider shadow-[0_0_25px_rgba(204,255,0,0.5)] hover:shadow-[0_0_35px_rgba(204,255,0,0.8)] hover:scale-105 active:scale-95 transition-all flex items-center gap-2.5">
+        <span>⚡</span>
+        <span>Download Standalone .EXE</span>
+        <span class="text-[10px] bg-black/20 text-black px-2 py-0.5 rounded font-mono font-bold">808 KB</span>
+      </a>
+
+      <a href="#simulator" class="px-6 py-3.5 rounded-xl bg-[#10141E] hover:bg-[#161B28] border border-[#263045] hover:border-[#CCFF00] text-white font-bold text-xs md:text-sm hover:scale-105 active:scale-95 transition-all flex items-center gap-2">
+        <span>🕹️</span>
+        <span>Interactive Live Simulator</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- ========================================================================= -->
+  <!-- DYNAMIC TELEMETRY HUD (CALCULATES IN REAL-TIME FROM SWITCH TOGGLES)       -->
+  <!-- ========================================================================= -->
+  <section id="telemetry" class="max-w-5xl mx-auto px-4 md:px-8 mb-16 relative z-10">
+    <div class="flex items-center justify-between mb-3 text-xs">
+      <span class="text-[#CCFF00] font-black uppercase tracking-wider flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-[#CCFF00] animate-pulse"></span>
+        // LIVE REAL-TIME TELEMETRY GOVERNOR
+      </span>
+      <span class="text-gray-500 font-mono text-[11px]">Updates dynamically with simulator toggles</span>
+    </div>
+
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 bg-[#0B0E14] border border-[#1E2330] rounded-2xl p-5 shadow-2xl relative">
+      <!-- Reticle corner markers -->
+      <div class="absolute top-2 left-2 text-[#CCFF00]/30 text-[10px]">┌</div>
+      <div class="absolute top-2 right-2 text-[#CCFF00]/30 text-[10px]">┐</div>
+      <div class="absolute bottom-2 left-2 text-[#CCFF00]/30 text-[10px]">└</div>
+      <div class="absolute bottom-2 right-2 text-[#CCFF00]/30 text-[10px]">┘</div>
+
+      <!-- Metric 1: NVMe Capacity -->
+      <div class="p-3 border-r border-[#1E2330] last:border-0">
+        <div class="text-[10px] text-gray-500 font-black tracking-wider uppercase">// NVMe STORAGE RECLAIMED</div>
+        <div class="text-2xl md:text-3xl font-black text-[#CCFF00] mt-1 transition-all" id="hud-storage">+7.50 GB</div>
+        <div class="text-[10px] text-gray-400 mt-0.5" id="hud-storage-desc">hiberfil.sys + %TEMP% purged</div>
+      </div>
+
+      <!-- Metric 2: Menu Latency -->
+      <div class="p-3 border-r border-[#1E2330] last:border-0">
+        <div class="text-[10px] text-gray-500 font-black tracking-wider uppercase">// CONTEXT MENU LATENCY</div>
+        <div class="text-2xl md:text-3xl font-black text-white mt-1 transition-all" id="hud-latency">20 ms</div>
+        <div class="text-[10px] text-gray-400 mt-0.5" id="hud-latency-desc">Instantaneous shell menus</div>
+      </div>
+
+      <!-- Metric 3: RAM Reclaimed -->
+      <div class="p-3 border-r border-[#1E2330] last:border-0">
+        <div class="text-[10px] text-gray-500 font-black tracking-wider uppercase">// IDLE WEBVIEWS RAM</div>
+        <div class="text-2xl md:text-3xl font-black text-[#10B981] mt-1 transition-all" id="hud-ram">-320 MB</div>
+        <div class="text-[10px] text-gray-400 mt-0.5" id="hud-ram-desc">WidgetService daemon dropped</div>
+      </div>
+
+      <!-- Metric 4: Clock Floor -->
+      <div class="p-3">
+        <div class="text-[10px] text-gray-500 font-black tracking-wider uppercase">// AC PROCESSOR FLOOR</div>
+        <div class="text-2xl md:text-3xl font-black text-[#CCFF00] mt-1 transition-all" id="hud-cpu">100% TURBO</div>
+        <div class="text-[10px] text-gray-400 mt-0.5" id="hud-cpu-desc">Zero frequency step ramp lag</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================= -->
+  <!-- 1:1 AUTHENTIC CYBERCORE DESKTOP APP MIRROR & SIMULATOR                    -->
+  <!-- ========================================================================= -->
+  <section id="simulator" class="max-w-4xl mx-auto px-4 md:px-8 mb-20 relative z-10">
+    <div class="flex items-center justify-between mb-4">
+      <div>
+        <span class="text-xs text-[#CCFF00] font-black tracking-wider uppercase block">// IN-BROWSER INTERACTIVE WINDOW</span>
+        <h2 class="text-xl md:text-2xl font-black text-white">Authentic Cybercore Desktop Mirror</h2>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="inline-block w-2.5 h-2.5 rounded-full bg-[#CCFF00] shadow-[0_0_8px_#CCFF00]"></span>
+        <span class="text-xs text-gray-400 font-bold hidden sm:inline">Win32 GDI+ Simulation</span>
+      </div>
+    </div>
+
+    <!-- Authentic Window Frame -->
+    <div class="bg-[#0B0E14] border-2 border-[#1E2330] rounded-2xl shadow-2xl overflow-hidden hover:border-[#CCFF00]/50 transition-all">
+      
+      <!-- Fake Window Titlebar with Windows 11 Controls -->
+      <div class="bg-[#10141E] px-4 py-2.5 border-b border-[#1E2330] flex items-center justify-between select-none">
+        <div class="flex items-center gap-2">
+          <span class="text-[#CCFF00] text-xs">⚡</span>
+          <span class="text-xs font-bold text-gray-300 tracking-wide">// SYS.CORE-TUNER // [CYBERCORE TECHWEAR GRID]</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="w-3 h-3 rounded-full bg-[#1E2330] border border-gray-600"></div>
+          <div class="w-3 h-3 rounded-full bg-[#1E2330] border border-gray-600"></div>
+          <div class="w-3 h-3 rounded-full bg-red-900/60 border border-red-500/60"></div>
+        </div>
+      </div>
+
+      <!-- App Header & Hardware Telemetry Spec -->
+      <div class="p-5 md:p-6 border-b border-[#1E2330] bg-[#0E121B] flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <div class="flex items-center gap-2 mb-1">
+            <span class="px-2 py-0.5 rounded bg-[#161B26] border border-[#263045] text-[10px] text-[#CCFF00] font-black uppercase tracking-wider">
+              // SYS.CORE-TUNER v2.4
+            </span>
+            <span class="text-[10px] text-gray-500">// LENOVO_82HS</span>
+          </div>
+          <h3 class="text-base font-black text-white">
+            INTEL Core i7-1165G7 <span class="text-[#CCFF00] font-normal">[4C/8T]</span>
+          </h3>
+          <p class="text-[11px] text-gray-400">TARGET SPEC: 16GB RAM • 512GB NVMe SSD • WINDOWS 11 / 10</p>
+        </div>
+
+        <!-- Dynamic Frequency Equalizer Module -->
+        <div class="flex items-center gap-3.5 bg-[#111622] border border-[#20293C] px-4 py-2.5 rounded-xl shadow-inner">
+          <div class="flex items-end gap-1 h-7">
+            <div class="w-1 bg-[#CCFF00] rounded-t eq-1"></div>
+            <div class="w-1 bg-[#CCFF00] rounded-t eq-2"></div>
+            <div class="w-1 bg-[#CCFF00] rounded-t eq-3"></div>
+            <div class="w-1 bg-[#CCFF00] rounded-t eq-4"></div>
+            <div class="w-1 bg-[#CCFF00] rounded-t eq-5"></div>
+            <div class="w-1 bg-[#CCFF00] rounded-t eq-6"></div>
+          </div>
+          <div class="border-l border-[#20293C] pl-3">
+            <div class="text-[8px] text-gray-500 font-black uppercase">THROUGHPUT GOVERNOR</div>
+            <div class="text-[11px] font-black text-[#CCFF00]">MAX SPEED // 100% UNLOCKED</div>
+            <div class="text-[9px] text-gray-400">STORAGE: <span class="text-white font-bold" id="eq-storage-display">+7.5 GB FREED</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 8 Optimization Cards List -->
+      <div class="p-5 md:p-6 space-y-2.5" id="sim-cards-container">
+        <!-- Rendered dynamically by JS -->
+      </div>
+
+      <!-- Live Stencil Status Bar -->
+      <div class="px-6 py-2 border-t border-[#1E2330] bg-[#0E121B] text-[11px] text-[#CCFF00] font-bold flex items-center justify-between">
+        <span>[SYS_LOG] >> READY. 8 PROTOCOLS ARMED. CLICK DEPLOY TO ENGAGE.</span>
+        <span class="text-gray-500 text-[10px]">ALL REVERSIBLE IN 1-CLICK</span>
+      </div>
+
+      <!-- Bottom Action Bar -->
+      <div class="p-5 md:p-6 bg-[#0B0E14] border-t border-[#1E2330] flex flex-wrap items-center justify-between gap-3">
+        <button onclick="simRestoreDefaults()" class="px-4 py-2.5 rounded-lg bg-[#141824] hover:bg-[#1C2234] border border-[#242E42] text-gray-300 hover:text-white font-bold text-xs transition-all flex items-center gap-1.5 active:scale-95">
+          <span>↺</span> RESTORE FACTORY DEFAULTS
+        </button>
+
+        <div class="flex items-center gap-2.5">
+          <button onclick="simToggleAll()" class="px-4 py-2.5 rounded-lg bg-[#141824] hover:bg-[#1C2234] border border-[#242E42] text-gray-300 hover:text-white font-bold text-xs transition-all active:scale-95">
+            TOGGLE ALL
+          </button>
+          <button onclick="simExecute()" class="px-6 py-2.5 rounded-lg bg-[#CCFF00] hover:bg-[#b8e600] text-black font-black text-xs uppercase tracking-wider shadow-[0_0_20px_rgba(204,255,0,0.35)] hover:shadow-[0_0_30px_rgba(204,255,0,0.65)] active:scale-95 transition-all flex items-center gap-2">
+            <span>⚡</span>
+            <span>DEPLOY TACTICAL TUNING ➔</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ========================================================================= -->
+  <!-- BESPOKE IN-BROWSER EXECUTION MODAL                                        -->
+  <!-- ========================================================================= -->
+  <div id="sim-modal" class="hidden fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-[#0B0E14] text-[#E6EDF3] border border-[#263045] rounded-2xl p-6 max-w-lg w-full shadow-[0_0_50px_rgba(204,255,0,0.25)] font-mono text-xs relative">
+      <div class="flex items-center justify-between pb-3 border-b border-[#1E2330] mb-4">
+        <div class="flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-[#CCFF00] animate-pulse"></span>
+          <h3 class="font-black text-xs text-[#CCFF00] uppercase tracking-wider">// OVERCLOCK ENGINE // KERNEL-DISPATCH</h3>
+        </div>
+        <span id="sim-modal-pct" class="bg-[#162016] text-[#CCFF00] border border-[#CCFF00]/40 font-black text-xs px-2.5 py-0.5 rounded">0%</span>
+      </div>
+
+      <!-- Acid-to-Emerald Glowing Progress Bar -->
+      <div class="w-full bg-[#10141E] rounded-full h-2 mb-4 overflow-hidden border border-[#20293C]">
+        <div id="sim-modal-bar" class="bg-gradient-to-r from-[#CCFF00] to-emerald-400 h-full w-0 transition-all duration-300"></div>
+      </div>
+
+      <!-- Monospace Tactical Console Terminal -->
+      <div id="sim-modal-log" class="bg-[#07090E] border border-[#1B2230] p-3.5 text-[11px] space-y-1.5 min-h-[210px] max-h-[250px] overflow-y-auto mb-4 rounded-xl text-gray-300 terminal-scroll leading-relaxed">
+        <div class="text-[#CCFF00]/70 pb-1 border-b border-[#1B2230]">// DISPATCHING SYSTEM TUNING VECTORS (PID: 9482)</div>
+      </div>
+
+      <!-- Modal Bottom Actions -->
+      <div class="flex justify-between items-center pt-2">
+        <span id="sim-modal-status" class="text-[11px] text-[#CCFF00] font-bold">// INITIATING LOW-LEVEL PROTOCOLS...</span>
+        <button id="sim-modal-close" onclick="closeSimModal()" class="hidden px-5 py-2 rounded-lg bg-[#CCFF00] hover:bg-[#b8e600] text-black font-black text-xs shadow-[0_0_15px_rgba(204,255,0,0.4)] active:scale-95 transition-all">
+          [ ✓ DISMISS CONSOLE ]
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- REUSABLE TEMPLATES PORTAL: NEO-BRUTALIST TECHNICAL STUDIO                -->
+  <!-- ========================================================================= -->
+  <section id="templates" class="max-w-4xl mx-auto px-4 md:px-8 mb-20 relative z-10">
+    <div class="text-center mb-8">
+      <span class="text-xs text-[#FFE600] font-black uppercase tracking-wider block">// PRESERVED ARCHETYPE</span>
+      <h2 class="text-2xl md:text-3xl font-black text-white">Concept 3: Neo-Brutalist Technical Studio</h2>
+      <p class="text-xs md:text-sm text-gray-400 max-w-xl mx-auto mt-1 font-sans">
+        Preserved as a modular, standalone template for your future dashboards, developer utilities, and settings panels.
+      </p>
+    </div>
+
+    <!-- Brutalist Mini-Preview Card -->
+    <div class="bg-[#FAFAFA] text-[#121212] border-4 border-black p-6 rounded-none shadow-brutalist text-xs">
+      <div class="flex flex-wrap justify-between items-center pb-4 border-b-2 border-black mb-4 gap-2">
+        <div class="bg-black text-[#FFE600] px-2.5 py-1 font-black text-xs uppercase tracking-widest shadow-[2px_2px_0px_#FFE600]">
+          STUDIO.SPEC // v1.0.0
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <span class="border-2 border-black bg-[#FFE600] px-2.5 py-0.5 font-black text-[10px] shadow-[2px_2px_0px_#000]">
+            CPU: i7-1165G7 [100%]
+          </span>
+          <span class="border-2 border-black bg-[#FFE600] px-2.5 py-0.5 font-black text-[10px] shadow-[2px_2px_0px_#000]">
+            RAM: 16 GB [-320MB]
+          </span>
+          <span class="border-2 border-black bg-[#FFE600] px-2.5 py-0.5 font-black text-[10px] shadow-[2px_2px_0px_#000]">
+            SSD: +7.5GB FREED
+          </span>
+          <span class="border-2 border-black bg-[#FFE600] px-2.5 py-0.5 font-black text-[10px] shadow-[2px_2px_0px_#000]">
+            DWM: 20ms SNAP
+          </span>
+        </div>
+      </div>
+
+      <!-- Brutalist Checkbox Items -->
+      <div class="space-y-2 mb-5">
+        <div class="border-2 border-black bg-white p-3 flex justify-between items-center shadow-[3px_3px_0px_#000] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all">
+          <div class="flex items-center gap-2.5">
+            <div class="w-5 h-5 bg-black text-[#FFE600] flex items-center justify-center font-black text-xs">✓</div>
+            <div>
+              <span class="font-black text-xs block">1. LOCK AC POWER TO 100% THROTTLE</span>
+              <span class="text-[11px] text-gray-600">Forces minimum CPU state to 100% on AC to eliminate ramp-up stutter.</span>
+            </div>
+          </div>
+          <span class="border border-black bg-[#FFE600] px-2 py-0.5 font-bold text-[10px]">ACTIVE</span>
+        </div>
+        <div class="border-2 border-black bg-white p-3 flex justify-between items-center shadow-[3px_3px_0px_#000] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all">
+          <div class="flex items-center gap-2.5">
+            <div class="w-5 h-5 bg-black text-[#FFE600] flex items-center justify-center font-black text-xs">✓</div>
+            <div>
+              <span class="font-black text-xs block">2. DECOUPLE GAME DVR VIDEO RECORDING</span>
+              <span class="text-[11px] text-gray-600">Disables rolling DirectX background video encoding hooks.</span>
+            </div>
+          </div>
+          <span class="border border-black bg-[#FFE600] px-2 py-0.5 font-bold text-[10px]">ACTIVE</span>
+        </div>
+      </div>
+
+      <!-- Action Link to Template -->
+      <div class="flex flex-wrap justify-between items-center pt-3 border-t-2 border-black gap-3">
+        <span class="text-gray-600 font-bold text-[11px]">Includes Web Audio API mechanical haptics & hazard progress bar.</span>
+        <div class="flex gap-2">
+          <a href="templates/concept3_neobrutalist_template.html" target="_blank" class="border-2 border-black bg-black text-white hover:bg-[#FFE600] hover:text-black font-black px-4 py-2 text-xs shadow-[3px_3px_0px_#000] transition-all">
+            LAUNCH STANDALONE TEMPLATE ➔
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================= -->
+  <!-- DIRECT EXECUTABLE DOWNLOAD HUB                                            -->
+  <!-- ========================================================================= -->
+  <section class="max-w-4xl mx-auto px-4 md:px-8 mb-20 relative z-10">
+    <div class="bg-gradient-to-b from-[#10141E] to-[#0B0E14] border border-[#20293C] rounded-2xl p-6 md:p-8 shadow-2xl flex flex-col md:flex-row items-center justify-between gap-6">
+      <div>
+        <div class="inline-flex items-center gap-2 px-2.5 py-0.5 rounded bg-[#162016] text-[#CCFF00] border border-[#CCFF00]/40 text-[10px] font-bold uppercase mb-2">
+          RELEASE BINARY v2.4
+        </div>
+        <h3 class="text-xl md:text-2xl font-black text-white">Download LaptopOptimizer.exe</h3>
+        <p class="text-xs text-gray-400 mt-1 max-w-md font-sans">
+          Standalone native executable with zero installation. Simply download, right-click, and select <strong>Run as administrator</strong> to tune your laptop.
+        </p>
+        <div class="flex items-center gap-3 mt-3 text-[11px] text-gray-500">
+          <span>• Size: ~808 KB</span>
+          <span>• SHA256: Embedded</span>
+          <span>• Windows 11 / 10 x64</span>
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-2.5 w-full md:w-auto">
+        <a href="https://github.com/GHOST-DEKU/laptop-optimizer/raw/main/LaptopOptimizer.exe" class="px-7 py-3.5 rounded-xl bg-[#CCFF00] hover:bg-[#b8e600] text-black font-black text-xs md:text-sm uppercase tracking-wider shadow-[0_0_20px_rgba(204,255,0,0.4)] hover:shadow-[0_0_35px_rgba(204,255,0,0.7)] hover:scale-105 active:scale-95 transition-all text-center flex items-center justify-center gap-2">
+          <span>⚡</span>
+          <span>Download Executable</span>
+        </a>
+        <a href="https://github.com/GHOST-DEKU/laptop-optimizer" target="_blank" class="px-5 py-2.5 rounded-xl bg-[#141824] hover:bg-[#1C2234] border border-[#242E42] text-gray-300 hover:text-white text-xs font-bold text-center transition-all">
+          View Source on GitHub
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================= -->
+  <!-- FOOTER                                                                    -->
+  <!-- ========================================================================= -->
+  <footer class="border-t border-[#1E2330] py-8 text-center text-xs text-gray-500 relative z-10 bg-[#07090E]">
+    <div class="max-w-4xl mx-auto px-4 flex flex-wrap justify-between items-center gap-4">
+      <div>
+        <span class="font-bold text-gray-300">Windows Laptop Optimizer</span> • Cybercore Techwear Architecture
+      </div>
+      <div class="flex items-center gap-4">
+        <a href="https://github.com/GHOST-DEKU/laptop-optimizer" class="hover:text-[#CCFF00] transition-colors">GitHub Repository</a>
+        <a href="https://github.com/GHOST-DEKU/laptop-optimizer/blob/main/LICENSE" class="hover:text-[#CCFF00] transition-colors">MIT License</a>
+        <a href="templates/concept3_neobrutalist_template.html" class="hover:text-[#CCFF00] transition-colors">Neo-Brutalist Template</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ========================================================================= -->
+  <!-- JAVASCRIPT: DYNAMIC TELEMETRY, SIMULATOR, AUDIO & SPOTLIGHT               -->
+  <!-- ========================================================================= -->
+  <script>
+    // --- 1. AMBIENT CURSOR SPOTLIGHT TRACKING ---
+    const spotlight = document.getElementById('cursor-spotlight');
+    window.addEventListener('mousemove', (e) => {
+      spotlight.style.left = `${e.clientX}px`;
+      spotlight.style.top = `${e.clientY}px`;
+    });
+
+    // --- 2. OPTIMIZATION PROTOCOLS DATA ---
+    const OPT_ITEMS = [
+      { id: 1, num: "01", title: "Zero-Ramp CPU Frequency Floor on AC", desc: "Sets minimum processor state to 100% floor on AC power to bypass ramp-up stutter.", badge: "100% FLOOR", enabled: true, log: "Unlocking High Performance power scheme and setting AC processor floor to 100%... OK" },
+      { id: 2, num: "02", title: "Bypass Game DVR Background Video Buffer", desc: "Halts continuous background DirectX video encoding and capture hooks; saves GPU VRAM.", badge: "ZERO VRAM", enabled: true, log: "Disabling GameDVR and historical background buffer in registry... OK" },
+      { id: 3, num: "03", title: "Instant Desktop Context Menus (20ms)", desc: "Cuts MenuShowDelay from 400ms down to 20ms for instant shell responsiveness.", badge: "20ms DELAY", enabled: true, log: "Writing MenuShowDelay = 20 to HKCU Control Panel Desktop... OK" },
+      { id: 4, num: "04", title: "Purge Windows 11 Widget Daemon Pack", desc: "Uninstalls WebExperience package; permanently terminates 20+ idle WebView2 processes.", badge: "-300MB RAM", enabled: true, log: "Uninstalled WebExperience pack; 20+ idle Edge WebView daemons purged... OK" },
+      { id: 5, num: "05", title: "Decouple Bing Cloud Integration from Start", desc: "Eliminates remote cloud latency on Start search; makes app launch search instant.", badge: "LOCAL ONLY", enabled: true, log: "Writing BingSearchEnabled = 0 to HKCU Search registry... OK" },
+      { id: 6, num: "06", title: "Halt Delivery Optimization P2P Seeding", desc: "Stops Windows from using your disk I/O and bandwidth to seed updates to network peers.", badge: "HTTP ONLY", enabled: true, log: "Setting DODownloadMode = 0 (HTTP Only mode)... OK" },
+      { id: 7, num: "07", title: "Clean Kernel Boots & Purge hiberfil.sys", desc: "Reclaims +6.22 GB NVMe SSD storage permanently and guarantees 100% clean boots.", badge: "+6.2GB SSD", enabled: true, log: "Executing powercfg -h off; hiberfil.sys deleted (+6.22 GB reclaimed)... OK" },
+      { id: 8, num: "08", title: "Purge Stale Temporary Files (>24h)", desc: "Cleans accumulated cache junk from %TEMP% to free NVMe storage and reduce indexing.", badge: "CLEAN TEMP", enabled: true, log: "Purged orphaned cache and temporary files (>24h)... OK" },
+    ];
+
+    // --- 3. PROCEDURAL MECHANICAL AUDIO SYNTHESIZER ---
+    let audioCtx = null;
+    let soundOn = true;
+
+    function initAudio() {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+
+    function toggleAudio() {
+      soundOn = !soundOn;
+      document.getElementById('sound-icon').textContent = soundOn ? '🔊' : '🔇';
+      document.getElementById('sound-label').textContent = soundOn ? 'Sound: On' : 'Sound: Off';
+    }
+
+    function playTone(type) {
+      if (!soundOn) return;
+      initAudio();
+      const t = audioCtx.currentTime;
+      if (type === 'click') {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(620, t);
+        osc.frequency.exponentialRampToValueAtTime(140, t + 0.04);
+        gain.gain.setValueAtTime(0.06, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(t);
+        osc.stop(t + 0.04);
+      } else if (type === 'success') {
+        [523.25, 659.25, 783.99].forEach((freq, idx) => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, t + idx * 0.07);
+          gain.gain.setValueAtTime(0.05, t + idx * 0.07);
+          gain.gain.exponentialRampToValueAtTime(0.001, t + idx * 0.07 + 0.12);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(t + idx * 0.07);
+          osc.stop(t + idx * 0.07 + 0.12);
+        });
+      }
+    }
+
+    // --- 4. DYNAMIC TELEMETRY HUD RECALCULATOR ---
+    function updateTelemetryHUD() {
+      const pwr = OPT_ITEMS.find(i => i.id === 1).enabled;
+      const dvr = OPT_ITEMS.find(i => i.id === 2).enabled;
+      const mnu = OPT_ITEMS.find(i => i.id === 3).enabled;
+      const wid = OPT_ITEMS.find(i => i.id === 4).enabled;
+      const hbr = OPT_ITEMS.find(i => i.id === 7).enabled;
+      const tmp = OPT_ITEMS.find(i => i.id === 8).enabled;
+
+      // Storage calculation
+      let storageFreed = 0;
+      if (hbr) storageFreed += 6.22;
+      if (tmp) storageFreed += 1.28;
+      const storageStr = storageFreed > 0 ? `+${storageFreed.toFixed(2)} GB` : `0.00 GB`;
+      document.getElementById('hud-storage').textContent = storageStr;
+      document.getElementById('eq-storage-display').textContent = `${storageStr} FREED`;
+
+      // Latency calculation
+      document.getElementById('hud-latency').textContent = mnu ? '20 ms' : '400 ms';
+      document.getElementById('hud-latency-desc').textContent = mnu ? 'Instantaneous shell menus' : 'Windows default delay';
+
+      // RAM calculation
+      document.getElementById('hud-ram').textContent = wid ? '-320 MB' : '0 MB';
+      document.getElementById('hud-ram-desc').textContent = wid ? 'WidgetService daemon dropped' : 'Idle WebViews active';
+
+      // CPU Floor
+      document.getElementById('hud-cpu').textContent = pwr ? '100% TURBO' : '5% THROTTLED';
+      document.getElementById('hud-cpu-desc').textContent = pwr ? 'Zero frequency step ramp lag' : 'Balanced ramp latency';
+    }
+
+    // --- 5. RENDER SIMULATOR CARDS ---
+    function renderSimCards() {
+      const container = document.getElementById('sim-cards-container');
+      container.innerHTML = '';
+
+      OPT_ITEMS.forEach(item => {
+        const card = document.createElement('div');
+        const borderCls = item.enabled ? 'border-[#1E2330] hover:border-[#CCFF00]' : 'border-[#1A202C] opacity-60';
+        card.className = `bg-[#10141E] ${borderCls} rounded-xl p-3 flex items-center justify-between cursor-pointer select-none transition-all group`;
+        card.onclick = () => toggleItem(item.id);
+
+        const thumbClass = item.enabled 
+          ? 'bg-[#CCFF00] text-black font-black text-[9px] shadow-[0_0_10px_rgba(204,255,0,0.7)]' 
+          : 'bg-[#202836] text-gray-500 font-bold text-[9px]';
+        const thumbPos = item.enabled ? 'justify-end' : 'justify-start';
+
+        card.innerHTML = `
+          <div class="flex items-center gap-3">
+            <div class="w-7 h-7 rounded-lg bg-[#182030] border border-[#263249] flex items-center justify-center text-[#CCFF00] font-black text-xs group-hover:bg-[#CCFF00] group-hover:text-black transition-all">
+              ${item.num}
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="font-extrabold text-white text-xs group-hover:text-[#CCFF00] transition-colors">${item.title}</span>
+                <span class="px-1.5 py-0.5 rounded bg-[#162016] text-[#CCFF00] border border-[#CCFF00]/30 text-[9px] font-bold">${item.badge}</span>
+              </div>
+              <span class="text-[11px] text-gray-400 block">${item.desc}</span>
+            </div>
+          </div>
+          <div class="w-12 h-6 bg-[#161C28] border ${item.enabled ? 'border-[#CCFF00]/60' : 'border-[#2C3850]'} rounded-lg p-0.5 flex ${thumbPos} items-center shadow-inner">
+            <div class="h-full px-2 rounded flex items-center justify-center ${thumbClass}">
+              ${item.enabled ? 'ON' : 'OFF'}
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+
+      updateTelemetryHUD();
+    }
+
+    function toggleItem(id) {
+      playTone('click');
+      const target = OPT_ITEMS.find(i => i.id === id);
+      if (target) {
+        target.enabled = !target.enabled;
+        renderSimCards();
+      }
+    }
+
+    function simToggleAll() {
+      playTone('click');
+      const allOn = OPT_ITEMS.every(i => i.enabled);
+      OPT_ITEMS.forEach(i => i.enabled = !allOn);
+      renderSimCards();
+    }
+
+    function simRestoreDefaults() {
+      playTone('click');
+      OPT_ITEMS.forEach(i => i.enabled = true);
+      renderSimCards();
+    }
+
+    // --- 6. BESPOKE SIMULATOR EXECUTION MODAL ---
+    function simExecute() {
+      playTone('click');
+      const active = OPT_ITEMS.filter(i => i.enabled);
+      if (active.length === 0) {
+        alert("Please enable at least one protocol.");
+        return;
+      }
+
+      const modal = document.getElementById('sim-modal');
+      const bar = document.getElementById('sim-modal-bar');
+      const pct = document.getElementById('sim-modal-pct');
+      const log = document.getElementById('sim-modal-log');
+      const status = document.getElementById('sim-modal-status');
+      const closeBtn = document.getElementById('sim-modal-close');
+
+      modal.classList.remove('hidden');
+      closeBtn.classList.add('hidden');
+      bar.style.width = '0%';
+      pct.textContent = '0%';
+      status.textContent = '// DISPATCHING SYSTEM TUNING VECTORS...';
+      log.innerHTML = '<div class="text-[#CCFF00]/70 pb-1 border-b border-[#1B2230]">// INITIALIZING CYBERCORE TUNING WORKER (PID: 9482)</div>';
+
+      let step = 0;
+      function nextStep() {
+        if (step < active.length) {
+          const item = active[step];
+          const progress = Math.round(((step + 1) / active.length) * 100);
+
+          setTimeout(() => {
+            bar.style.width = `${progress}%`;
+            pct.textContent = `${progress}%`;
+            playTone('click');
+
+            const entry = document.createElement('div');
+            entry.className = 'py-0.5 text-gray-300';
+            entry.innerHTML = `<span class="text-gray-500">[${step + 1}/${active.length}]</span> ${item.log}`;
+            log.appendChild(entry);
+            log.scrollTop = log.scrollHeight;
+
+            step++;
+            nextStep();
+          }, 220);
+        } else {
+          setTimeout(() => {
+            playTone('success');
+            bar.style.width = '100%';
+            pct.textContent = '100%';
+            status.textContent = 'STATUS: ALL SUBSYSTEMS RUNNING AT PEAK SPEC';
+
+            const done = document.createElement('div');
+            done.className = 'text-[#CCFF00] font-black pt-1 border-t border-[#1B2230]';
+            done.textContent = '// [✓] SUCCESS: ALL SELECTED TUNING VECTORS SATISFIED.';
+            log.appendChild(done);
+            log.scrollTop = log.scrollHeight;
+
+            closeBtn.classList.remove('hidden');
+          }, 160);
+        }
+      }
+      nextStep();
+    }
+
+    function closeSimModal() {
+      playTone('click');
+      document.getElementById('sim-modal').classList.add('hidden');
+    }
+
+    // Init on load
+    document.addEventListener('DOMContentLoaded', () => {
+      renderSimCards();
+    });
+  </script>
+</body>
+</html>
