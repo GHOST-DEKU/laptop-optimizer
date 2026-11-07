@@ -90,12 +90,34 @@
       gap: 16px;
     }
 
+    .pulse-pip {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background-color: var(--acid-volt);
+      box-shadow: 0 0 8px var(--acid-volt);
+      animation: pipPulse 1.6s infinite ease-in-out;
+      display: inline-block;
+    }
+    @keyframes pipPulse {
+      0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+        box-shadow: 0 0 8px var(--acid-volt);
+      }
+      50% {
+        opacity: 0.35;
+        transform: scale(0.8);
+        box-shadow: 0 0 2px var(--acid-volt);
+      }
+    }
+
     .badge-pill {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      padding: 2px 8px;
-      border-radius: 4px;
+      padding: 3px 10px;
+      border-radius: 6px;
       background: #161b26;
       border: 1px solid #263045;
       font-size: 10px;
@@ -103,11 +125,24 @@
       font-weight: 900;
       letter-spacing: 1px;
       text-transform: uppercase;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer;
+    }
+    .badge-pill:hover {
+      border-color: var(--acid-volt);
+      color: #ffffff;
+      box-shadow: 0 0 16px rgba(204, 255, 0, 0.45);
+      transform: translateY(-2px) scale(1.03);
     }
 
     .badge-secondary {
       color: #6b7280;
       border-color: transparent;
+    }
+    .badge-secondary:hover {
+      color: #9ca3af;
+      border-color: #374151;
+      box-shadow: none;
     }
 
     .cpu-title {
@@ -119,11 +154,20 @@
       display: flex;
       align-items: center;
       gap: 8px;
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+    .cpu-title:hover {
+      transform: translateX(2px);
     }
 
     .cpu-cores {
       color: var(--acid-volt);
       font-weight: 700;
+      transition: color 0.2s;
+    }
+    .cpu-title:hover .cpu-cores {
+      text-shadow: 0 0 10px rgba(204, 255, 0, 0.6);
     }
 
     .cpu-sub {
@@ -132,7 +176,7 @@
       font-weight: 400;
     }
 
-    /* Equalizer and Telemetry HUD */
+    /* Equalizer and Telemetry HUD with dynamic hover bloom */
     .telemetry-module {
       display: flex;
       align-items: center;
@@ -141,10 +185,17 @@
       border: 1px solid #20293c;
       padding: 10px 16px;
       border-radius: 12px;
-      transition: border-color 0.2s ease;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer;
     }
     .telemetry-module:hover {
-      border-color: var(--acid-volt);
+      border-color: rgba(204, 255, 0, 0.8);
+      box-shadow: 0 0 28px rgba(204, 255, 0, 0.25), inset 0 0 10px rgba(204, 255, 0, 0.05);
+      transform: translateY(-3px) scale(1.02);
+    }
+    .telemetry-module:hover .eq-bar {
+      filter: drop-shadow(0 0 6px #ccff00);
+      animation-duration: 0.38s !important;
     }
 
     .equalizer-bars {
@@ -157,6 +208,7 @@
       width: 4px;
       background-color: var(--acid-volt);
       border-radius: 2px 2px 0 0;
+      transition: filter 0.2s ease;
     }
     @keyframes spec1 { 0%, 100% { height: 12px; } 50% { height: 26px; } }
     @keyframes spec2 { 0%, 100% { height: 24px; } 50% { height: 8px; } }
@@ -187,6 +239,11 @@
       font-weight: 900;
       color: var(--acid-volt);
       letter-spacing: 0.5px;
+      display: inline-block;
+      transition: transform 0.2s ease;
+    }
+    .telemetry-val:hover {
+      transform: scale(1.05);
     }
     .telemetry-val-white {
       color: #ffffff;
@@ -213,9 +270,12 @@
     }
     .tweak-card:hover {
       transform: translateX(6px);
-      border-color: rgba(204, 255, 0, 0.7);
-      box-shadow: 0 0 20px rgba(204, 255, 0, 0.15);
-      background-color: var(--bg-item-hover);
+      border-color: rgba(204, 255, 0, 0.8);
+      box-shadow: 0 0 25px rgba(204, 255, 0, 0.18);
+      background-color: #121724;
+    }
+    .tweak-card:active {
+      transform: translateX(3px) scale(0.995);
     }
 
     .tweak-left {
@@ -236,12 +296,13 @@
       color: var(--acid-volt);
       font-weight: 900;
       font-size: 12px;
-      transition: all 0.2s ease;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
     .tweak-card:hover .tweak-num {
       background: var(--acid-volt);
       color: #000000;
-      box-shadow: 0 0 12px rgba(204, 255, 0, 0.8);
+      box-shadow: 0 0 14px rgba(204, 255, 0, 0.85);
+      transform: scale(1.06);
     }
 
     .tweak-title-row {
@@ -254,10 +315,11 @@
       font-size: 13px;
       font-weight: 800;
       color: #ffffff;
-      transition: color 0.2s;
+      transition: color 0.2s ease, text-shadow 0.2s ease;
     }
     .tweak-card:hover .tweak-title {
       color: var(--acid-volt);
+      text-shadow: 0 0 12px rgba(204, 255, 0, 0.4);
     }
     .tweak-desc {
       font-size: 11px;
@@ -271,6 +333,7 @@
       font-size: 9px;
       font-weight: 800;
       letter-spacing: 0.5px;
+      transition: all 0.2s ease;
     }
     .tag-on {
       background: #162016;
@@ -282,51 +345,70 @@
       color: #6b7280;
       border: 1px solid #263045;
     }
+    .tweak-card:hover .tag-on {
+      border-color: rgba(204, 255, 0, 0.7);
+      box-shadow: 0 0 10px rgba(204, 255, 0, 0.3);
+    }
 
-    /* Cyber Switches */
+    /* Cyber Switches with authentic mechanical spring glide */
     .switch-track {
+      position: relative;
       width: 48px;
       height: 24px;
       border-radius: 6px;
       padding: 2px;
       display: flex;
       align-items: center;
-      transition: all 0.2s ease;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
       box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6);
+      cursor: pointer;
     }
     .sw-track-on {
       background: #161c28;
       border: 1px solid #2c3850;
-      justify-content: flex-end;
     }
     .sw-track-off {
       background: #0e1118;
       border: 1px solid #1b2230;
-      justify-content: flex-start;
     }
     .tweak-card:hover .sw-track-on {
-      border-color: rgba(204, 255, 0, 0.6);
+      border-color: rgba(204, 255, 0, 0.8);
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6), 0 0 12px rgba(204, 255, 0, 0.3);
+    }
+    .tweak-card:hover .sw-track-off {
+      border-color: #3b475f;
     }
 
     .switch-thumb {
-      height: 100%;
-      padding: 0 7px;
-      font-size: 9px;
+      position: absolute;
+      top: 2px;
+      bottom: 2px;
+      left: 2px;
+      width: 20px;
+      font-size: 8px;
       font-weight: 900;
       border-radius: 4px;
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      letter-spacing: 0.5px;
+      transition: transform 0.24s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
     }
     .sw-thumb-on {
+      transform: translateX(22px);
       background: var(--acid-volt);
       color: #000000;
       box-shadow: 0 0 10px rgba(204, 255, 0, 0.7);
     }
     .sw-thumb-off {
+      transform: translateX(0px);
       background: #374151;
       color: #9ca3af;
+      box-shadow: none;
+    }
+    .tweak-card:hover .sw-thumb-on {
+      box-shadow: 0 0 16px rgba(204, 255, 0, 0.95);
+      background: #d8ff26;
     }
 
     /* Footer Action Bar */
@@ -344,7 +426,7 @@
       background: #141824;
       border: 1px solid #242e42;
       color: #9ca3af;
-      padding: 9px 14px;
+      padding: 9px 15px;
       border-radius: 8px;
       font-size: 11px;
       font-weight: 800;
@@ -353,13 +435,14 @@
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      transition: all 0.2s;
+      transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
     .btn-secondary:hover {
       background: #1c2234;
       color: #ffffff;
       border-color: #4b5563;
-      transform: scale(1.03);
+      transform: translateY(-2px) scale(1.03);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
     }
     .btn-secondary:active {
       transform: scale(0.97);
@@ -378,12 +461,16 @@
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      transition: all 0.2s;
+      transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
     .btn-startup:hover {
       border-color: var(--acid-volt);
       background: #1c2234;
-      transform: scale(1.03);
+      transform: translateY(-2px) scale(1.03);
+      box-shadow: 0 4px 14px rgba(204, 255, 0, 0.25);
+    }
+    .btn-startup:active {
+      transform: scale(0.97);
     }
 
     .btn-deploy {
@@ -401,28 +488,29 @@
       align-items: center;
       gap: 8px;
       box-shadow: 0 0 20px rgba(204, 255, 0, 0.4);
-      transition: all 0.2s;
+      transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
     .btn-deploy:hover {
       background: #b8e600;
-      box-shadow: 0 0 32px rgba(204, 255, 0, 0.7);
-      transform: scale(1.04);
+      box-shadow: 0 0 38px rgba(204, 255, 0, 0.85);
+      transform: translateY(-2px) scale(1.04);
     }
     .btn-deploy:active {
       transform: scale(0.96);
     }
 
-    /* In-App Modals */
+    /* In-App Modals with smooth entrance animations */
     .modal-backdrop {
       position: fixed;
       inset: 0;
       background: rgba(0, 0, 0, 0.85);
-      backdrop-filter: blur(6px);
+      backdrop-filter: blur(8px);
       z-index: 100;
       display: flex;
       align-items: center;
       justify-content: center;
       padding: 20px;
+      transition: opacity 0.22s ease;
     }
     .modal-hidden {
       display: none !important;
@@ -435,8 +523,19 @@
       padding: 24px;
       max-width: 600px;
       width: 100%;
-      box-shadow: 0 0 50px rgba(204, 255, 0, 0.2);
+      box-shadow: 0 0 50px rgba(204, 255, 0, 0.25);
       position: relative;
+      animation: modalPop 0.24s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    @keyframes modalPop {
+      0% {
+        opacity: 0;
+        transform: scale(0.92) translateY(14px);
+      }
+      100% {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
     }
 
     .modal-header {
@@ -523,7 +622,7 @@
     <div class="app-header">
       <div>
         <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
-          <span class="badge-pill">// SYS.CORE-TUNER v2.4</span>
+          <span class="badge-pill"><span class="pulse-pip"></span> // SYS.CORE-TUNER v2.4</span>
           <span class="badge-pill badge-secondary" id="system-model">// LENOVO 82HS</span>
         </div>
         <div class="cpu-title">
