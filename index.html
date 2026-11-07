@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -486,11 +486,22 @@
       border: 1px solid #20293c;
       width: 300px;
       height: 60px;
-      border-radius: 3px;
+      border-radius: 12px;
       padding: 8px 14px;
       display: flex;
       align-items: center;
       gap: 12px;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer;
+    }
+    .app-telem-module:hover {
+      border-color: rgba(204, 255, 0, 0.8);
+      box-shadow: 0 0 28px rgba(204, 255, 0, 0.25), inset 0 0 10px rgba(204, 255, 0, 0.05);
+      transform: translateY(-3px) scale(1.02);
+    }
+    .app-telem-module:hover .app-eq-bar {
+      filter: drop-shadow(0 0 6px #ccff00);
+      animation-duration: 0.38s !important;
     }
     @media (max-width: 768px) {
       .app-telem-module { width: 100%; }
@@ -545,7 +556,21 @@
       font-weight: 700;
     }
 
-    /* The 8 Vertical Optimization Cards (Height: 50px each, Gap: 6px) */
+    .pulse-pip {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background-color: var(--acid-volt);
+      box-shadow: 0 0 8px var(--acid-volt);
+      animation: pipPulse 1.6s infinite ease-in-out;
+      display: inline-block;
+    }
+    @keyframes pipPulse {
+      0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 8px var(--acid-volt); }
+      50% { opacity: 0.35; transform: scale(0.8); box-shadow: 0 0 2px var(--acid-volt); }
+    }
+
+    /* The 8 Vertical Optimization Cards (Height: 56px each, Gap: 6px) */
     .app-cards-viewport {
       padding: 12px 40px;
       display: flex;
@@ -565,13 +590,44 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
+      cursor: pointer;
+      user-select: none;
       transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
     }
     .app-opt-card:hover {
-      background: var(--bg-slate-hover);
+      background: #121724;
       border-color: rgba(204, 255, 0, 0.8);
       transform: translateX(6px);
-      box-shadow: 0 0 22px rgba(204, 255, 0, 0.16);
+      box-shadow: 0 0 25px rgba(204, 255, 0, 0.18);
+    }
+    .app-opt-card:active {
+      transform: translateX(3px) scale(0.995);
+    }
+    .app-opt-card:hover .card-id-box {
+      background: var(--acid-volt);
+      color: #000000;
+      box-shadow: 0 0 14px rgba(204, 255, 0, 0.85);
+      transform: scale(1.06);
+    }
+    .app-opt-card:hover .card-title {
+      color: var(--acid-volt);
+      text-shadow: 0 0 12px rgba(204, 255, 0, 0.4);
+    }
+    .app-opt-card:hover .card-badge-pill {
+      border-color: rgba(204, 255, 0, 0.7);
+      box-shadow: 0 0 10px rgba(204, 255, 0, 0.3);
+    }
+    .app-opt-card:hover .app-cyber-switch {
+      border-color: rgba(204, 255, 0, 0.8);
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6), 0 0 12px rgba(204, 255, 0, 0.3);
+    }
+    .app-opt-card:hover .app-switch-thumb {
+      box-shadow: 0 0 16px rgba(204, 255, 0, 0.95);
+      background: #d8ff26;
+    }
+    .app-opt-card:hover .app-cyber-switch.off .app-switch-thumb {
+      box-shadow: none;
+      background: #374151;
     }
     .app-opt-card.active-card {
       border-color: var(--border-dark);
@@ -598,6 +654,8 @@
       font-size: 11px;
       font-weight: 700;
       flex-shrink: 0;
+      border-radius: 6px;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .card-text-block {
@@ -612,6 +670,7 @@
       color: var(--text-white);
       text-overflow: ellipsis;
       overflow: hidden;
+      transition: color 0.2s ease, text-shadow 0.2s ease;
     }
     .card-desc {
       font-size: 10px;
@@ -641,6 +700,7 @@
       font-weight: 700;
       color: var(--acid-volt);
       letter-spacing: 0.5px;
+      transition: all 0.2s ease;
     }
     .card-badge-pill.disabled-badge {
       background: #161b24;
@@ -651,7 +711,7 @@
       .card-badge-pill { display: none; }
     }
 
-    /* 54x24px Rectangular Cyber Switch matching C++ DrawRectI / FillRectI */
+    /* 54x24px Rectangular Cyber Switch with sliding mechanical spring physics */
     .app-cyber-switch {
       width: 54px;
       height: 24px;
@@ -662,14 +722,21 @@
       display: flex;
       align-items: center;
       padding: 2px;
-      transition: all 0.15s;
+      border-radius: 6px;
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6);
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     }
     .app-cyber-switch.off {
+      background: #0e1118;
       border-color: #2c3850;
+      box-shadow: none;
     }
     .app-switch-thumb {
-      width: 26px;
-      height: 18px;
+      position: absolute;
+      top: 2px;
+      bottom: 2px;
+      left: 2px;
+      width: 24px;
       background: var(--acid-volt);
       display: flex;
       align-items: center;
@@ -677,13 +744,16 @@
       color: #000;
       font-size: 9px;
       font-weight: 900;
-      margin-left: 22px;
-      transition: transform 0.15s, background 0.15s, margin-left 0.15s;
+      border-radius: 4px;
+      box-shadow: 0 0 10px rgba(204, 255, 0, 0.7);
+      transform: translateX(24px);
+      transition: transform 0.24s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
     }
     .app-cyber-switch.off .app-switch-thumb {
-      margin-left: 0;
-      background: #232a3a;
+      transform: translateX(0px);
+      background: #374151;
       color: var(--text-muted);
+      box-shadow: none;
     }
 
     /* Bottom Control Bar of the App Window */
@@ -886,6 +956,86 @@
     }
     .btn-dismiss-modal:hover {
       background: #dbff33;
+    }
+
+    /* Startup items with full drift, reactive glow & staggered cascade */
+    .startup-item {
+      background: #10141e;
+      border: 1px solid #1b2230;
+      border-radius: 8px;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+      opacity: 0;
+      animation: startupCascade 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .startup-item:hover {
+      transform: translateX(6px);
+      border-color: rgba(204, 255, 0, 0.8);
+      box-shadow: 0 0 25px rgba(204, 255, 0, 0.18);
+      background-color: #121724;
+    }
+    .startup-item:active {
+      transform: translateX(3px) scale(0.995);
+    }
+    .startup-title {
+      font-weight: 800;
+      font-size: 13px;
+      transition: color 0.2s ease, text-shadow 0.2s ease;
+    }
+    .startup-item:hover .startup-title {
+      color: var(--acid-volt) !important;
+      text-shadow: 0 0 12px rgba(204, 255, 0, 0.4);
+    }
+    .startup-item:hover .app-cyber-switch {
+      border-color: rgba(204, 255, 0, 0.8);
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6), 0 0 12px rgba(204, 255, 0, 0.3);
+    }
+    .startup-item:hover .app-switch-thumb {
+      box-shadow: 0 0 16px rgba(204, 255, 0, 0.95);
+      background: #d8ff26;
+    }
+    .startup-item:hover .app-cyber-switch.off .app-switch-thumb {
+      box-shadow: none;
+      background: #374151;
+    }
+    .startup-desc {
+      font-size: 10px;
+      color: #6b7280;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-top: 2px;
+    }
+    @keyframes startupCascade {
+      0% { opacity: 0; transform: translateX(-12px); }
+      100% { opacity: 1; transform: translateX(0); }
+    }
+    .modal-close-btn {
+      background: #141824;
+      border: 1px solid #242e42;
+      color: #9ca3af;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .modal-close-btn:hover {
+      background: #1c2234;
+      color: var(--acid-volt);
+      border-color: var(--acid-volt);
+      box-shadow: 0 0 16px rgba(204, 255, 0, 0.4);
+      transform: scale(1.1) rotate(90deg);
     }
 
     /* ========================================================================= */
@@ -1187,7 +1337,7 @@
           <div class="app-header-left">
             <div class="app-pill-row" style="margin-bottom:6px;">
               <span class="header-pill" style="display:inline-flex;align-items:center;gap:6px;">
-                <span style="width:6px;height:6px;border-radius:50%;background:#ccff00;display:inline-block;animation:pulse 2s infinite;"></span>
+                <span class="pulse-pip"></span>
                 // SYS.CORE-TUNER v2.4
               </span>
               <span class="header-airframe">// LEN_82HS</span>
@@ -1226,7 +1376,7 @@
         <div class="app-cards-viewport">
           
           <!-- Card 01 -->
-          <div class="app-opt-card" id="card-1">
+          <div class="app-opt-card" id="card-1" onclick="toggleAppSwitch(1)">
             <div class="card-left-cluster">
               <div class="card-id-box">01</div>
               <div class="card-text-block">
@@ -1238,14 +1388,14 @@
               </div>
             </div>
             <div class="card-right-cluster">
-              <div class="app-cyber-switch" id="sw-1" onclick="toggleAppSwitch(1)">
+              <div class="app-cyber-switch" id="sw-1" style="pointer-events:none;">
                 <div class="app-switch-thumb">ON</div>
               </div>
             </div>
           </div>
 
           <!-- Card 02 -->
-          <div class="app-opt-card" id="card-2">
+          <div class="app-opt-card" id="card-2" onclick="toggleAppSwitch(2)">
             <div class="card-left-cluster">
               <div class="card-id-box">02</div>
               <div class="card-text-block">
@@ -1257,14 +1407,14 @@
               </div>
             </div>
             <div class="card-right-cluster">
-              <div class="app-cyber-switch" id="sw-2" onclick="toggleAppSwitch(2)">
+              <div class="app-cyber-switch" id="sw-2" style="pointer-events:none;">
                 <div class="app-switch-thumb">ON</div>
               </div>
             </div>
           </div>
 
           <!-- Card 03 -->
-          <div class="app-opt-card" id="card-3">
+          <div class="app-opt-card" id="card-3" onclick="toggleAppSwitch(3)">
             <div class="card-left-cluster">
               <div class="card-id-box">03</div>
               <div class="card-text-block">
@@ -1276,14 +1426,14 @@
               </div>
             </div>
             <div class="card-right-cluster">
-              <div class="app-cyber-switch" id="sw-3" onclick="toggleAppSwitch(3)">
+              <div class="app-cyber-switch" id="sw-3" style="pointer-events:none;">
                 <div class="app-switch-thumb">ON</div>
               </div>
             </div>
           </div>
 
           <!-- Card 04 -->
-          <div class="app-opt-card" id="card-4">
+          <div class="app-opt-card" id="card-4" onclick="toggleAppSwitch(4)">
             <div class="card-left-cluster">
               <div class="card-id-box">04</div>
               <div class="card-text-block">
@@ -1295,14 +1445,14 @@
               </div>
             </div>
             <div class="card-right-cluster">
-              <div class="app-cyber-switch" id="sw-4" onclick="toggleAppSwitch(4)">
+              <div class="app-cyber-switch" id="sw-4" style="pointer-events:none;">
                 <div class="app-switch-thumb">ON</div>
               </div>
             </div>
           </div>
 
           <!-- Card 05 -->
-          <div class="app-opt-card" id="card-5">
+          <div class="app-opt-card" id="card-5" onclick="toggleAppSwitch(5)">
             <div class="card-left-cluster">
               <div class="card-id-box">05</div>
               <div class="card-text-block">
@@ -1314,14 +1464,14 @@
               </div>
             </div>
             <div class="card-right-cluster">
-              <div class="app-cyber-switch" id="sw-5" onclick="toggleAppSwitch(5)">
+              <div class="app-cyber-switch" id="sw-5" style="pointer-events:none;">
                 <div class="app-switch-thumb">ON</div>
               </div>
             </div>
           </div>
 
           <!-- Card 06 -->
-          <div class="app-opt-card" id="card-6">
+          <div class="app-opt-card" id="card-6" onclick="toggleAppSwitch(6)">
             <div class="card-left-cluster">
               <div class="card-id-box">06</div>
               <div class="card-text-block">
@@ -1333,14 +1483,14 @@
               </div>
             </div>
             <div class="card-right-cluster">
-              <div class="app-cyber-switch" id="sw-6" onclick="toggleAppSwitch(6)">
+              <div class="app-cyber-switch" id="sw-6" style="pointer-events:none;">
                 <div class="app-switch-thumb">ON</div>
               </div>
             </div>
           </div>
 
           <!-- Card 07 -->
-          <div class="app-opt-card" id="card-7">
+          <div class="app-opt-card" id="card-7" onclick="toggleAppSwitch(7)">
             <div class="card-left-cluster">
               <div class="card-id-box">07</div>
               <div class="card-text-block">
@@ -1352,14 +1502,14 @@
               </div>
             </div>
             <div class="card-right-cluster">
-              <div class="app-cyber-switch" id="sw-7" onclick="toggleAppSwitch(7)">
+              <div class="app-cyber-switch" id="sw-7" style="pointer-events:none;">
                 <div class="app-switch-thumb">ON</div>
               </div>
             </div>
           </div>
 
           <!-- Card 08 -->
-          <div class="app-opt-card" id="card-8">
+          <div class="app-opt-card" id="card-8" onclick="toggleAppSwitch(8)">
             <div class="card-left-cluster">
               <div class="card-id-box">08</div>
               <div class="card-text-block">
@@ -1371,7 +1521,7 @@
               </div>
             </div>
             <div class="card-right-cluster">
-              <div class="app-cyber-switch" id="sw-8" onclick="toggleAppSwitch(8)">
+              <div class="app-cyber-switch" id="sw-8" style="pointer-events:none;">
                 <div class="app-switch-thumb">ON</div>
               </div>
             </div>
@@ -1492,7 +1642,7 @@
                 <div class="pulse-dot"></div>
                 <span>// STARTUP APPLICATIONS MANAGER // AUTOSTART DECOUPLER</span>
               </div>
-              <button onclick="closeStartupModal()" style="background:#161c28;border:1px solid #2d384e;color:#fff;font-family:var(--font-mono);font-size:10px;font-weight:700;padding:4px 10px;cursor:pointer;border-radius:3px;">✕ CLOSE</button>
+              <button onclick="closeStartupModal()" class="modal-close-btn" title="Close">✕</button>
             </div>
             <div style="padding: 10px 18px; font-size: 11px; color: var(--text-muted); border-bottom: 1px solid var(--border-dark); line-height: 1.4;">
               Toggle background autostart bloatware without deleting registry keys. Changes persist cleanly with Windows Task Manager.
@@ -1939,16 +2089,18 @@
       list.innerHTML = "";
       startupApps.forEach((app, idx) => {
         const row = document.createElement("div");
-        row.style.cssText = `background:#10141e;border:1px solid ${app.on ? "#233044" : "#1a202c"};padding:10px 14px;border-radius:4px;display:flex;align-items:center;justify-content:space-between;gap:12px;`;
+        row.className = "startup-item";
+        row.style.animationDelay = (idx * 0.05) + "s";
+        row.onclick = () => toggleStartupApp(idx);
         row.innerHTML = `
-          <div style="display:flex;align-items:center;gap:10px;overflow:hidden;">
-            <span style="background:#182030;border:1px solid #263249;color:#ccff00;font-size:9px;font-weight:700;padding:2px 6px;border-radius:2px;">${app.loc}</span>
+          <div style="display:flex;align-items:center;gap:12px;overflow:hidden;">
+            <span style="background:#182030;border:1px solid #263249;color:#ccff00;font-size:9px;font-weight:900;padding:3px 8px;border-radius:4px;letter-spacing:0.5px;">${app.loc}</span>
             <div style="overflow:hidden;">
-              <div style="font-size:12px;font-weight:700;color:${app.on ? "#fff" : "#6b7280"};">${app.name}</div>
-              <div style="font-size:10px;color:#6b7280;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${app.cmd}</div>
+              <div class="startup-title" style="color:${app.on ? "#fff" : "#9ca3af"};">${app.name}</div>
+              <div class="startup-desc">${app.cmd}</div>
             </div>
           </div>
-          <div class="app-cyber-switch ${app.on ? "" : "off"}" onclick="toggleStartupApp(${idx})">
+          <div class="app-cyber-switch ${app.on ? "" : "off"}" style="pointer-events:none;">
             <div class="app-switch-thumb">${app.on ? "ON" : "OFF"}</div>
           </div>
         `;
