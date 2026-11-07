@@ -560,17 +560,19 @@
     .app-opt-card {
       background: var(--bg-slate);
       border: 1px solid var(--border-dark);
-      height: 50px;
-      border-radius: 2px;
+      height: 56px;
+      border-radius: 8px;
       padding: 0 16px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      transition: background 0.15s, border-color 0.15s;
+      transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
     }
     .app-opt-card:hover {
       background: var(--bg-slate-hover);
-      border-color: var(--border-focus);
+      border-color: rgba(204, 255, 0, 0.8);
+      transform: translateX(6px);
+      box-shadow: 0 0 22px rgba(204, 255, 0, 0.16);
     }
     .app-opt-card.active-card {
       border-color: var(--border-dark);
@@ -1189,8 +1191,10 @@
               <span class="header-airframe">// LENOVO_82HS</span>
               <span class="header-pill" style="border-color:#3c6414;color:#ccff00;background:#142218;display:inline-flex;align-items:center;gap:4px;"><span>✓</span> ADMIN: ELEVATED (UAC)</span>
             </div>
-            <div class="header-cpu-title">INTEL Core i7-1165G7 [4C/8T]</div>
-            <div class="header-cpu-specs">TARGET SPEC: 16GB RAM • 512GB NVMe SSD • WINDOWS 11 / 10</div>
+            <div style="display:flex;align-items:center;gap:10px;margin-top:2px;">
+              <span class="header-cpu-title" style="color:var(--acid-volt);">INTEL i7-1165G7 [4C/8T]</span>
+              <span class="header-cpu-specs" style="margin-top:0;">•  16GB RAM  •  NVMe 512GB</span>
+            </div>
           </div>
 
           <!-- Top-Right Telemetry Equalizer Module -->
@@ -1225,12 +1229,14 @@
             <div class="card-left-cluster">
               <div class="card-id-box">01</div>
               <div class="card-text-block">
-                <div class="card-title">Zero-Ramp CPU Frequency Floor on AC</div>
-                <div class="card-desc">Sets processor state to 100% floor on AC power to eliminate turbo ramp stutter.</div>
+                <div style="display:flex;align-items:center;gap:10px;">
+                  <div class="card-title">Zero-Ramp CPU Frequency Floor on AC</div>
+                  <div class="card-badge-pill" id="badge-1" style="width:auto;padding:2px 8px;height:18px;border-radius:4px;">100% FLOOR</div>
+                </div>
+                <div class="card-desc" style="margin-top:2px;">Sets processor state to 100% floor on AC power to eliminate turbo ramp stutter.</div>
               </div>
             </div>
             <div class="card-right-cluster">
-              <div class="card-badge-pill" id="badge-1">100% FLOOR</div>
               <div class="app-cyber-switch" id="sw-1" onclick="toggleAppSwitch(1)">
                 <div class="app-switch-thumb">ON</div>
               </div>
@@ -1242,12 +1248,14 @@
             <div class="card-left-cluster">
               <div class="card-id-box">02</div>
               <div class="card-text-block">
-                <div class="card-title">Bypass Game DVR Background Video Buffer</div>
-                <div class="card-desc">Halts continuous background DirectX video encoding and capture hooks; saves GPU VRAM.</div>
+                <div style="display:flex;align-items:center;gap:10px;">
+                  <div class="card-title">Bypass Game DVR Background Video Buffer</div>
+                  <div class="card-badge-pill" id="badge-2" style="width:auto;padding:2px 8px;height:18px;border-radius:4px;">ZERO VRAM</div>
+                </div>
+                <div class="card-desc" style="margin-top:2px;">Halts continuous background DirectX video encoding and capture hooks; saves GPU VRAM.</div>
               </div>
             </div>
             <div class="card-right-cluster">
-              <div class="card-badge-pill" id="badge-2">ZERO VRAM</div>
               <div class="app-cyber-switch" id="sw-2" onclick="toggleAppSwitch(2)">
                 <div class="app-switch-thumb">ON</div>
               </div>
@@ -1259,12 +1267,14 @@
             <div class="card-left-cluster">
               <div class="card-id-box">03</div>
               <div class="card-text-block">
-                <div class="card-title">Instant Desktop Context Menus (20ms)</div>
-                <div class="card-desc">Cuts MenuShowDelay from 400ms to 20ms for instantaneous shell responsiveness.</div>
+                <div style="display:flex;align-items:center;gap:10px;">
+                  <div class="card-title">Instant Desktop Context Menus (20ms)</div>
+                  <div class="card-badge-pill" id="badge-3" style="width:auto;padding:2px 8px;height:18px;border-radius:4px;">20ms DELAY</div>
+                </div>
+                <div class="card-desc" style="margin-top:2px;">Cuts MenuShowDelay from 400ms to 20ms for instantaneous shell responsiveness.</div>
               </div>
             </div>
             <div class="card-right-cluster">
-              <div class="card-badge-pill" id="badge-3">20ms DELAY</div>
               <div class="app-cyber-switch" id="sw-3" onclick="toggleAppSwitch(3)">
                 <div class="app-switch-thumb">ON</div>
               </div>
@@ -1276,12 +1286,14 @@
             <div class="card-left-cluster">
               <div class="card-id-box">04</div>
               <div class="card-text-block">
-                <div class="card-title">Purge Windows 11 Widget Daemon Pack</div>
-                <div class="card-desc">Uninstalls WebExperience package; permanently terminates 20+ idle WebView2 processes.</div>
+                <div style="display:flex;align-items:center;gap:10px;">
+                  <div class="card-title">Purge Windows 11 Widget Daemon Pack</div>
+                  <div class="card-badge-pill" id="badge-4" style="width:auto;padding:2px 8px;height:18px;border-radius:4px;">-300MB RAM</div>
+                </div>
+                <div class="card-desc" style="margin-top:2px;">Uninstalls WebExperience package; permanently terminates 20+ idle WebView2 processes.</div>
               </div>
             </div>
             <div class="card-right-cluster">
-              <div class="card-badge-pill" id="badge-4">-300MB RAM</div>
               <div class="app-cyber-switch" id="sw-4" onclick="toggleAppSwitch(4)">
                 <div class="app-switch-thumb">ON</div>
               </div>
@@ -1293,12 +1305,14 @@
             <div class="card-left-cluster">
               <div class="card-id-box">05</div>
               <div class="card-text-block">
-                <div class="card-title">Decouple Bing Cloud Integration from Start</div>
-                <div class="card-desc">Eliminates remote cloud latency on Start search; makes app launch search instant.</div>
+                <div style="display:flex;align-items:center;gap:10px;">
+                  <div class="card-title">Decouple Bing Cloud Integration from Start</div>
+                  <div class="card-badge-pill" id="badge-5" style="width:auto;padding:2px 8px;height:18px;border-radius:4px;">LOCAL ONLY</div>
+                </div>
+                <div class="card-desc" style="margin-top:2px;">Eliminates remote cloud latency on Start search; makes app launch search instant.</div>
               </div>
             </div>
             <div class="card-right-cluster">
-              <div class="card-badge-pill" id="badge-5">LOCAL ONLY</div>
               <div class="app-cyber-switch" id="sw-5" onclick="toggleAppSwitch(5)">
                 <div class="app-switch-thumb">ON</div>
               </div>
@@ -1310,12 +1324,14 @@
             <div class="card-left-cluster">
               <div class="card-id-box">06</div>
               <div class="card-text-block">
-                <div class="card-title">Halt Delivery Optimization P2P Seeding</div>
-                <div class="card-desc">Stops Windows from using your disk I/O and bandwidth to seed updates to network peers.</div>
+                <div style="display:flex;align-items:center;gap:10px;">
+                  <div class="card-title">Halt Delivery Optimization P2P Seeding</div>
+                  <div class="card-badge-pill" id="badge-6" style="width:auto;padding:2px 8px;height:18px;border-radius:4px;">HTTP ONLY</div>
+                </div>
+                <div class="card-desc" style="margin-top:2px;">Stops Windows from using your disk I/O and bandwidth to seed updates to network peers.</div>
               </div>
             </div>
             <div class="card-right-cluster">
-              <div class="card-badge-pill" id="badge-6">HTTP ONLY</div>
               <div class="app-cyber-switch" id="sw-6" onclick="toggleAppSwitch(6)">
                 <div class="app-switch-thumb">ON</div>
               </div>
@@ -1327,12 +1343,14 @@
             <div class="card-left-cluster">
               <div class="card-id-box">07</div>
               <div class="card-text-block">
-                <div class="card-title">Clean Kernel Boots & Purge hiberfil.sys</div>
-                <div class="card-desc">Reclaims +6.22 GB NVMe SSD storage permanently and guarantees 100% clean boots.</div>
+                <div style="display:flex;align-items:center;gap:10px;">
+                  <div class="card-title">Clean Kernel Boots & Purge hiberfil.sys</div>
+                  <div class="card-badge-pill" id="badge-7" style="width:auto;padding:2px 8px;height:18px;border-radius:4px;">+6.2GB SSD</div>
+                </div>
+                <div class="card-desc" style="margin-top:2px;">Reclaims +6.22 GB NVMe SSD storage permanently and guarantees 100% clean boots.</div>
               </div>
             </div>
             <div class="card-right-cluster">
-              <div class="card-badge-pill" id="badge-7">+6.2GB SSD</div>
               <div class="app-cyber-switch" id="sw-7" onclick="toggleAppSwitch(7)">
                 <div class="app-switch-thumb">ON</div>
               </div>
@@ -1344,12 +1362,14 @@
             <div class="card-left-cluster">
               <div class="card-id-box">08</div>
               <div class="card-text-block">
-                <div class="card-title">Purge Stale Temporary Files (>24h)</div>
-                <div class="card-desc">Cleans accumulated cache junk from %TEMP% to free NVMe storage and reduce indexing.</div>
+                <div style="display:flex;align-items:center;gap:10px;">
+                  <div class="card-title">Purge Stale Temporary Files (>24h)</div>
+                  <div class="card-badge-pill" id="badge-8" style="width:auto;padding:2px 8px;height:18px;border-radius:4px;">CLEAN TEMP</div>
+                </div>
+                <div class="card-desc" style="margin-top:2px;">Cleans accumulated cache junk from %TEMP% to free NVMe storage and reduce indexing.</div>
               </div>
             </div>
             <div class="card-right-cluster">
-              <div class="card-badge-pill" id="badge-8">CLEAN TEMP</div>
               <div class="app-cyber-switch" id="sw-8" onclick="toggleAppSwitch(8)">
                 <div class="app-switch-thumb">ON</div>
               </div>
