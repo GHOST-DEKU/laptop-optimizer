@@ -174,14 +174,14 @@ void InitOptimizationCards(int clientW, int clientH) {
         g_cards.push_back({ 8, L"08", L"Purge Stale Temporary Files (>24h)", L"Cleans accumulated cache junk from %TEMP% to free NVMe storage and reduce indexing.", L"CLEAN TEMP", true });
     }
 
-    int pad = 20;
+    int pad = 24;
     int mx = pad, my = pad;
     int mw = clientW - pad * 2;
     int mh = clientH - pad * 2;
 
-    int startY = my + 82;
-    int cardH = 54;
-    int gap = 8;
+    int startY = my + 94;
+    int cardH = 62;
+    int gap = 10;
     int cardW = mw - 32;
 
     for (size_t i = 0; i < g_cards.size(); ++i) {
@@ -335,8 +335,8 @@ void OnPaint(HWND hWnd) {
     SolidBrush canvasBrush(clrCanvas);
     g.FillRectangle(&canvasBrush, 0, 0, width, height);
 
-    // Master Card Container (20px padding)
-    int pad = 20;
+    // Master Card Container (24px padding, matching p-6)
+    int pad = 24;
     int mx = pad, my = pad;
     int mw = width - pad * 2;
     int mh = height - pad * 2;
@@ -387,10 +387,10 @@ void OnPaint(HWND hWnd) {
     sf.SetLineAlignment(StringAlignmentNear);
 
     // =========================================================================
-    // 2. TOP TECHWEAR BANNER (MATCHING be9d415c.jpg EXACTLY)
+    // 2. TOP TECHWEAR BANNER (MATCHING Concept 2 HTML EXACTLY)
     // =========================================================================
-    // Clean bottom divider separating header from cards
-    g.DrawLine(&divPen, mx + 16, my + 68, mx + mw - 16, my + 68);
+    // Clean bottom divider separating header from cards (pb-4 border-b mb-5)
+    g.DrawLine(&divPen, mx + 16, my + 74, mx + mw - 16, my + 74);
 
     // 2A. Left Header Cluster (No enclosed box, sits directly on canvas)
     // Line 1: // SYS.CORE-TUNER v2.4 (pill with animated pulsing LED pip) + // LEN_82HS
@@ -459,7 +459,7 @@ void OnPaint(HWND hWnd) {
     g.DrawString(L"+7.5 GB FREED", -1, &fontTelemVal, PointF((REAL)telemX + 260, (REAL)telemY + 23), &whiteBrush);
 
     // =========================================================================
-    // 3. OPTIMIZATION CARDS (MATCHING be9d415c.jpg EXACTLY)
+    // 3. OPTIMIZATION CARDS (MATCHING Concept 2 CSS EXACTLY)
     // =========================================================================
     for (size_t i = 0; i < g_cards.size(); ++i) {
         const auto& card = g_cards[i];
@@ -478,43 +478,44 @@ void OnPaint(HWND hWnd) {
         SolidBrush cBrush(cardBg);
         Pen pPen(borderClr, 1.0f);
 
-        // Hover neon glow drop shadow
+        // Hover neon glow drop shadow (box-shadow: 0 0 25px rgba(204,255,0,0.18))
         if (isHovered) {
             Pen glowPen(Color(45, 204, 255, 0), 2.0f);
-            DrawRoundRect(g, &glowPen, cx - 1, cy - 1, cw + 2, ch + 2, 11);
+            DrawRoundRect(g, &glowPen, cx - 1, cy - 1, cw + 2, ch + 2, 13);
         }
 
-        FillRoundRect(g, &cBrush, cx, cy, cw, ch, 10);
-        DrawRoundRect(g, &pPen, cx, cy, cw, ch, 10);
+        FillRoundRect(g, &cBrush, cx, cy, cw, ch, 12);
+        DrawRoundRect(g, &pPen, cx, cy, cw, ch, 12);
 
-        // ID Box: exactly 28x28px (matching w-7 h-7), radius 6px
+        // ID Box: exactly 28x28px (matching w-7 h-7), radius 8px (rounded-lg)
         int idX = cx + 14;
-        int idY = cy + 13;
+        int idY = cy + (ch - 28) / 2;  // Vertically centered
         int idS = 28;
 
         if (isHovered) {
             SolidBrush idHoverBg(clrAcidVolt);
-            FillRoundRect(g, &idHoverBg, idX, idY, idS, idS, 6);
+            FillRoundRect(g, &idHoverBg, idX, idY, idS, idS, 8);
             Pen idGlow(Color(120, 204, 255, 0), 2.0f);
-            DrawRoundRect(g, &idGlow, idX - 1, idY - 1, idS + 2, idS + 2, 7);
+            DrawRoundRect(g, &idGlow, idX - 1, idY - 1, idS + 2, idS + 2, 9);
             g.DrawString(card.numStr.c_str(), -1, &fontId, PointF((REAL)idX + 6, (REAL)idY + 6), &jetBlackBrush);
         } else {
             SolidBrush numBg(Color(255, 24, 32, 48)); // #182030
             Pen numBorder(Color(255, 38, 50, 73), 1.0f); // #263249
-            FillRoundRect(g, &numBg, idX, idY, idS, idS, 6);
-            DrawRoundRect(g, &numBorder, idX, idY, idS, idS, 6);
+            FillRoundRect(g, &numBg, idX, idY, idS, idS, 8);
+            DrawRoundRect(g, &numBorder, idX, idY, idS, idS, 8);
             g.DrawString(card.numStr.c_str(), -1, &fontId, PointF((REAL)idX + 6, (REAL)idY + 6), &acidBrush);
         }
 
-        // Title text (Line 1): White (or Acid-Volt on hover)
+        // Title text (Line 1): White (or Acid-Volt on hover) — vertically centered
+        int titleY = cy + (ch / 2) - 16;  // Upper half of card
         SolidBrush* titleBrush = isHovered ? &acidBrush : &whiteBrush;
-        g.DrawString(card.title.c_str(), -1, &fontCardTitle, PointF((REAL)cx + 52, (REAL)cy + 9), titleBrush);
+        g.DrawString(card.title.c_str(), -1, &fontCardTitle, PointF((REAL)cx + 52, (REAL)titleY), titleBrush);
 
         // INLINE BADGE PILL: positioned immediately next to title!
         RectF tRect;
         g.MeasureString(card.title.c_str(), -1, &fontCardTitle, PointF(0, 0), &sf, &tRect);
         int badgeX = (int)(cx + 52 + tRect.Width + 10);
-        int badgeY = cy + 10;
+        int badgeY = titleY + 1;
 
         RectF bTextRect;
         g.MeasureString(card.badge.c_str(), -1, &fontBadge, PointF(0, 0), &sf, &bTextRect);
@@ -527,18 +528,23 @@ void OnPaint(HWND hWnd) {
         DrawRoundRect(g, &badgeBorder, badgeX, badgeY, badgeW, badgeH, 4);
         g.DrawString(card.badge.c_str(), -1, &fontBadge, PointF((REAL)badgeX + 6, (REAL)badgeY + 2), &acidBrush);
 
-        // Description text (Line 2)
-        g.DrawString(card.desc.c_str(), -1, &fontCardDesc, PointF((REAL)cx + 52, (REAL)cy + 29), &mutedBrush);
+        // Description text (Line 2) — 11px, vertically below title
+        int descY = cy + (ch / 2) + 2;  // Lower half of card
+        g.DrawString(card.desc.c_str(), -1, &fontCardDesc, PointF((REAL)cx + 52, (REAL)descY), &mutedBrush);
 
-        // SLEEK TOGGLE SWITCH: Exactly 48x24px (matching w-12 h-6), radius 6px
+        // SLEEK TOGGLE SWITCH: Exactly 48x24px (w-12 h-6), radius 8px (rounded-lg)
         int swW = 48, swH = 24;
         int swX = cx + cw - 16 - swW;
-        int swY = cy + 15;
+        int swY = cy + (ch - swH) / 2;  // Vertically centered
 
+        // Switch track with inner shadow effect (shadow-inner)
         SolidBrush swBg(Color(255, 22, 28, 40)); // #161C28
         Pen swBorder(isHovered ? clrAcidVolt : Color(255, 44, 56, 80), 1.0f); // #2C3850
-        FillRoundRect(g, &swBg, swX, swY, swW, swH, 6);
-        DrawRoundRect(g, &swBorder, swX, swY, swW, swH, 6);
+        FillRoundRect(g, &swBg, swX, swY, swW, swH, 8);
+        // Inner shadow: darker top edge
+        SolidBrush swInnerShadow(Color(40, 0, 0, 0));
+        FillRoundRect(g, &swInnerShadow, swX, swY, swW, 6, 8);
+        DrawRoundRect(g, &swBorder, swX, swY, swW, swH, 8);
 
         // Animated Smooth Switch Gliding (interpolated 0.0 -> 1.0)
         float sAnim = g_switchAnim[i];

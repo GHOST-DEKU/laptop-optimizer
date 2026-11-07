@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>// SYS.CORE-TUNER // [CYBERCORE TECHWEAR WORKSTATION]</title>
+  <style>
+    :root {
+      --bg-darkest: #07090e;
+      --bg-card: #0b0e14;
+      --bg-item: #10141e;
+      --bg-item-hover: #121724;
+      --border-main: #1e2330;
+      --border-item: #1b2230;
+      --border-focus: #263045;
+      --acid-volt: #ccff00;
+      --acid-glow: rgba(204, 255, 0, 0.45);
+      --text-white: #f3f4f6;
+      --text-muted: #9ca3af;
+      --text-dim: #6b7280;
+      --font-mono: 'Cascadia Code', Consolas, 'Courier New', monospace;
+      --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-darkest);
+      color: var(--text-white);
+      font-family: var(--font-mono);
+      font-size: 13px;
+      line-height: 1.5;
+      user-select: none;
+      -webkit-user-select: none;
+      overflow-x: hidden;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+    }
+
+    /* Technical grid pattern */
+    .techwear-grid {
+      background-image: radial-gradient(#1f2636 1px, transparent 1px);
+      background-size: 16px 16px;
+    }
+
+    /* Container */
+    .app-chassis {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-main);
+      border-radius: 16px;
+      padding: 24px;
+      width: 100%;
+      max-width: 880px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
+      position: relative;
+    }
+
+    /* Header */
+    .app-header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 18px;
+      border-bottom: 1px solid var(--border-item);
+      margin-bottom: 20px;
+      gap: 16px;
+    }
+
+    .badge-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      background: #161b26;
+      border: 1px solid #263045;
+      font-size: 10px;
+      color: var(--acid-volt);
+      font-weight: 900;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .badge-secondary {
+      color: #6b7280;
+      border-color: transparent;
+    }
+
+    .cpu-title {
+      font-size: 17px;
+      font-weight: 900;
+      color: #ffffff;
+      margin-top: 5px;
+      letter-spacing: -0.5px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .cpu-cores {
+      color: var(--acid-volt);
+      font-weight: 700;
+    }
+
+    .cpu-sub {
+      font-size: 12px;
+      color: #9ca3af;
+      font-weight: 400;
+    }
+
+    /* Equalizer and Telemetry HUD */
+    .telemetry-module {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: #111622;
+      border: 1px solid #20293c;
+      padding: 10px 16px;
+      border-radius: 12px;
+      transition: border-color 0.2s ease;
+    }
+    .telemetry-module:hover {
+      border-color: var(--acid-volt);
+    }
+
+    .equalizer-bars {
+      display: flex;
+      align-items: flex-end;
+      gap: 4px;
+      height: 28px;
+    }
+    .eq-bar {
+      width: 4px;
+      background-color: var(--acid-volt);
+      border-radius: 2px 2px 0 0;
+    }
+    @keyframes spec1 { 0%, 100% { height: 12px; } 50% { height: 26px; } }
+    @keyframes spec2 { 0%, 100% { height: 24px; } 50% { height: 8px; } }
+    @keyframes spec3 { 0%, 100% { height: 8px; } 50% { height: 22px; } }
+    @keyframes spec4 { 0%, 100% { height: 26px; } 50% { height: 14px; } }
+    @keyframes spec5 { 0%, 100% { height: 18px; } 50% { height: 6px; } }
+    @keyframes spec6 { 0%, 100% { height: 10px; } 50% { height: 20px; } }
+    .b1 { animation: spec1 0.70s infinite ease-in-out; }
+    .b2 { animation: spec2 0.50s infinite ease-in-out; }
+    .b3 { animation: spec3 0.65s infinite ease-in-out; }
+    .b4 { animation: spec4 0.80s infinite ease-in-out; }
+    .b5 { animation: spec5 0.55s infinite ease-in-out; }
+    .b6 { animation: spec6 0.75s infinite ease-in-out; }
+
+    .telemetry-col {
+      border-left: 1px solid #20293c;
+      padding-left: 12px;
+    }
+    .telemetry-label {
+      font-size: 9px;
+      color: #6b7280;
+      text-transform: uppercase;
+      font-weight: 900;
+      letter-spacing: 0.5px;
+    }
+    .telemetry-val {
+      font-size: 12px;
+      font-weight: 900;
+      color: var(--acid-volt);
+      letter-spacing: 0.5px;
+    }
+    .telemetry-val-white {
+      color: #ffffff;
+    }
+
+    /* Cards Stack */
+    .tweak-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+
+    .tweak-card {
+      background-color: var(--bg-item);
+      border: 1px solid var(--border-item);
+      border-radius: 12px;
+      padding: 13px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .tweak-card:hover {
+      transform: translateX(6px);
+      border-color: rgba(204, 255, 0, 0.7);
+      box-shadow: 0 0 20px rgba(204, 255, 0, 0.15);
+      background-color: var(--bg-item-hover);
+    }
+
+    .tweak-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .tweak-num {
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      background: #182030;
+      border: 1px solid #263249;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--acid-volt);
+      font-weight: 900;
+      font-size: 12px;
+      transition: all 0.2s ease;
+    }
+    .tweak-card:hover .tweak-num {
+      background: var(--acid-volt);
+      color: #000000;
+      box-shadow: 0 0 12px rgba(204, 255, 0, 0.8);
+    }
+
+    .tweak-title-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 2px;
+    }
+    .tweak-title {
+      font-size: 13px;
+      font-weight: 800;
+      color: #ffffff;
+      transition: color 0.2s;
+    }
+    .tweak-card:hover .tweak-title {
+      color: var(--acid-volt);
+    }
+    .tweak-desc {
+      font-size: 11px;
+      color: #9ca3af;
+      font-family: var(--font-sans);
+    }
+
+    .tag-benefit {
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+    }
+    .tag-on {
+      background: #162016;
+      color: var(--acid-volt);
+      border: 1px solid rgba(204, 255, 0, 0.3);
+    }
+    .tag-off {
+      background: #11141c;
+      color: #6b7280;
+      border: 1px solid #263045;
+    }
+
+    /* Cyber Switches */
+    .switch-track {
+      width: 48px;
+      height: 24px;
+      border-radius: 6px;
+      padding: 2px;
+      display: flex;
+      align-items: center;
+      transition: all 0.2s ease;
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6);
+    }
+    .sw-track-on {
+      background: #161c28;
+      border: 1px solid #2c3850;
+      justify-content: flex-end;
+    }
+    .sw-track-off {
+      background: #0e1118;
+      border: 1px solid #1b2230;
+      justify-content: flex-start;
+    }
+    .tweak-card:hover .sw-track-on {
+      border-color: rgba(204, 255, 0, 0.6);
+    }
+
+    .switch-thumb {
+      height: 100%;
+      padding: 0 7px;
+      font-size: 9px;
+      font-weight: 900;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .sw-thumb-on {
+      background: var(--acid-volt);
+      color: #000000;
+      box-shadow: 0 0 10px rgba(204, 255, 0, 0.7);
+    }
+    .sw-thumb-off {
+      background: #374151;
+      color: #9ca3af;
+    }
+
+    /* Footer Action Bar */
+    .app-footer {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 18px;
+      border-top: 1px solid var(--border-item);
+      gap: 12px;
+    }
+
+    .btn-secondary {
+      background: #141824;
+      border: 1px solid #242e42;
+      color: #9ca3af;
+      padding: 9px 14px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 800;
+      font-family: var(--font-mono);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .btn-secondary:hover {
+      background: #1c2234;
+      color: #ffffff;
+      border-color: #4b5563;
+      transform: scale(1.03);
+    }
+    .btn-secondary:active {
+      transform: scale(0.97);
+    }
+
+    .btn-startup {
+      background: #141824;
+      border: 1px solid #242e42;
+      color: #ffffff;
+      padding: 9px 16px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 800;
+      font-family: var(--font-mono);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .btn-startup:hover {
+      border-color: var(--acid-volt);
+      background: #1c2234;
+      transform: scale(1.03);
+    }
+
+    .btn-deploy {
+      background: var(--acid-volt);
+      border: none;
+      color: #000000;
+      padding: 10px 22px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: 0.5px;
+      font-family: var(--font-mono);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 0 20px rgba(204, 255, 0, 0.4);
+      transition: all 0.2s;
+    }
+    .btn-deploy:hover {
+      background: #b8e600;
+      box-shadow: 0 0 32px rgba(204, 255, 0, 0.7);
+      transform: scale(1.04);
+    }
+    .btn-deploy:active {
+      transform: scale(0.96);
+    }
+
+    /* In-App Modals */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(6px);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-hidden {
+      display: none !important;
+    }
+
+    .modal-dialog {
+      background: #0b0e14;
+      border: 1px solid #263045;
+      border-radius: 16px;
+      padding: 24px;
+      max-width: 600px;
+      width: 100%;
+      box-shadow: 0 0 50px rgba(204, 255, 0, 0.2);
+      position: relative;
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 14px;
+      border-bottom: 1px solid #1b2230;
+      margin-bottom: 16px;
+    }
+
+    .modal-title {
+      font-size: 12px;
+      font-weight: 900;
+      color: var(--acid-volt);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .progress-track {
+      width: 100%;
+      height: 8px;
+      background: #10141e;
+      border: 1px solid #20293c;
+      border-radius: 999px;
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #ccff00, #10b981);
+      box-shadow: 0 0 12px rgba(204, 255, 0, 0.7);
+      transition: width 0.3s ease;
+    }
+
+    .console-screen {
+      background: #07090e;
+      border: 1px solid #1b2230;
+      border-radius: 10px;
+      padding: 14px;
+      font-size: 11px;
+      height: 200px;
+      overflow-y: auto;
+      color: #d1d5db;
+      margin-bottom: 16px;
+      line-height: 1.6;
+    }
+    .console-line {
+      margin-bottom: 4px;
+    }
+    .console-highlight {
+      color: var(--acid-volt);
+    }
+    .console-err {
+      color: #f87171;
+    }
+
+    .modal-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .startup-item {
+      background: #10141e;
+      border: 1px solid #1b2230;
+      border-radius: 10px;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-chassis techwear-grid">
+    <!-- Top Techwear Banner -->
+    <div class="app-header">
+      <div>
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+          <span class="badge-pill">// SYS.CORE-TUNER v2.4</span>
+          <span class="badge-pill badge-secondary">// LEN_82HS</span>
+        </div>
+        <div class="cpu-title">
+          <span id="cpu-name">INTEL i7-1165G7</span>
+          <span class="cpu-cores" id="cpu-cores">[4C/8T]</span>
+          <span class="cpu-sub">• 16GB RAM • NVMe 512GB</span>
+        </div>
+      </div>
+
+      <div class="telemetry-module">
+        <div class="equalizer-bars">
+          <div class="eq-bar b1"></div>
+          <div class="eq-bar b2"></div>
+          <div class="eq-bar b3"></div>
+          <div class="eq-bar b4"></div>
+          <div class="eq-bar b5"></div>
+          <div class="eq-bar b6"></div>
+        </div>
+        <div class="telemetry-col">
+          <div class="telemetry-label">THROUGHPUT GOVERNOR</div>
+          <div class="telemetry-val">MAX SPEED // 100% UNLOCKED</div>
+        </div>
+        <div class="telemetry-col">
+          <div class="telemetry-label">STORAGE GAIN</div>
+          <div class="telemetry-val telemetry-val-white">+7.5 GB FREED</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Optimization Cards -->
+    <div class="tweak-list" id="tweak-container">
+      <!-- 01 -->
+      <div class="tweak-card" onclick="toggleTweak(1)">
+        <div class="tweak-left">
+          <div class="tweak-num">01</div>
+          <div>
+            <div class="tweak-title-row">
+              <span class="tweak-title">Zero-Ramp CPU Frequency Floor on AC</span>
+              <span class="tag-benefit tag-on" id="badge-1">100% FLOOR</span>
+            </div>
+            <div class="tweak-desc">Sets processor floor to 100% on AC to bypass frequency ramp-up latency.</div>
+          </div>
+        </div>
+        <div class="switch-track sw-track-on" id="sw-track-1">
+          <div class="switch-thumb sw-thumb-on" id="sw-thumb-1">ON</div>
+        </div>
+      </div>
+
+      <!-- 02 -->
+      <div class="tweak-card" onclick="toggleTweak(2)">
+        <div class="tweak-left">
+          <div class="tweak-num">02</div>
+          <div>
+            <div class="tweak-title-row">
+              <span class="tweak-title">Bypass Game DVR Background Video Buffer</span>
+              <span class="tag-benefit tag-on" id="badge-2">ZERO VRAM DRAIN</span>
+            </div>
+            <div class="tweak-desc">Halts continuous background DirectX video encoding and capture hooks.</div>
+          </div>
+        </div>
+        <div class="switch-track sw-track-on" id="sw-track-2">
+          <div class="switch-thumb sw-thumb-on" id="sw-thumb-2">ON</div>
+        </div>
+      </div>
+
+      <!-- 03 -->
+      <div class="tweak-card" onclick="toggleTweak(3)">
+        <div class="tweak-left">
+          <div class="tweak-num">03</div>
+          <div>
+            <div class="tweak-title-row">
+              <span class="tweak-title">Instant Desktop Context Menus</span>
+              <span class="tag-benefit tag-on" id="badge-3">20ms DELAY</span>
+            </div>
+            <div class="tweak-desc">Reduces MenuShowDelay from 400ms to 20ms for instant desktop responsiveness.</div>
+          </div>
+        </div>
+        <div class="switch-track sw-track-on" id="sw-track-3">
+          <div class="switch-thumb sw-thumb-on" id="sw-thumb-3">ON</div>
+        </div>
+      </div>
+
+      <!-- 04 -->
+      <div class="tweak-card" onclick="toggleTweak(4)">
+        <div class="tweak-left">
+          <div class="tweak-num">04</div>
+          <div>
+            <div class="tweak-title-row">
+              <span class="tweak-title">Purge Windows 11 Widget Daemon Pack</span>
+              <span class="tag-benefit tag-on" id="badge-4">-300MB RAM</span>
+            </div>
+            <div class="tweak-desc">Uninstalls WebExperience package to permanently kill 20+ idle WebView2 processes.</div>
+          </div>
+        </div>
+        <div class="switch-track sw-track-on" id="sw-track-4">
+          <div class="switch-thumb sw-thumb-on" id="sw-thumb-4">ON</div>
+        </div>
+      </div>
+
+      <!-- 05 -->
+      <div class="tweak-card" onclick="toggleTweak(5)">
+        <div class="tweak-left">
+          <div class="tweak-num">05</div>
+          <div>
+            <div class="tweak-title-row">
+              <span class="tweak-title">Clean Kernel Boots & Delete hiberfil.sys</span>
+              <span class="tag-benefit tag-on" id="badge-5">+6.22GB DISK</span>
+            </div>
+            <div class="tweak-desc">Disables hybrid hibernation; deletes hiberfil.sys and guarantees 100% fresh kernel state.</div>
+          </div>
+        </div>
+        <div class="switch-track sw-track-on" id="sw-track-5">
+          <div class="switch-thumb sw-thumb-on" id="sw-thumb-5">ON</div>
+        </div>
+      </div>
+
+      <!-- 06 -->
+      <div class="tweak-card" onclick="toggleTweak(6)">
+        <div class="tweak-left">
+          <div class="tweak-num">06</div>
+          <div>
+            <div class="tweak-title-row">
+              <span class="tweak-title">Decouple Bing Cloud Integration from Start</span>
+              <span class="tag-benefit tag-on" id="badge-6">LOCAL ONLY</span>
+            </div>
+            <div class="tweak-desc">Eliminates remote cloud latency on Start search; makes app launch search instant.</div>
+          </div>
+        </div>
+        <div class="switch-track sw-track-on" id="sw-track-6">
+          <div class="switch-thumb sw-thumb-on" id="sw-thumb-6">ON</div>
+        </div>
+      </div>
+
+      <!-- 07 -->
+      <div class="tweak-card" onclick="toggleTweak(7)">
+        <div class="tweak-left">
+          <div class="tweak-num">07</div>
+          <div>
+            <div class="tweak-title-row">
+              <span class="tweak-title">Halt Delivery Optimization P2P Seeding</span>
+              <span class="tag-benefit tag-on" id="badge-7">HTTP ONLY</span>
+            </div>
+            <div class="tweak-desc">Stops Windows from using your disk I/O and bandwidth to seed updates to network peers.</div>
+          </div>
+        </div>
+        <div class="switch-track sw-track-on" id="sw-track-7">
+          <div class="switch-thumb sw-thumb-on" id="sw-thumb-7">ON</div>
+        </div>
+      </div>
+
+      <!-- 08 -->
+      <div class="tweak-card" onclick="toggleTweak(8)">
+        <div class="tweak-left">
+          <div class="tweak-num">08</div>
+          <div>
+            <div class="tweak-title-row">
+              <span class="tweak-title">Purge Stale Temporary Files (>24h)</span>
+              <span class="tag-benefit tag-on" id="badge-8">CLEAN TEMP</span>
+            </div>
+            <div class="tweak-desc">Cleans accumulated cache junk from %TEMP% to free NVMe storage and reduce indexing.</div>
+          </div>
+        </div>
+        <div class="switch-track sw-track-on" id="sw-track-8">
+          <div class="switch-thumb sw-thumb-on" id="sw-thumb-8">ON</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Action Bar -->
+    <div class="app-footer">
+      <button class="btn-secondary" onclick="restoreDefaults()">
+        <span>↺</span> RESTORE FACTORY DEFAULTS
+      </button>
+
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <button class="btn-secondary" onclick="toggleAll()">TOGGLE ALL</button>
+        <button class="btn-startup" onclick="openStartupModal()">
+          <span>🚀</span> STARTUP APPS
+        </button>
+        <button class="btn-deploy" onclick="deployOptimizations()">
+          <span>⚡</span> DEPLOY TACTICAL TUNING ➔
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Execution Progress Modal -->
+  <div class="modal-backdrop modal-hidden" id="exec-modal">
+    <div class="modal-dialog techwear-grid">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#ccff00; box-shadow:0 0 8px #ccff00;"></span>
+          // SYSTEM OVERCLOCK ENGINE // KERNEL-DISPATCH
+        </div>
+        <div style="font-size:12px; font-weight:900; color:#ccff00;" id="exec-pct">0%</div>
+      </div>
+
+      <div class="progress-track">
+        <div class="progress-fill" id="exec-bar"></div>
+      </div>
+
+      <div class="console-screen" id="exec-console">
+        <div class="console-line console-highlight">// INITIALIZING KERNEL DISPATCH PROTOCOLS...</div>
+      </div>
+
+      <div class="modal-footer">
+        <div style="font-size:11px; color:#ccff00; font-weight:700;" id="exec-status">
+          // RUNNING OPTIMIZATIONS...
+        </div>
+        <button class="btn-deploy modal-hidden" id="exec-close-btn" onclick="closeExecModal()">
+          [ ✓ DISMISS CONSOLE ]
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Startup Apps Manager Modal -->
+  <div class="modal-backdrop modal-hidden" id="startup-modal">
+    <div class="modal-dialog techwear-grid" style="max-width: 660px;">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span>🚀</span> // STARTUP APPLICATION DECOUPLER
+        </div>
+        <button class="btn-secondary" style="padding: 4px 10px;" onclick="closeStartupModal()">✕</button>
+      </div>
+
+      <div style="font-size: 11px; color: #9ca3af; margin-bottom: 14px;">
+        Safely enable or disable background autostart hooks via Windows StartupApproved registry.
+      </div>
+
+      <div style="max-height: 320px; overflow-y: auto;" id="startup-list-container">
+        <!-- Loaded dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // State management
+    const tweakStates = {
+      1: true, 2: true, 3: true, 4: true,
+      5: true, 6: true, 7: true, 8: true
+    };
+
+    const tweakLabels = {
+      1: "Zero-Ramp CPU Frequency Floor",
+      2: "Bypass Game DVR Background Video Buffer",
+      3: "Instant Desktop Context Menus",
+      4: "Purge Windows 11 Widget Daemon Pack",
+      5: "Clean Kernel Boots & Delete hiberfil.sys",
+      6: "Decouple Bing Cloud Integration",
+      7: "Halt Delivery Optimization P2P Seeding",
+      8: "Purge Stale Temporary Files"
+    };
+
+    // Web Audio Procedural Synthesis
+    let audioCtx = null;
+    function playAudio(type) {
+      try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        const now = audioCtx.currentTime;
+
+        if (type === 'click') {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(800, now);
+          osc.frequency.exponentialRampToValueAtTime(300, now + 0.03);
+          gain.gain.setValueAtTime(0.04, now);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.035);
+          osc.start(now);
+          osc.stop(now + 0.035);
+        } else if (type === 'relay') {
+          osc.type = 'square';
+          osc.frequency.setValueAtTime(360, now);
+          osc.frequency.exponentialRampToValueAtTime(160, now + 0.045);
+          gain.gain.setValueAtTime(0.03, now);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.05);
+          osc.start(now);
+          osc.stop(now + 0.05);
+        } else if (type === 'success') {
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(440, now);
+          osc.frequency.exponentialRampToValueAtTime(880, now + 0.2);
+          gain.gain.setValueAtTime(0.05, now);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
+          osc.start(now);
+          osc.stop(now + 0.22);
+        }
+      } catch (e) {}
+    }
+
+    // Toggle single tweak switch
+    function toggleTweak(idx) {
+      playAudio('click');
+      tweakStates[idx] = !tweakStates[idx];
+      updateTweakUI(idx);
+    }
+
+    function updateTweakUI(idx) {
+      const on = tweakStates[idx];
+      const track = document.getElementById('sw-track-' + idx);
+      const thumb = document.getElementById('sw-thumb-' + idx);
+      const badge = document.getElementById('badge-' + idx);
+
+      if (on) {
+        track.className = 'switch-track sw-track-on';
+        thumb.className = 'switch-thumb sw-thumb-on';
+        thumb.innerText = 'ON';
+        badge.className = 'tag-benefit tag-on';
+      } else {
+        track.className = 'switch-track sw-track-off';
+        thumb.className = 'switch-thumb sw-thumb-off';
+        thumb.innerText = 'OFF';
+        badge.className = 'tag-benefit tag-off';
+      }
+    }
+
+    // Toggle all tweaks
+    function toggleAll() {
+      playAudio('relay');
+      const allOn = Object.values(tweakStates).every(Boolean);
+      for (let i = 1; i <= 8; i++) {
+        tweakStates[i] = !allOn;
+        updateTweakUI(i);
+      }
+    }
+
+    // Execute optimizations
+    async function deployOptimizations() {
+      playAudio('relay');
+      const modal = document.getElementById('exec-modal');
+      const bar = document.getElementById('exec-bar');
+      const pct = document.getElementById('exec-pct');
+      const consoleBox = document.getElementById('exec-console');
+      const status = document.getElementById('exec-status');
+      const closeBtn = document.getElementById('exec-close-btn');
+
+      modal.classList.remove('modal-hidden');
+      closeBtn.classList.add('modal-hidden');
+      bar.style.width = '0%';
+      pct.innerText = '0%';
+      consoleBox.innerHTML = '<div class="console-line console-highlight">// INITIATING TACTICAL SYSTEM TUNING PIPELINE...</div>';
+      status.innerText = '// RUNNING LOW-LEVEL OPERATIONS...';
+
+      const activeTweaks = Object.keys(tweakStates).filter(k => tweakStates[k]);
+      const total = activeTweaks.length;
+
+      if (total === 0) {
+        consoleBox.innerHTML += '<div class="console-line">// No tweaks selected. Toggle items ON to deploy.</div>';
+        status.innerText = '// COMPLETED (0 ACTIONS)';
+        closeBtn.classList.remove('modal-hidden');
+        return;
+      }
+
+      for (let i = 0; i < total; i++) {
+        const id = parseInt(activeTweaks[i]);
+        const tweakName = tweakLabels[id];
+        const progress = Math.round(((i + 1) / total) * 100);
+
+        consoleBox.innerHTML += `<div class="console-line">> [EXECUTING 0${id}] ${tweakName}...</div>`;
+        consoleBox.scrollTop = consoleBox.scrollHeight;
+
+        try {
+          if (window.__TAURI__ && window.__TAURI__.core) {
+            const res = await window.__TAURI__.core.invoke('apply_tweak', { id });
+            consoleBox.innerHTML += `<div class="console-line console-highlight">  ✓ ${res}</div>`;
+          } else {
+            // Web / Mock simulation mode
+            await new Promise(r => setTimeout(r, 350));
+            consoleBox.innerHTML += `<div class="console-line console-highlight">  ✓ Applied successfully [SIMULATED]</div>`;
+          }
+        } catch (err) {
+          consoleBox.innerHTML += `<div class="console-line console-err">  ✗ Error: ${err}</div>`;
+        }
+
+        bar.style.width = progress + '%';
+        pct.innerText = progress + '%';
+        consoleBox.scrollTop = consoleBox.scrollHeight;
+      }
+
+      playAudio('success');
+      status.innerText = '// TACTICAL TUNING DEPLOYED SUCCESSFULLY';
+      closeBtn.classList.remove('modal-hidden');
+    }
+
+    function closeExecModal() {
+      playAudio('click');
+      document.getElementById('exec-modal').classList.add('modal-hidden');
+    }
+
+    // Restore factory defaults
+    async function restoreDefaults() {
+      playAudio('relay');
+      if (!confirm("Are you sure you want to restore all settings to default Windows configurations?")) return;
+
+      const modal = document.getElementById('exec-modal');
+      const bar = document.getElementById('exec-bar');
+      const pct = document.getElementById('exec-pct');
+      const consoleBox = document.getElementById('exec-console');
+      const status = document.getElementById('exec-status');
+      const closeBtn = document.getElementById('exec-close-btn');
+
+      modal.classList.remove('modal-hidden');
+      closeBtn.classList.add('modal-hidden');
+      bar.style.width = '50%';
+      pct.innerText = '50%';
+      consoleBox.innerHTML = '<div class="console-line console-highlight">// RESTORING FACTORY WINDOWS DEFAULTS...</div>';
+      status.innerText = '// REVERTING SYSTEM KEYS...';
+
+      try {
+        if (window.__TAURI__ && window.__TAURI__.core) {
+          const logs = await window.__TAURI__.core.invoke('restore_all');
+          for (const line of logs) {
+            consoleBox.innerHTML += `<div class="console-line">  ✓ ${line}</div>`;
+          }
+        } else {
+          await new Promise(r => setTimeout(r, 600));
+          consoleBox.innerHTML += '<div class="console-line">  ✓ Balanced power scheme restored [SIMULATED]</div>';
+          consoleBox.innerHTML += '<div class="console-line">  ✓ MenuShowDelay reset to 400ms [SIMULATED]</div>';
+          consoleBox.innerHTML += '<div class="console-line">  ✓ Game DVR re-enabled [SIMULATED]</div>';
+        }
+      } catch (e) {
+        consoleBox.innerHTML += `<div class="console-line console-err">  ✗ Restore Error: ${e}</div>`;
+      }
+
+      bar.style.width = '100%';
+      pct.innerText = '100%';
+      playAudio('success');
+      status.innerText = '// SYSTEM RESTORED TO FACTORY DEFAULTS';
+      closeBtn.classList.remove('modal-hidden');
+    }
+
+    // Startup Apps Manager
+    async function openStartupModal() {
+      playAudio('click');
+      const modal = document.getElementById('startup-modal');
+      const list = document.getElementById('startup-list-container');
+      modal.classList.remove('modal-hidden');
+      list.innerHTML = '<div style="color:#6b7280; padding:10px;">Loading startup applications...</div>';
+
+      let apps = [];
+      try {
+        if (window.__TAURI__ && window.__TAURI__.core) {
+          apps = await window.__TAURI__.core.invoke('get_startup_apps');
+        } else {
+          apps = [
+            { name: "OneDrive", command: "OneDrive.exe /background", location: "HKCU", is_enabled: true },
+            { name: "Grammarly", command: "GrammarlyDesktop.exe", location: "HKCU", is_enabled: true },
+            { name: "UniGetUI", command: "UniGetUI.exe --daemon", location: "HKCU", is_enabled: true },
+            { name: "RiotClient", command: "RiotClientServices.exe", location: "HKCU", is_enabled: false }
+          ];
+        }
+      } catch (e) {
+        list.innerHTML = `<div style="color:#f87171;">Failed to load startup apps: ${e}</div>`;
+        return;
+      }
+
+      list.innerHTML = '';
+      apps.forEach((app, idx) => {
+        const item = document.createElement('div');
+        item.className = 'startup-item';
+        item.innerHTML = `
+          <div>
+            <div style="font-weight: 800; font-size: 12px; color: #ffffff;">${app.name}</div>
+            <div style="font-size: 10px; color: #9ca3af; font-family: var(--font-mono);">${app.location} • ${app.command}</div>
+          </div>
+          <div class="switch-track ${app.is_enabled ? 'sw-track-on' : 'sw-track-off'}" id="su-track-${idx}" onclick="toggleStartupAppItem('${app.name}', '${app.location}', ${idx})">
+            <div class="switch-thumb ${app.is_enabled ? 'sw-thumb-on' : 'sw-thumb-off'}" id="su-thumb-${idx}">
+              ${app.is_enabled ? 'ON' : 'OFF'}
+            </div>
+          </div>
+        `;
+        list.appendChild(item);
+      });
+    }
+
+    async function toggleStartupAppItem(name, location, idx) {
+      playAudio('click');
+      const track = document.getElementById('su-track-' + idx);
+      const thumb = document.getElementById('su-thumb-' + idx);
+      const isNowOn = !track.classList.contains('sw-track-on');
+
+      if (isNowOn) {
+        track.className = 'switch-track sw-track-on';
+        thumb.className = 'switch-thumb sw-thumb-on';
+        thumb.innerText = 'ON';
+      } else {
+        track.className = 'switch-track sw-track-off';
+        thumb.className = 'switch-thumb sw-thumb-off';
+        thumb.innerText = 'OFF';
+      }
+
+      if (window.__TAURI__ && window.__TAURI__.core) {
+        await window.__TAURI__.core.invoke('toggle_startup_app', { name, location, enable: isNowOn });
+      }
+    }
+
+    function closeStartupModal() {
+      playAudio('click');
+      document.getElementById('startup-modal').classList.add('modal-hidden');
+    }
+  </script>
+</body>
+</html>

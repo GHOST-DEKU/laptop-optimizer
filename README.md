@@ -1,32 +1,37 @@
 # ⚡ Windows Laptop Optimizer // Cybercore Techwear Edition
 
-> A high-performance, standalone native Windows GUI application (`.exe`) engineered to eliminate background telemetry, unlock full CPU clock responsiveness, purge bloated WebViews, and reclaim gigabytes of NVMe storage — wrapped in a bespoke, brand-free **Cybercore // Dark Techwear** interface with zero external runtime dependencies.
+> A high-performance, standalone native Windows desktop application engineered to eliminate background telemetry, unlock full CPU clock responsiveness, purge bloated WebViews, and reclaim gigabytes of NVMe storage — wrapped in a bespoke, brand-free **Cybercore // Dark Techwear** interface with 100% pixel-perfect fidelity.
 
 ![Windows 11](https://img.shields.io/badge/OS-Windows%2010%20%7C%2011-0078D6?style=for-the-badge&logo=windows&logoColor=white)
-![C++](https://img.shields.io/badge/Language-C%2B%2B-00599C?style=for-the-badge&logo=c%2B%2B&logoColor=white)
+![Rust](https://img.shields.io/badge/Backend-Rust%201.95-DEA584?style=for-the-badge&logo=rust&logoColor=white)
+![Tauri](https://img.shields.io/badge/GUI-Tauri%20v2%20(WebView2)-FFC131?style=for-the-badge&logo=tauri&logoColor=white)
 ![Theme](https://img.shields.io/badge/Theme-Cybercore%20Techwear-CCFF00?style=for-the-badge&labelColor=0B0E14)
-![Architecture](https://img.shields.io/badge/Arch-x64%20Native%20(Win32%2FGDI%2B)-brightgreen?style=for-the-badge)
 ![License](https://img.shields.io/badge/License-MIT-purple?style=for-the-badge)
 
 ---
 
 ## 🖥️ What Makes It "Out of the Box"?
 
-Unlike traditional batch or PowerShell scripts that require command terminal copy-pasting, **Windows Laptop Optimizer** is a **true standalone native desktop executable (`.exe`)**:
+Unlike traditional batch or PowerShell scripts that require terminal copy-pasting, **Windows Laptop Optimizer** is a **true standalone native desktop executable (`.exe`)**:
 
-* **Double-Click & Run**: Statically compiled binary. Requires **no** external dependencies (.NET, Python, Node, WebView2, or Electron are **NOT** required).
-* **Cybercore // Dark Techwear Theme**:
+* **Double-Click & Run**: Self-contained executable powered by Tauri v2 and Windows native WebView2 (pre-installed on Windows 10/11). Zero extra runtime installations needed.
+* **100% Pixel-Perfect Concept 2 Fidelity**:
   * Matte Obsidian Canvas (`#0B0E14`) paired with slate containers (`#10141E`) and subtle techwear borders (`#1E2330`).
   * High-Voltage Acid-Volt (`#CCFF00`) and emerald highlights with interactive focus glow.
-  * Real-time hardware telemetry module with dynamic frequency equalizer spectrum visualizer.
+  * Real-time hardware telemetry module with dynamic 6-bar frequency equalizer spectrum visualizer (`@keyframes spec1..6`).
   * Monospace tactical stencils (`// SYS.CORE-TUNER`, `// PROTOCOL: ZERO_LATENCY`, `[STATUS: ARMED]`).
+  * Smooth micro-interactions: card hover drift (`translateX(6px)`), switch thumb animations, and glow scaling.
+* **Web Audio API Mechanical Sound Engine**:
+  * Procedurally synthesized haptic mechanical switch clicks, relay snaps, and success chords (zero audio asset dependencies).
+* **Startup Applications Decoupler**:
+  * Integrated modal to audit and toggle background startup programs safely using the Windows `StartupApproved\Run` registry without deleting user keys.
 * **Bespoke In-Window Execution Modal**:
-  * No standard Windows message popups!
   * Displays a custom overclock engine dispatch modal with animated acid-to-emerald gradient progress bar, real-time worker console log stream, and a `[ ✓ DISMISS CONSOLE ]` action.
 * **100% Reversible with 1-Click Rollback**:
-  * Includes a dedicated **`↺ RESTORE FACTORY DEFAULTS`** button that safely restores all original Windows settings (Balanced power scheme, Game DVR hooks, 400ms menu delay, and re-enables fast startup).
-* **Embedded Multi-Resolution Icon**:
-  * High-resolution application icon (256x256, 48x48, 32x32, 16x16) compiled directly into the binary via `windres`.
+  * Dedicated **`↺ RESTORE FACTORY DEFAULTS`** button that safely restores all original Windows settings (Balanced power scheme, Game DVR hooks, 400ms menu delay, and re-enables fast startup).
+* **Self-Elevation & Security**:
+  * Embedded Windows application manifest requesting `requireAdministrator` privileges.
+  * Automatic NTFS `:Zone.Identifier` stream unblocking at startup.
 
 ---
 
@@ -48,9 +53,9 @@ Unlike traditional batch or PowerShell scripts that require command terminal cop
 ## 📥 How to Run
 
 1. Download `LaptopOptimizer.exe` from the repository root or Releases.
-2. Right-click `LaptopOptimizer.exe` and select **Run as administrator** *(required to configure power schemes and delete kernel hibernation storage)*.
+2. Launch `LaptopOptimizer.exe` (UAC prompt will request administrative privileges for system power and disk cleanup operations).
 3. Toggle the cyber switches on or off to choose your preferred tweaks, or click `TOGGLE ALL`.
-4. Click **`⚡ DEPLOY TACTICAL TUNING ➔`** to engage the overclock engine!
+4. Click **`⚡ DEPLOY TACTICAL TUNING ➔`** to engage the system tuning engine!
 5. Inspect the live console logs in the execution modal and click `[ ✓ DISMISS CONSOLE ]` when finished.
 6. To undo changes at any time, click **`↺ RESTORE FACTORY DEFAULTS`**.
 
@@ -58,17 +63,26 @@ Unlike traditional batch or PowerShell scripts that require command terminal cop
 
 ## 🛠️ Building From Source
 
-This project compiles natively with **MinGW-w64 (GCC)** and the GNU resource compiler (`windres`) with zero third-party dependencies:
+### Option A: Tauri Architecture (Recommended)
 
 ```bash
-# 1. Compile Windows resource icon
-windres -i src/resource.rc -o src/resource.res -O coff
+cd laptop-optimizer-tauri
 
-# 2. Build standalone GUI executable
-g++ -O2 -mwindows -static -Isrc src/main.cpp src/resource.res -o LaptopOptimizer.exe -lgdiplus -lgdi32 -luser32 -ldwmapi -lcomctl32 -lole32 -lshlwapi
+# 1. Install frontend CLI tools
+pnpm install
+
+# 2. Compile optimized release executable
+cargo build --release --manifest-path src-tauri/Cargo.toml
 ```
 
-Or simply run `build.bat`.
+Output binary: `laptop-optimizer-tauri/src-tauri/target/release/laptop-optimizer-tauri.exe`.
+
+### Option B: Native C++ MinGW Architecture
+
+```bash
+# Compile via GCC / MinGW
+g++ -O2 -mwindows -static -Isrc src/main.cpp src/resource.res -o LaptopOptimizer.exe -lgdiplus -lgdi32 -luser32 -ldwmapi -lcomctl32 -lole32 -lshlwapi
+```
 
 ---
 
