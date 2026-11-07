@@ -1,24 +1,10 @@
 mod optimizer;
 
-use optimizer::{OptimizerEngine, StartupAppEntry};
-use serde::{Deserialize, Serialize};
-
-#[derive(Serialize, Deserialize)]
-pub struct SystemInfo {
-    cpu: String,
-    cores: String,
-    ram: String,
-    disk: String,
-}
+use optimizer::{HardwareInfo, OptimizerEngine, StartupAppEntry};
 
 #[tauri::command]
-fn get_system_info() -> SystemInfo {
-    SystemInfo {
-        cpu: "INTEL i7-1165G7".into(),
-        cores: "[4C/8T]".into(),
-        ram: "16GB RAM".into(),
-        disk: "NVMe 512GB".into(),
-    }
+fn get_system_info() -> HardwareInfo {
+    OptimizerEngine::get_hardware_info()
 }
 
 #[tauri::command]

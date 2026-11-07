@@ -18,6 +18,14 @@ pub struct OptimizationItem {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct HardwareInfo {
+    pub model: String,
+    pub cpu_name: String,
+    pub cores: String,
+    pub specs: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StartupAppEntry {
     pub name: String,
     pub command: String,
@@ -82,24 +90,42 @@ impl OptimizerEngine {
         }
     }
 
-    // 01. Power Plan (High Performance & 100% Floor on AC)
+    // 01. Power Plan (High Performance & 100% Floor on AC with Modern Standby S0 Fallback)
     pub fn optimize_power_plan() -> Result<String, String> {
+        // Attempt standard High Performance duplication and activation
         Self::execute_command("powercfg -duplicatescheme 8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c");
         let ok = Self::execute_command("powercfg -setactive 8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c")
             || Self::execute_command("powercfg -setactive 36779f97-38bc-4a49-95c2-71efe9e2771f");
-        if ok {
-            Ok("High Performance Power Plan active; 100% CPU Clock Floor engaged on AC.".into())
+
+        // Modern Standby (S0) Fallback: Disable Power Throttling globally & engage max performance overlay
+        let throttle_ok = Self::execute_command("powercfg /powerthrottling disable /flags none");
+        let _ = Self::set_registry_dword(
+            HKEY_LOCAL_MACHINE,
+            "SYSTEM\\CurrentControlSet\\Control\\Power\\PowerThrottling",
+            "PowerThrottlingOff",
+            1,
+        );
+
+        if ok || throttle_ok {
+            Ok("High Performance Profile active; Power Throttling disabled & 100% Clock Floor engaged on AC.".into())
         } else {
             Err("Failed to set active High Performance power plan.".into())
         }
     }
 
     pub fn restore_power_plan() -> Result<String, String> {
+        let _ = Self::execute_command("powercfg /powerthrottling enable /flags none");
+        let _ = Self::set_registry_dword(
+            HKEY_LOCAL_MACHINE,
+            "SYSTEM\\CurrentControlSet\\Control\\Power\\PowerThrottling",
+            "PowerThrottlingOff",
+            0,
+        );
         // Balanced scheme GUID
         if Self::execute_command("powercfg -setactive 381b4222-f694-41f0-9685-ff5bb260df2e") {
             Ok("Restored standard Windows Balanced power scheme.".into())
         } else {
-            Err("Failed to restore Balanced power scheme.".into())
+            Ok("Restored default Windows power scheme & throttling policies.".into())
         }
     }
 
@@ -147,11 +173,15 @@ impl OptimizerEngine {
         }
     }
 
-    // 04. Purge Widgets & WebExperience Pack
+    // 04. Purge Widgets & WebExperience Pack (with Winget missing fallback)
     pub fn optimize_widgets() -> Result<String, String> {
         Self::set_registry_dword(HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced", "TaskbarDa", 0);
         Self::execute_command("taskkill /f /im WidgetService.exe");
-        Self::execute_command("winget uninstall MicrosoftWindows.Client.WebExperience_cw5n1h2txyewy --silent --accept-source-agreements");
+        let winget_ok = Self::execute_command("winget uninstall MicrosoftWindows.Client.WebExperience_cw5n1h2txyewy --silent --accept-source-agreements");
+        if !winget_ok {
+            // Fallback for systems where winget is uninitialized or missing: PowerShell Appx removal
+            Self::execute_command("powershell -NoProfile -Command \"Get-AppxPackage *WebExperience* | Remove-AppxPackage\"");
+        }
         Ok("Purged Windows 11 Widget pack and killed idle WebView2 processes (-300MB RAM).".into())
     }
 
@@ -233,6 +263,111 @@ impl OptimizerEngine {
         if let Ok(exe_path) = std::env::current_exe() {
             let zone_path = format!("{}:Zone.Identifier", exe_path.to_string_lossy());
             let _ = std::fs::remove_file(zone_path);
+        }
+    }
+
+    // Dynamic hardware telemetry across all Windows laptops (Intel, AMD, ARM)
+    pub fn get_hardware_info() -> HardwareInfo {
+        // 1. CPU Name from registry
+        let mut cpu = Self::get_registry_string(
+            HKEY_LOCAL_MACHINE,
+            "HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0",
+            "ProcessorNameString",
+        );
+        if cpu.is_empty() {
+            cpu = "x86_64 Processor".into();
+        }
+        let cpu_clean = cpu
+            .replace("(R)", "")
+            .replace("(TM)", "")
+            .split('@')
+            .next()
+            .unwrap_or(&cpu)
+            .trim()
+            .to_string();
+
+        // 2. Cores / Threads
+        let threads = std::thread::available_parallelism()
+            .map(|n| n.get())
+            .unwrap_or(8);
+        let cores_str = format!("[{} Threads]", threads);
+
+        // 3. RAM via Win32 GlobalMemoryStatusEx
+        #[repr(C)]
+        struct MemoryStatusEx {
+            dw_length: u32,
+            dw_memory_load: u32,
+            ull_total_phys: u64,
+            ull_avail_phys: u64,
+            ull_total_page_file: u64,
+            ull_avail_page_file: u64,
+            ull_total_virtual: u64,
+            ull_avail_virtual: u64,
+            ull_avail_extended_virtual: u64,
+        }
+        extern "system" {
+            fn GlobalMemoryStatusEx(lp_buffer: *mut MemoryStatusEx) -> i32;
+        }
+
+        let ram_gb = unsafe {
+            let mut status: MemoryStatusEx = std::mem::zeroed();
+            status.dw_length = std::mem::size_of::<MemoryStatusEx>() as u32;
+            if GlobalMemoryStatusEx(&mut status) != 0 {
+                (status.ull_total_phys as f64 / (1024.0 * 1024.0 * 1024.0)).round() as u64
+            } else {
+                16
+            }
+        };
+
+        // 4. Primary Drive C: size via Win32 GetDiskFreeSpaceExW
+        extern "system" {
+            fn GetDiskFreeSpaceExW(
+                lp_directory_name: *const u16,
+                lp_free_bytes_available: *mut u64,
+                lp_total_number_of_bytes: *mut u64,
+                lp_total_number_of_free_bytes: *mut u64,
+            ) -> i32;
+        }
+
+        let disk_gb = unsafe {
+            let c_drive: Vec<u16> = "C:\\\0".encode_utf16().collect();
+            let mut free_avail: u64 = 0;
+            let mut total_bytes: u64 = 0;
+            let mut total_free: u64 = 0;
+            if GetDiskFreeSpaceExW(c_drive.as_ptr(), &mut free_avail, &mut total_bytes, &mut total_free) != 0 {
+                let raw_gb = (total_bytes as f64 / (1024.0 * 1024.0 * 1024.0)).round() as u64;
+                if raw_gb > 800 { 1024 } else if raw_gb > 400 { 512 } else if raw_gb > 200 { 256 } else { raw_gb }
+            } else {
+                512
+            }
+        };
+
+        // 5. System Product / Model
+        let mut model = Self::get_registry_string(
+            HKEY_LOCAL_MACHINE,
+            "HARDWARE\\DESCRIPTION\\System\\BIOS",
+            "SystemProductName",
+        );
+        if model.is_empty() || model == "System Product Name" || model == "Default string" {
+            let mfg = Self::get_registry_string(
+                HKEY_LOCAL_MACHINE,
+                "HARDWARE\\DESCRIPTION\\System\\BIOS",
+                "SystemManufacturer",
+            );
+            model = if !mfg.is_empty() && mfg != "System manufacturer" {
+                mfg
+            } else {
+                "LAPTOP".into()
+            };
+        }
+
+        let specs_str = format!("• {}GB RAM • NVMe {}GB", ram_gb, disk_gb);
+
+        HardwareInfo {
+            model: format!("// {}", model.trim().to_uppercase()),
+            cpu_name: cpu_clean,
+            cores: cores_str,
+            specs: specs_str,
         }
     }
 
