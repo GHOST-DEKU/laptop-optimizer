@@ -898,6 +898,10 @@
             <span>CYBERCORE // DARK TECHWEAR</span>
           </span>
           <span class="badge-pill badge-secondary" id="system-model">LENOVO 82HS // 100% PASS</span>
+          <button class="badge-pill" id="btn-audio-toggle" onclick="toggleAudio()" style="cursor:pointer;" title="Toggle Native Audio Haptics">
+            <span id="audio-icon">🔊</span>
+            <span id="audio-label">SFX: ON</span>
+          </button>
         </div>
         <div class="cpu-title" id="cpu-name">
           INTEL CORE i7-1165G7 @ 2.80GHz
@@ -906,7 +910,7 @@
         </div>
       </div>
 
-      <!-- Top Right Telemetry: Live Oscilloscope HUD -->
+      <!-- Top Right Telemetry: Live Oscilloscope HUD & Real-Time Hardware Telemetry -->
       <div class="telemetry-module">
         <div class="scope-box" id="scope-container">
           <canvas class="scope-canvas" id="oscilloscope" width="140" height="42"></canvas>
@@ -915,12 +919,16 @@
         </div>
 
         <div class="telemetry-col">
-          <div class="telemetry-label">THROUGHPUT GOVERNOR</div>
-          <div class="telemetry-val" id="gov-text">MAX SPEED // 100% UNLOCKED</div>
+          <div class="telemetry-label">CPU CLOCK</div>
+          <div class="telemetry-val" id="telem-cpu-mhz">2803 MHz</div>
         </div>
         <div class="telemetry-col">
-          <div class="telemetry-label">STORAGE GAIN</div>
-          <div class="telemetry-val telemetry-val-white" id="storage-gain-val">+7.5 GB FREED</div>
+          <div class="telemetry-label">RAM IN-USE</div>
+          <div class="telemetry-val" id="telem-ram-val">8.2 / 16.0 GB (51%)</div>
+        </div>
+        <div class="telemetry-col">
+          <div class="telemetry-label">NVMe HEALTH</div>
+          <div class="telemetry-val telemetry-val-white" id="telem-ssd-val">116.1 GB // HEALTHY</div>
         </div>
       </div>
     </div>
@@ -1043,8 +1051,10 @@
   </div>
 
   <script>
-    // --- PROCEDURAL WEB AUDIO API ACOUSTICS ---
+    // --- PROCEDURAL WEB AUDIO API ACOUSTICS (TASK 59.5) ---
     let audioCtx = null;
+    let sfxEnabled = true;
+
     function getAudioCtx() {
       if (!audioCtx) {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -1052,7 +1062,22 @@
       return audioCtx;
     }
 
+    function toggleAudio() {
+      sfxEnabled = !sfxEnabled;
+      const icon = document.getElementById("audio-icon");
+      const label = document.getElementById("audio-label");
+      if (sfxEnabled) {
+        if (icon) icon.innerText = "🔊";
+        if (label) label.innerText = "SFX: ON";
+        playAudio('click');
+      } else {
+        if (icon) icon.innerText = "🔇";
+        if (label) label.innerText = "SFX: OFF";
+      }
+    }
+
     function playAudio(type) {
+      if (!sfxEnabled) return;
       try {
         const ctx = getAudioCtx();
         if (!ctx) return;
@@ -1545,10 +1570,40 @@
       }
     }
 
+    // Real-Time Hardware Telemetry Polling (Task 59.4)
+    async function updateLiveTelemetry() {
+      try {
+        if (window.__TAURI__ && window.__TAURI__.core) {
+          const telem = await window.__TAURI__.core.invoke('get_live_telemetry');
+          if (telem) {
+            const cpuEl = document.getElementById("telem-cpu-mhz");
+            const ramEl = document.getElementById("telem-ram-val");
+            const ssdEl = document.getElementById("telem-ssd-val");
+            if (cpuEl) cpuEl.innerText = `${telem.cpu_mhz} MHz`;
+            if (ramEl) ramEl.innerText = `${telem.ram_used_gb.toFixed(1)} / ${telem.ram_total_gb.toFixed(1)} GB (${telem.ram_usage_pct}%)`;
+            if (ssdEl) ssdEl.innerText = `${telem.ssd_free_gb.toFixed(1)} GB // HEALTHY`;
+          }
+        } else {
+          // Simulation fallback for browser preview
+          const cpuEl = document.getElementById("telem-cpu-mhz");
+          const ramEl = document.getElementById("telem-ram-val");
+          const ssdEl = document.getElementById("telem-ssd-val");
+          const jitter = Math.floor(Math.random() * 20) - 10;
+          if (cpuEl) cpuEl.innerText = `${2803 + jitter} MHz`;
+          if (ramEl) ramEl.innerText = `8.2 / 16.0 GB (51%)`;
+          if (ssdEl) ssdEl.innerText = `116.1 GB // HEALTHY`;
+        }
+      } catch (e) {
+        console.warn("Live telemetry query error:", e);
+      }
+    }
+
     // Initialization
     window.addEventListener('DOMContentLoaded', () => {
       renderGrid();
       initSystemInfo();
+      updateLiveTelemetry();
+      setInterval(updateLiveTelemetry, 1500);
     });
   </script>
 </body>

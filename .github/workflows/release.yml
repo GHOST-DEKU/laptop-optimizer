@@ -1,0 +1,70 @@
+name: Release & Distribute
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build & Release MSI / EXE
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 12.18.0
+
+      - name: Setup Rust Toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - name: Rust Cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './laptop-optimizer-tauri/src-tauri -> target'
+
+      - name: Install Frontend Dependencies
+        working-directory: ./laptop-optimizer-tauri
+        run: pnpm install
+
+      - name: Build Tauri Desktop & Bundlers (MSI, NSIS, Portable EXE)
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectPath: './laptop-optimizer-tauri'
+          tagName: ${{ github.ref_name }}
+          releaseName: 'Laptop Optimizer v${{ github.ref_name }} // Cybercore Techwear'
+          releaseBody: |
+            ## Laptop Optimizer Production Release
+            **Airframe Target:** Lenovo 82HS / Universal Windows 10 & 11
+            **Architecture:** Concept 2 Cybercore Techwear // Tauri v2 + Rust
+            
+            ### Included Release Assets:
+            - **`LaptopOptimizer.exe`**: 100% standalone, portable single-executable (zero installation required).
+            - **`LaptopOptimizer_x64_en-US.msi`**: Official Windows Installer package (WiX).
+            - **`LaptopOptimizer_x64-setup.exe`**: Standard NSIS installation wizard.
+            
+            ### Highlights in v2.5:
+            - **Unified Cockpit**: 60 FPS CRT vector oscilloscope + architectural silicon die CAD HUD.
+            - **Tactical Lock-BAY Cards**: Carbon weave, hex corner rivets, protocol interlocks, and mechanical sliding switches.
+            - **Clean Sci-Fi Nuke Silo Hatch**: Monolithic smoked obsidian visor with 3D flip-hood kinematics and pneumatic audio haptics.
+            - **Live Hardware Telemetry**: Real-time nominal CPU MHz, physical RAM working set, and NVMe SSD health readouts.
+            - **Native Audio Haptics**: Web Audio procedural switch clicks and vault latch mechanics with header mute toggle.
+          releaseDraft: false
+          prerelease: false

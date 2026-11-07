@@ -1,10 +1,15 @@
 mod optimizer;
 
-use optimizer::{HardwareInfo, OptimizerEngine, StartupAppEntry};
+use optimizer::{HardwareInfo, LiveTelemetry, OptimizerEngine, StartupAppEntry};
 
 #[tauri::command]
 fn get_system_info() -> HardwareInfo {
     OptimizerEngine::get_hardware_info()
+}
+
+#[tauri::command]
+fn get_live_telemetry() -> LiveTelemetry {
+    OptimizerEngine::get_live_telemetry()
 }
 
 #[tauri::command]
@@ -73,6 +78,7 @@ pub fn run() {
         .plugin(tauri_plugin_log::Builder::default().build())
         .invoke_handler(tauri::generate_handler![
             get_system_info,
+            get_live_telemetry,
             apply_tweak,
             restore_tweak,
             restore_all,
