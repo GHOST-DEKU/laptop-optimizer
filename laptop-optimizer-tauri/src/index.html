@@ -332,9 +332,9 @@
       border: 1px solid #232c40;
       border-radius: 6px;
       padding: 14px 18px;
-      min-height: 84px;
+      min-height: 120px;
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       justify-content: space-between;
       cursor: pointer;
       position: relative;
@@ -366,7 +366,7 @@
 
     .tweak-left {
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       gap: 12px;
       flex: 1;
     }
@@ -444,6 +444,55 @@
       font-size: 11px;
       color: #9ca3af;
       line-height: 1.4;
+    }
+
+    .tweak-sys-path {
+      font-size: 8.5px;
+      font-weight: 700;
+      color: #6b7280;
+      font-family: var(--font-mono);
+      letter-spacing: 0.3px;
+      margin-bottom: 2px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .tweak-sys-path::before {
+      content: "⬦";
+      color: #4a5568;
+      font-size: 7px;
+    }
+
+    .tweak-gain-row {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      margin-top: 3px;
+    }
+    .tweak-gain-bar {
+      display: inline-flex;
+      gap: 1px;
+    }
+    .tweak-gain-bar span {
+      display: inline-block;
+      width: 5px;
+      height: 6px;
+      background: var(--acid-volt);
+      opacity: 0.85;
+    }
+    .tweak-gain-text {
+      font-size: 9px;
+      font-weight: 900;
+      color: var(--acid-volt);
+      font-family: var(--font-mono);
+      letter-spacing: 0.3px;
+    }
+    .tweak-card:not(.card-active) .tweak-gain-bar span {
+      background: #6b7280;
+      opacity: 0.5;
+    }
+    .tweak-card:not(.card-active) .tweak-gain-text {
+      color: #6b7280;
     }
 
     .hazard-lock-badge {
@@ -1006,16 +1055,12 @@
         </div>
 
         <div class="telemetry-col">
-          <div class="telemetry-label">CPU CLOCK</div>
-          <div class="telemetry-val" id="telem-cpu-mhz">2803 MHz</div>
+          <div class="telemetry-label">THROUGHPUT GOVERNOR</div>
+          <div class="telemetry-val" id="gov-text">MAX SPEED // 100% UNLOCKED</div>
         </div>
         <div class="telemetry-col">
-          <div class="telemetry-label">RAM IN-USE</div>
-          <div class="telemetry-val" id="telem-ram-val">8.2 / 16.0 GB (51%)</div>
-        </div>
-        <div class="telemetry-col">
-          <div class="telemetry-label">NVMe HEALTH</div>
-          <div class="telemetry-val telemetry-val-white" id="telem-ssd-val">116.1 GB // HEALTHY</div>
+          <div class="telemetry-label">STORAGE GAIN</div>
+          <div class="telemetry-val" id="telem-storage-gain">+7.5 GB FREED</div>
         </div>
       </div>
     </div>
@@ -1239,66 +1284,82 @@
     // --- 8 TACTICAL OPTIMIZATION PROTOCOLS ---
     const tweaks = [
       { 
-        id: 1, 
-        title: "CPU Clock Floor (AC)", 
-        tag: "0ms LATENCY", 
-        desc: "Pins minimum processor state to 100% on AC power; eliminates frequency ramp-up stutters.", 
-        lockProtocol: "POWER_AC_FLOOR",
+        id: 1,
+        sys: "SYS: CPU_GOVERNOR [INTEL_SPEEDSTEP]",
+        title: "Zero-Ramp CPU Frequency Floor on AC", 
+        tag: "100% FLOOR", 
+        desc: "Locks minimum processor floor to 100% on AC to bypass frequency ramp-up latency.", 
+        gain: "GAIN: \u2212380ms DPC LATENCY",
+        lockProtocol: "GOV_LOCK_AC",
         on: true 
       },
       { 
-        id: 2, 
-        title: "Xbox Game DVR Capture", 
-        tag: "NO HOOKS", 
-        desc: "Decouples continuous background video capture and Direct3D screen recording hooks.", 
-        lockProtocol: "D3D_HOOK_HALT",
+        id: 2,
+        sys: "SYS: DIRECTX_DWM [FRAME_LATENCY]",
+        title: "Bypass Game DVR Background Video Buf...", 
+        tag: "ZERO VRAM DRAIN", 
+        desc: "Disables continuous DirectX background video recording and capture hooks.", 
+        gain: "GAIN: ZERO VRAM OVERHEAD",
+        lockProtocol: "DWM_HOOK_KILL",
         on: true 
       },
       { 
-        id: 3, 
-        title: "Windows Shell Menu Delay", 
-        tag: "20ms RESPONSE", 
-        desc: "Reduces MenuShowDelay registry latency from 400ms to 20ms for instant desktop response.", 
-        lockProtocol: "DWM_SHELL_20MS",
+        id: 3,
+        sys: "SYS: USER32_SHELL [MENU_SPEED]",
+        title: "Instant Desktop Context Menus", 
+        tag: "20ms DELAY", 
+        desc: "Reduces MenuShowDelay from 400ms to 20ms for instant desktop responsiveness.", 
+        gain: "GAIN: \u2212380ms DELAY CUT",
+        lockProtocol: "WIN32_DISPATCH",
         on: true 
       },
       { 
-        id: 4, 
-        title: "Web Experience Widgets", 
-        tag: "-300MB RAM", 
-        desc: "Disables background news, weather, and WebExperience WebView2 background processes.", 
-        lockProtocol: "WIN11_WIDGET_PURGE",
+        id: 4,
+        sys: "SYS: WEBVIEW2_DAEMON [RAM_PURGE]",
+        title: "Purge Windows 11 Widget Daemon Pack", 
+        tag: "\u2212300MB RAM", 
+        desc: "Uninstalls WebExperience package to permanently kill 20+ idle child processes.", 
+        gain: "GAIN: \u2212300MB LEAK RECLAIMED",
+        lockProtocol: "VFS_ISOLATION",
         on: true 
       },
       { 
-        id: 5, 
-        title: "Windows Search Indexing", 
-        tag: "-15% DISK I/O", 
-        desc: "Throttles background indexing daemons on battery and caps aggressive CPU usage.", 
-        lockProtocol: "INDEXER_THROTTLE",
+        id: 5,
+        sys: "SYS: NT_KERNEL [HIBERNATE_DEL]",
+        title: "Clean Kernel Boots & Delete hiberfil.s...", 
+        tag: "+6.22GB DISK", 
+        desc: "Disables hybrid hibernation; deletes hiberfil.sys for 100% fresh kernel state.", 
+        gain: "GAIN: +6.22GB NVMe FREED",
+        lockProtocol: "KERNEL_FASTBOOT",
         on: true 
       },
       { 
-        id: 6, 
-        title: "Delivery Optimization P2P", 
-        tag: "NO P2P LEAKS", 
-        desc: "Halts Windows Update peer-to-peer telemetry uploads from consuming network bandwidth.", 
+        id: 6,
+        sys: "SYS: SEARCH_HOST [CLOUD_DECOUPLE]",
+        title: "Decouple Bing Cloud Integration from Sta...", 
+        tag: "LOCAL ONLY", 
+        desc: "Eliminates remote cloud latency on Start search; makes app launch search instant.", 
+        gain: "GAIN: 0ms CLOUD ROUNDTRIP",
+        lockProtocol: "OFFLINE_SEARCH",
+        on: true 
+      },
+      { 
+        id: 7,
+        sys: "SYS: BITS_P2P [NETWORK_ISOLATE]",
+        title: "Halt Delivery Optimization P2P Seeding", 
+        tag: "HTTP ONLY", 
+        desc: "Blocks Windows Update peer-to-peer telemetry and upload bandwidth consumption.", 
+        gain: "GAIN: 0ms P2P OVERHEAD",
         lockProtocol: "NET_P2P_DECOUPLE",
         on: true 
       },
       { 
-        id: 7, 
-        title: "System Hibernation File", 
-        tag: "+6.2GB NVMe", 
-        desc: "Purges obsolete hiberfil.sys to reclaim NVMe storage and eliminate Fast Startup RAM corruption.", 
-        lockProtocol: "HIBERFIL_PURGE",
-        on: true 
-      },
-      { 
-        id: 8, 
-        title: "Temp Storage & Disk Cache", 
-        tag: "+1.4GB CLEANED", 
-        desc: "Cleans accumulated cache junk from %TEMP% to free NVMe storage and reduce indexing overhead.", 
+        id: 8,
+        sys: "SYS: NVME_VFS [TEMP_PURGE]",
+        title: "Purge Stale Temporary Files (>24h)", 
+        tag: "CLEAR TEMP", 
+        desc: "Wipes stale %TEMP% artifacts older than 24h; reclaims NVMe write headroom.", 
+        gain: "GAIN: +1.4GB CLEARED",
         lockProtocol: "IO_TRIM_CACHE",
         on: true 
       }
@@ -1320,11 +1381,16 @@
               <span class="channel-num">${item.id < 10 ? '0' + item.id : item.id}</span>
             </div>
             <div class="tweak-content-col">
+              <div class="tweak-sys-path">${item.sys}</div>
               <div class="tweak-title-row">
                 <span class="tweak-title">${item.title}</span>
                 <span class="tag-benefit ${item.on ? 'tag-on' : 'tag-off'}">${item.tag}</span>
               </div>
               <div class="tweak-desc">${item.desc}</div>
+              <div class="tweak-gain-row">
+                <div class="tweak-gain-bar"><span></span><span></span><span></span><span></span></div>
+                <span class="tweak-gain-text">${item.gain}</span>
+              </div>
               <div class="hazard-lock-badge ${item.on ? 'lock-armed' : 'lock-standby'}">
                 <span>${item.on ? '⬡ ARMED // PROTOCOL_LOCK' : 'STANDBY // UNLATCHED'}</span>
                 <span style="opacity: 0.6; font-size: 7px;">[${item.lockProtocol}]</span>
