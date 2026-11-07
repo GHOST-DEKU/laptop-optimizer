@@ -370,7 +370,7 @@
     /* 3. 1:1 AUTHENTIC INTERACTIVE WORKSTATION MIRROR (LaptopOptimizer.exe)     */
     /* ========================================================================= */
     .app-mirror-stage {
-      max-width: 880px;
+      max-width: 1040px;
       margin: 0 auto 70px;
       position: relative;
     }
@@ -570,15 +570,18 @@
       50% { opacity: 0.35; transform: scale(0.8); box-shadow: 0 0 2px var(--acid-volt); }
     }
 
-    /* The 8 Vertical Optimization Cards (Height: 56px each, Gap: 6px) */
+    /* The 8 Tactical Optimization Cards (Adaptive 2-Column Responsive Grid) */
     .app-cards-viewport {
-      padding: 12px 40px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
+      padding: 16px 24px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+      gap: 10px;
     }
-    @media (max-width: 768px) {
-      .app-cards-viewport { padding: 12px 16px; }
+    @media (max-width: 820px) {
+      .app-cards-viewport {
+        grid-template-columns: 1fr;
+        padding: 12px 16px;
+      }
     }
 
     .app-opt-card {
