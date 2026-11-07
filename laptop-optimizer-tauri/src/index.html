@@ -15,6 +15,7 @@
       --border-focus: #263045;
       --acid-volt: #ccff00;
       --acid-glow: rgba(204, 255, 0, 0.45);
+      --warning-amber: #ff9900;
       --text-white: #f3f4f6;
       --text-muted: #9ca3af;
       --text-dim: #6b7280;
@@ -43,7 +44,7 @@
       -webkit-user-select: none;
     }
 
-    /* Sleek Cybercore Scrollbar for Compact Displays */
+    /* Cybercore Scrollbar */
     ::-webkit-scrollbar {
       width: 6px;
     }
@@ -82,7 +83,7 @@
       flex-wrap: wrap;
       justify-content: space-between;
       align-items: center;
-      padding: 16px 24px;
+      padding: 12px 24px;
       border-bottom: 1px solid var(--border-item);
       background: rgba(11, 14, 20, 0.96);
       backdrop-filter: blur(12px);
@@ -139,17 +140,12 @@
       color: #6b7280;
       border-color: transparent;
     }
-    .badge-secondary:hover {
-      color: #9ca3af;
-      border-color: #374151;
-      box-shadow: none;
-    }
 
     .cpu-title {
-      font-size: 17px;
+      font-size: 16px;
       font-weight: 900;
       color: #ffffff;
-      margin-top: 5px;
+      margin-top: 4px;
       letter-spacing: -0.5px;
       display: flex;
       align-items: center;
@@ -164,64 +160,65 @@
     .cpu-cores {
       color: var(--acid-volt);
       font-weight: 700;
-      transition: color 0.2s;
     }
-    .cpu-title:hover .cpu-cores {
-      text-shadow: 0 0 10px rgba(204, 255, 0, 0.6);
-    }
-
     .cpu-sub {
-      font-size: 12px;
+      font-size: 11.5px;
       color: #9ca3af;
       font-weight: 400;
     }
 
-    /* Equalizer and Telemetry HUD with dynamic hover bloom */
+    /* Telemetry HUD & CRT Oscilloscope */
     .telemetry-module {
       display: flex;
       align-items: center;
       gap: 16px;
       background: #111622;
       border: 1px solid #20293c;
-      padding: 10px 16px;
-      border-radius: 12px;
+      padding: 8px 16px;
+      border-radius: 10px;
       transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-      cursor: pointer;
     }
     .telemetry-module:hover {
       border-color: rgba(204, 255, 0, 0.8);
-      box-shadow: 0 0 28px rgba(204, 255, 0, 0.25), inset 0 0 10px rgba(204, 255, 0, 0.05);
-      transform: translateY(-3px) scale(1.02);
-    }
-    .telemetry-module:hover .eq-bar {
-      filter: drop-shadow(0 0 6px #ccff00);
-      animation-duration: 0.38s !important;
+      box-shadow: 0 0 24px rgba(204, 255, 0, 0.2), inset 0 0 10px rgba(204, 255, 0, 0.05);
     }
 
-    .equalizer-bars {
+    /* 60 FPS CRT Vector Oscilloscope Canvas */
+    .scope-box {
+      width: 140px;
+      height: 42px;
+      background: #04060a;
+      border: 1px solid #1a2232;
+      border-radius: 6px;
+      position: relative;
+      overflow: hidden;
       display: flex;
-      align-items: flex-end;
-      gap: 4px;
-      height: 28px;
+      align-items: center;
+      justify-content: center;
     }
-    .eq-bar {
-      width: 4px;
-      background-color: var(--acid-volt);
-      border-radius: 2px 2px 0 0;
-      transition: filter 0.2s ease;
+    .scope-canvas {
+      width: 140px;
+      height: 42px;
+      display: block;
     }
-    @keyframes spec1 { 0%, 100% { height: 12px; } 50% { height: 26px; } }
-    @keyframes spec2 { 0%, 100% { height: 24px; } 50% { height: 8px; } }
-    @keyframes spec3 { 0%, 100% { height: 8px; } 50% { height: 22px; } }
-    @keyframes spec4 { 0%, 100% { height: 26px; } 50% { height: 14px; } }
-    @keyframes spec5 { 0%, 100% { height: 18px; } 50% { height: 6px; } }
-    @keyframes spec6 { 0%, 100% { height: 10px; } 50% { height: 20px; } }
-    .b1 { animation: spec1 0.70s infinite ease-in-out; }
-    .b2 { animation: spec2 0.50s infinite ease-in-out; }
-    .b3 { animation: spec3 0.65s infinite ease-in-out; }
-    .b4 { animation: spec4 0.80s infinite ease-in-out; }
-    .b5 { animation: spec5 0.55s infinite ease-in-out; }
-    .b6 { animation: spec6 0.75s infinite ease-in-out; }
+    .scope-reticle {
+      position: absolute;
+      inset: 0;
+      background-image: linear-gradient(rgba(204, 255, 0, 0.08) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(204, 255, 0, 0.08) 1px, transparent 1px);
+      background-size: 14px 10px;
+      pointer-events: none;
+    }
+    .scope-tag {
+      position: absolute;
+      bottom: 2px;
+      right: 4px;
+      font-size: 8px;
+      color: var(--acid-volt);
+      font-weight: 900;
+      opacity: 0.75;
+      font-family: var(--font-mono);
+    }
 
     .telemetry-col {
       border-left: 1px solid #20293c;
@@ -235,26 +232,71 @@
       letter-spacing: 0.5px;
     }
     .telemetry-val {
-      font-size: 12px;
+      font-size: 11.5px;
       font-weight: 900;
       color: var(--acid-volt);
       letter-spacing: 0.5px;
-      display: inline-block;
-      transition: transform 0.2s ease;
-    }
-    .telemetry-val:hover {
-      transform: scale(1.05);
     }
     .telemetry-val-white {
       color: #ffffff;
     }
 
-    /* Main Content Stage: Scrollable Viewport */
+    /* Silicon Die Schematic CAD HUD Banner */
+    .silicon-die-hud {
+      margin-bottom: 12px;
+      background: #080b11;
+      border: 1px solid #1e2638;
+      border-radius: 8px;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-shrink: 0;
+    }
+    .die-visual {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .die-core-box {
+      width: 48px;
+      height: 34px;
+      background: #101522;
+      border: 1px solid #253147;
+      border-radius: 4px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 8px;
+      font-weight: 900;
+      color: #6b7280;
+      transition: all 0.25s ease;
+    }
+    .die-core-box.active {
+      background: #182314;
+      border-color: var(--acid-volt);
+      color: var(--acid-volt);
+      box-shadow: 0 0 10px rgba(204, 255, 0, 0.3);
+    }
+    .die-bus-line {
+      width: 20px;
+      height: 2px;
+      background: #253147;
+      transition: background 0.25s ease;
+    }
+    .die-bus-line.active {
+      background: var(--acid-volt);
+      box-shadow: 0 0 6px var(--acid-volt);
+    }
+
+    /* Main Content Stage */
     .tweak-viewport {
       flex: 1 1 auto;
       overflow-y: auto;
       overflow-x: hidden;
-      padding: 16px 24px;
+      padding: 14px 24px;
       display: flex;
       flex-direction: column;
     }
@@ -272,233 +314,289 @@
       }
     }
 
+    /* ========================================================
+       STYLE 4: TACTICAL AVIONICS LOCK-BAY CARDS
+       ======================================================== */
     .tweak-card {
-      background-color: var(--bg-item);
-      border: 1px solid var(--border-item);
-      border-radius: 12px;
-      padding: 13px 16px;
+      background: repeating-linear-gradient(
+        45deg,
+        #0a0d14,
+        #0a0d14 3px,
+        #0e121c 3px,
+        #0e121c 8px
+      );
+      border: 1px solid #232c40;
+      border-radius: 6px;
+      padding: 12px 14px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       cursor: pointer;
+      position: relative;
       transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    .tweak-card:hover {
-      transform: translateX(6px);
-      border-color: rgba(204, 255, 0, 0.8);
-      box-shadow: 0 0 25px rgba(204, 255, 0, 0.18);
-      background-color: #121724;
+    .tweak-card::before {
+      content: "⬡";
+      position: absolute;
+      top: 4px;
+      left: 5px;
+      font-size: 8px;
+      color: #3f4e6b;
+      font-weight: 900;
     }
-    .tweak-card:active {
-      transform: translateX(3px) scale(0.995);
+    .tweak-card:hover {
+      transform: translateX(4px);
+      border-color: rgba(204, 255, 0, 0.7);
+      box-shadow: 0 0 20px rgba(204, 255, 0, 0.16);
+    }
+    .tweak-card.card-active {
+      border-color: rgba(204, 255, 0, 0.5);
+      border-left: 4px solid var(--acid-volt);
+      box-shadow: 0 0 20px rgba(204, 255, 0, 0.18), inset 0 0 14px rgba(204, 255, 0, 0.04);
+    }
+    .tweak-card.card-active::before {
+      color: var(--acid-volt);
+      text-shadow: 0 0 6px var(--acid-volt);
     }
 
     .tweak-left {
       display: flex;
       align-items: center;
-      gap: 14px;
+      gap: 12px;
+      flex: 1;
     }
 
-    .tweak-num {
-      width: 30px;
-      height: 30px;
-      border-radius: 8px;
-      background: #182030;
-      border: 1px solid #263249;
+    .tweak-channel-badge {
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
-      color: var(--acid-volt);
-      font-weight: 900;
-      font-size: 12px;
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      width: 32px;
+      height: 38px;
+      background: #090c12;
+      border: 1px solid #2c3850;
+      border-radius: 4px;
+      flex-shrink: 0;
+      transition: all 0.2s ease;
     }
-    .tweak-card:hover .tweak-num {
-      background: var(--acid-volt);
-      color: #000000;
-      box-shadow: 0 0 14px rgba(204, 255, 0, 0.85);
-      transform: scale(1.06);
+    .tweak-card.card-active .tweak-channel-badge {
+      border-color: var(--acid-volt);
+      box-shadow: 0 0 8px rgba(204, 255, 0, 0.25);
+    }
+    .channel-prefix {
+      font-size: 7.5px;
+      font-weight: 900;
+      color: #6b7280;
+    }
+    .channel-num {
+      font-size: 13px;
+      font-weight: 900;
+      color: #ffffff;
+      line-height: 1;
+    }
+    .tweak-card.card-active .channel-num {
+      color: var(--acid-volt);
+    }
+
+    .tweak-content-col {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      flex: 1;
     }
 
     .tweak-title-row {
       display: flex;
       align-items: center;
       gap: 8px;
-      margin-bottom: 2px;
+      flex-wrap: wrap;
     }
     .tweak-title {
       font-size: 13px;
-      font-weight: 800;
+      font-weight: 900;
       color: #ffffff;
-      transition: color 0.2s ease, text-shadow 0.2s ease;
+      letter-spacing: -0.2px;
     }
-    .tweak-card:hover .tweak-title {
+    .tag-benefit {
+      font-size: 9px;
+      font-weight: 900;
+      padding: 1px 7px;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+    }
+    .tag-on {
+      background: rgba(204, 255, 0, 0.12);
       color: var(--acid-volt);
-      text-shadow: 0 0 12px rgba(204, 255, 0, 0.4);
+      border: 1px solid rgba(204, 255, 0, 0.35);
     }
+    .tag-off {
+      background: rgba(107, 114, 128, 0.12);
+      color: #9ca3af;
+      border: 1px solid rgba(107, 114, 128, 0.25);
+    }
+
     .tweak-desc {
       font-size: 11px;
       color: #9ca3af;
-      font-family: var(--font-sans);
+      line-height: 1.4;
     }
 
-    .tag-benefit {
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-size: 9px;
-      font-weight: 800;
-      letter-spacing: 0.5px;
-      transition: all 0.2s ease;
-    }
-    .tag-on {
-      background: #162016;
-      color: var(--acid-volt);
-      border: 1px solid rgba(204, 255, 0, 0.3);
-    }
-    .tag-off {
-      background: #11141c;
-      color: #6b7280;
-      border: 1px solid #263045;
-    }
-    .tweak-card:hover .tag-on {
-      border-color: rgba(204, 255, 0, 0.7);
-      box-shadow: 0 0 10px rgba(204, 255, 0, 0.3);
-    }
-
-    /* Cyber Switches with authentic mechanical spring glide */
-    .switch-track {
-      position: relative;
-      width: 48px;
-      height: 24px;
-      border-radius: 6px;
-      padding: 2px;
-      display: flex;
+    .hazard-lock-badge {
+      display: inline-flex;
       align-items: center;
-      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6);
+      gap: 4px;
+      font-size: 8px;
+      font-weight: 900;
+      padding: 2px 6px;
+      border-radius: 3px;
+      letter-spacing: 0.5px;
+      font-family: var(--font-mono);
+      margin-top: 3px;
+      width: fit-content;
+    }
+    .lock-armed {
+      background: #182218;
+      border: 1px solid var(--acid-volt);
+      color: var(--acid-volt);
+    }
+    .lock-standby {
+      background: #11141c;
+      border: 1px solid #263045;
+      color: #6b7280;
+    }
+
+    /* Mechanical Switch Bay */
+    .switch-bay {
+      margin-left: 12px;
+      flex-shrink: 0;
+    }
+    .switch-track {
+      width: 58px;
+      height: 28px;
+      border-radius: 14px;
+      padding: 3px;
+      position: relative;
       cursor: pointer;
+      border: 1px solid #263045;
+      transition: all 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
     .sw-track-on {
-      background: #161c28;
-      border: 1px solid #2c3850;
+      background: #182214;
+      border-color: var(--acid-volt);
+      box-shadow: 0 0 12px rgba(204, 255, 0, 0.3);
     }
     .sw-track-off {
-      background: #0e1118;
-      border: 1px solid #1b2230;
-    }
-    .tweak-card:hover .sw-track-on {
-      border-color: rgba(204, 255, 0, 0.8);
-      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6), 0 0 12px rgba(204, 255, 0, 0.3);
-    }
-    .tweak-card:hover .sw-track-off {
-      border-color: #3b475f;
+      background: #0f131a;
+      border-color: #263045;
     }
 
     .switch-thumb {
-      position: absolute;
-      top: 2px;
-      bottom: 2px;
-      left: 2px;
-      width: 20px;
-      font-size: 8px;
-      font-weight: 900;
-      border-radius: 4px;
+      width: 22px;
+      height: 22px;
+      border-radius: 11px;
       display: flex;
       align-items: center;
       justify-content: center;
-      letter-spacing: 0.5px;
-      transition: transform 0.24s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
+      font-size: 8px;
+      font-weight: 900;
+      transition: all 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
     .sw-thumb-on {
-      transform: translateX(22px);
       background: var(--acid-volt);
       color: #000000;
-      box-shadow: 0 0 10px rgba(204, 255, 0, 0.7);
+      transform: translateX(28px);
+      box-shadow: 0 0 10px var(--acid-volt);
     }
     .sw-thumb-off {
-      transform: translateX(0px);
-      background: #374151;
+      background: #2b3548;
       color: #9ca3af;
-      box-shadow: none;
-    }
-    .tweak-card:hover .sw-thumb-on {
-      box-shadow: 0 0 16px rgba(204, 255, 0, 0.95);
-      background: #d8ff26;
+      transform: translateX(0);
     }
 
-    /* Bottom Action Dock: Permanently Pinned */
+    /* ========================================================
+       OPTION 5: DOCKED REAL-TIME KERNEL DISPATCH DRAWER
+       ======================================================== */
+    .docked-console-drawer {
+      flex-shrink: 0;
+      background: #07090e;
+      border-top: 1px solid #1f2636;
+      transition: height 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      height: 36px;
+    }
+    .docked-console-drawer.expanded {
+      height: 170px;
+    }
+    .drawer-header {
+      height: 36px;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      background: #0b0e14;
+      border-bottom: 1px solid #1a2232;
+    }
+    .drawer-header:hover {
+      background: #0f131b;
+    }
+    .drawer-title {
+      font-size: 11px;
+      font-weight: 900;
+      color: var(--acid-volt);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      letter-spacing: 0.5px;
+    }
+    .drawer-content {
+      flex: 1;
+      padding: 10px 24px;
+      font-size: 11px;
+      line-height: 1.6;
+      color: #9ca3af;
+      overflow-y: auto;
+      background: #05070a;
+      font-family: var(--font-mono);
+    }
+    .log-line {
+      margin-bottom: 3px;
+    }
+    .log-success {
+      color: var(--acid-volt);
+    }
+    .log-info {
+      color: #00f0ff;
+    }
+    .log-err {
+      color: #f87171;
+    }
+
+    /* ========================================================
+       BOTTOM ACTION DOCK
+       ======================================================== */
     .app-footer {
       flex-shrink: 0;
       display: flex;
       flex-wrap: wrap;
       justify-content: space-between;
       align-items: center;
-      padding: 14px 24px;
+      padding: 12px 24px;
       border-top: 1px solid var(--border-item);
       background: rgba(11, 14, 20, 0.98);
-      backdrop-filter: blur(12px);
       gap: 12px;
       z-index: 10;
     }
 
     .btn-secondary {
-      background: #141824;
-      border: 1px solid #242e42;
+      background: #111622;
+      border: 1px solid #20293c;
       color: #9ca3af;
-      padding: 9px 15px;
-      border-radius: 8px;
-      font-size: 11px;
-      font-weight: 800;
-      font-family: var(--font-mono);
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-    }
-    .btn-secondary:hover {
-      background: #1c2234;
-      color: #ffffff;
-      border-color: #4b5563;
-      transform: translateY(-2px) scale(1.03);
-      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
-    }
-    .btn-secondary:active {
-      transform: scale(0.97);
-    }
-
-    .btn-startup {
-      background: #141824;
-      border: 1px solid #242e42;
-      color: #ffffff;
       padding: 9px 16px;
       border-radius: 8px;
       font-size: 11px;
-      font-weight: 800;
-      font-family: var(--font-mono);
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-    }
-    .btn-startup:hover {
-      border-color: var(--acid-volt);
-      background: #1c2234;
-      transform: translateY(-2px) scale(1.03);
-      box-shadow: 0 4px 14px rgba(204, 255, 0, 0.25);
-    }
-    .btn-startup:active {
-      transform: scale(0.97);
-    }
-
-    .btn-deploy {
-      background: var(--acid-volt);
-      border: none;
-      color: #000000;
-      padding: 10px 22px;
-      border-radius: 8px;
-      font-size: 12px;
       font-weight: 900;
       letter-spacing: 0.5px;
       font-family: var(--font-mono);
@@ -506,413 +604,376 @@
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      box-shadow: 0 0 20px rgba(204, 255, 0, 0.4);
-      transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+      transition: all 0.2s ease;
     }
-    .btn-deploy:hover {
-      background: #b8e600;
-      box-shadow: 0 0 38px rgba(204, 255, 0, 0.85);
-      transform: translateY(-2px) scale(1.04);
-    }
-    .btn-deploy:active {
-      transform: scale(0.96);
+    .btn-secondary:hover {
+      border-color: #3b4b6b;
+      color: #ffffff;
+      background: #171e2e;
+      transform: translateY(-1px);
     }
 
-    /* In-App Modals with smooth entrance animations */
-    .modal-backdrop {
+    /* ========================================================
+       CLEAN SCI-FI NUKE LAUNCHER SAFETY ASSEMBLY (OPTION 2)
+       ======================================================== */
+    .safety-deploy-assembly {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 240px;
+      min-width: 240px;
+      max-width: 240px;
+      box-sizing: border-box;
+      perspective: 900px;
+      perspective-origin: 50% 0%;
+    }
+
+    /* Flush Titanium Hinge Bracket */
+    .safety-hinge-bracket {
+      position: absolute;
+      top: -7px;
+      left: 12px;
+      right: 12px;
+      height: 6px;
+      background: #080c14;
+      border: 1px solid #232c40;
+      border-bottom: none;
+      border-radius: 4px 4px 0 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 8px;
+      z-index: 26;
+      box-shadow: 0 -1px 4px rgba(0, 0, 0, 0.6);
+      pointer-events: none;
+    }
+    .hinge-rivet {
+      color: #ff9900;
+      font-size: 7px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      font-family: var(--font-mono);
+    }
+    .hinge-pin {
+      background: #ff9900;
+      box-shadow: 0 0 5px rgba(255, 153, 0, 0.4);
+      width: 22px;
+      height: 1.5px;
+      border-radius: 1px;
+    }
+
+    /* Clean Smoked Obsidian Silo Visor */
+    .safety-cover {
+      position: absolute;
+      inset: 0;
+      z-index: 25;
+      background: linear-gradient(135deg, rgba(12, 16, 25, 0.96) 0%, rgba(6, 9, 14, 0.98) 100%);
+      border: 1.5px solid #ff9900;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 12px;
+      cursor: pointer;
+      transform-origin: 50% 0%;
+      transform-style: preserve-3d;
+      transition: transform 0.38s cubic-bezier(0.34, 1.56, 0.64, 1), 
+                  box-shadow 0.25s ease, 
+                  border-color 0.25s ease, 
+                  background 0.25s ease;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.8), 0 0 14px rgba(255, 153, 0, 0.2);
+      user-select: none;
+    }
+    .safety-cover:hover {
+      border-color: #ffbb33;
+      box-shadow: 0 8px 26px rgba(0, 0, 0, 0.9), 0 0 20px rgba(255, 153, 0, 0.35);
+    }
+
+    .guard-header-row {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+    }
+    .guard-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: #06090e;
+      border: 1px solid #ff9900;
+      color: #ffaa00;
+      box-shadow: 0 0 8px rgba(255, 153, 0, 0.2);
+      font-size: 8.5px;
+      font-weight: 900;
+      font-family: var(--font-mono);
+      padding: 2px 7px;
+      border-radius: 3px;
+      letter-spacing: 0.6px;
+      transition: all 0.2s ease;
+    }
+    .guard-lock-svg {
+      width: 10px;
+      height: 10px;
+      stroke: currentColor;
+    }
+    .guard-action-hint {
+      font-size: 8px;
+      font-family: var(--font-mono);
+      font-weight: 800;
+      color: #8896ad;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      transition: color 0.2s ease;
+    }
+    .safety-cover:hover .guard-action-hint {
+      color: #ffaa00;
+    }
+    .guard-laser-trim {
+      width: 70%;
+      height: 2px;
+      background: #2a1f14;
+      border-top: 1px solid rgba(255, 153, 0, 0.35);
+      border-radius: 1px;
+    }
+
+    /* 3D Flip Hood Perspective when Armed */
+    .safety-cover.open {
+      transform: translateY(-44px) rotateX(-26deg) scale(0.97);
+      background: linear-gradient(135deg, rgba(16, 8, 10, 0.98) 0%, rgba(8, 4, 6, 0.98) 100%);
+      border-color: #ff3355;
+      box-shadow: 0 16px 32px rgba(0, 0, 0, 0.9), 0 0 18px rgba(255, 51, 85, 0.3);
+    }
+    .safety-cover.open:hover {
+      transform: translateY(-46px) rotateX(-28deg) scale(0.99);
+      border-color: #ff6680;
+      box-shadow: 0 18px 36px rgba(0, 0, 0, 0.95), 0 0 24px rgba(255, 51, 85, 0.45);
+    }
+    .safety-cover.open .guard-badge {
+      background: #140508;
+      border-color: #ff3355;
+      color: #ff3355;
+      box-shadow: 0 0 10px rgba(255, 51, 85, 0.35);
+    }
+    .safety-cover.open .guard-action-hint {
+      color: #ff6680;
+      font-weight: 800;
+    }
+    .safety-cover.open .guard-laser-trim {
+      background: #2a0b12;
+      border-top: 1px solid rgba(255, 51, 85, 0.4);
+    }
+
+    /* Fixed 240px Button Underneath */
+    .btn-deploy {
+      background: #10141e;
+      border: 1px solid #1e2638;
+      color: #6b7280;
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 0.5px;
+      font-family: var(--font-mono);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 240px;
+      min-width: 240px;
+      max-width: 240px;
+      box-sizing: border-box;
+      white-space: nowrap;
+      transition: all 0.25s ease;
+    }
+    .safety-deploy-assembly.guard-open-state .btn-deploy {
+      background: linear-gradient(135deg, #141926 0%, #0b0e17 100%) !important;
+      color: #ff9900 !important;
+      font-weight: 900 !important;
+      border: 1.5px solid #ff9900 !important;
+      box-shadow: 0 0 22px rgba(255, 153, 0, 0.3), inset 0 0 12px rgba(255, 153, 0, 0.1) !important;
+    }
+    .safety-deploy-assembly.guard-open-state .btn-deploy:hover {
+      background: linear-gradient(135deg, #1c2233 0%, #0e121c 100%) !important;
+      border-color: #ffbb33 !important;
+      color: #ffbb33 !important;
+      box-shadow: 0 0 28px rgba(255, 153, 0, 0.5), inset 0 0 16px rgba(255, 153, 0, 0.15) !important;
+      transform: translateY(-1px);
+    }
+
+    /* Modal dialogs */
+    .modal-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.85);
+      background: rgba(4, 6, 10, 0.85);
       backdrop-filter: blur(8px);
-      z-index: 100;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 20px;
-      transition: opacity 0.22s ease;
+      z-index: 100;
+      transition: opacity 0.2s ease;
     }
     .modal-hidden {
       display: none !important;
     }
-
-    .modal-dialog {
-      background: #0b0e14;
-      border: 1px solid #263045;
-      border-radius: 16px;
+    .modal-box {
+      background: #0b0f17;
+      border: 1px solid #26334d;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 580px;
       padding: 24px;
-      max-width: 600px;
-      width: 100%;
-      box-shadow: 0 0 50px rgba(204, 255, 0, 0.25);
-      position: relative;
-      animation: modalPop 0.24s cubic-bezier(0.34, 1.56, 0.64, 1);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.9), 0 0 30px rgba(204, 255, 0, 0.15);
+      animation: modalPop 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
     @keyframes modalPop {
-      0% {
-        opacity: 0;
-        transform: scale(0.92) translateY(14px);
-      }
-      100% {
-        opacity: 1;
-        transform: scale(1) translateY(0);
-      }
+      0% { opacity: 0; transform: scale(0.92); }
+      100% { opacity: 1; transform: scale(1); }
     }
-
-    .modal-header {
+    .modal-title-row {
       display: flex;
-      align-items: center;
       justify-content: space-between;
-      padding-bottom: 14px;
-      border-bottom: 1px solid #1b2230;
+      align-items: center;
       margin-bottom: 16px;
+      border-bottom: 1px solid #1a2333;
+      padding-bottom: 12px;
     }
-
     .modal-title {
-      font-size: 12px;
+      font-size: 14px;
       font-weight: 900;
       color: var(--acid-volt);
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
+      letter-spacing: 0.5px;
     }
-
-    .progress-track {
-      width: 100%;
-      height: 8px;
-      background: #10141e;
-      border: 1px solid #20293c;
-      border-radius: 999px;
-      overflow: hidden;
-      margin-bottom: 16px;
-    }
-    .progress-fill {
-      height: 100%;
-      width: 0%;
-      background: linear-gradient(90deg, #ccff00, #10b981);
-      box-shadow: 0 0 12px rgba(204, 255, 0, 0.7);
-      transition: width 0.3s ease;
-    }
-
-    .console-screen {
-      background: #07090e;
-      border: 1px solid #1b2230;
-      border-radius: 10px;
-      padding: 14px;
-      font-size: 11px;
-      height: 200px;
-      overflow-y: auto;
-      color: #d1d5db;
-      margin-bottom: 16px;
-      line-height: 1.6;
-    }
-    .console-line {
-      margin-bottom: 4px;
-    }
-    .console-highlight {
-      color: var(--acid-volt);
-    }
-    .console-err {
-      color: #f87171;
-    }
-
-    .modal-footer {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .modal-close-btn {
-      background: #141824;
-      border: 1px solid #242e42;
-      color: #9ca3af;
-      padding: 6px 12px;
-      border-radius: 8px;
-      font-size: 13px;
-      font-weight: 800;
+    .modal-close {
+      background: transparent;
+      border: none;
+      color: #6b7280;
+      font-size: 18px;
       cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+      line-height: 1;
     }
-    .modal-close-btn:hover {
-      background: #1c2234;
-      color: var(--acid-volt);
-      border-color: var(--acid-volt);
-      box-shadow: 0 0 16px rgba(204, 255, 0, 0.4);
-      transform: scale(1.1) rotate(90deg);
-    }
-    .modal-close-btn:active {
-      transform: scale(0.95);
+    .modal-close:hover {
+      color: #ffffff;
     }
 
-    .modal-title-text {
-      font-size: 13px;
-      font-weight: 900;
-      color: var(--acid-volt);
-      letter-spacing: 1px;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      transition: all 0.2s ease;
-      cursor: default;
-    }
-    .modal-title-text:hover {
-      text-shadow: 0 0 14px rgba(204, 255, 0, 0.6);
-    }
-    .modal-rocket {
-      display: inline-block;
-      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-    }
-    .modal-title-text:hover .modal-rocket {
-      transform: translateY(-2px) scale(1.25) rotate(-10deg);
-    }
-
-    /* Startup items with full drift, reactive glow & staggered cascade */
     .startup-item {
-      background: #10141e;
-      border: 1px solid #1b2230;
-      border-radius: 12px;
-      padding: 12px 16px;
       display: flex;
       align-items: center;
       justify-content: space-between;
+      padding: 10px 14px;
+      background: #101522;
+      border: 1px solid #1e2638;
+      border-radius: 8px;
       margin-bottom: 8px;
       cursor: pointer;
-      user-select: none;
-      transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
-      opacity: 0;
-      animation: startupCascade 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
     .startup-item:hover {
-      transform: translateX(6px);
-      border-color: rgba(204, 255, 0, 0.8);
-      box-shadow: 0 0 25px rgba(204, 255, 0, 0.18);
-      background-color: #121724;
-    }
-    .startup-item:active {
-      transform: translateX(3px) scale(0.995);
+      border-color: rgba(204, 255, 0, 0.6);
+      transform: translateX(4px);
     }
     .startup-title {
-      font-weight: 800;
-      font-size: 13px;
+      font-size: 12px;
+      font-weight: 900;
       color: #ffffff;
-      transition: color 0.2s ease, text-shadow 0.2s ease;
-    }
-    .startup-item:hover .startup-title {
-      color: var(--acid-volt);
-      text-shadow: 0 0 12px rgba(204, 255, 0, 0.4);
-    }
-    .startup-item:hover .sw-track-on {
-      border-color: rgba(204, 255, 0, 0.8);
-      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6), 0 0 12px rgba(204, 255, 0, 0.3);
-    }
-    .startup-item:hover .sw-track-off {
-      border-color: #3b475f;
-    }
-    .startup-item:hover .sw-thumb-on {
-      box-shadow: 0 0 16px rgba(204, 255, 0, 0.95);
-      background: #d8ff26;
     }
     .startup-desc {
       font-size: 10px;
-      color: #9ca3af;
-      font-family: var(--font-mono);
-      margin-top: 2px;
-    }
-
-    @keyframes startupCascade {
-      0% {
-        opacity: 0;
-        transform: translateX(-12px);
-      }
-      100% {
-        opacity: 1;
-        transform: translateX(0);
-      }
+      color: #6b7280;
     }
   </style>
 </head>
-<body>
+<body class="techwear-grid">
 
-  <div class="app-chassis techwear-grid">
-    <!-- Top Techwear Banner -->
+  <div class="app-chassis" id="app-chassis">
+
+    <!-- Top Docked Header -->
     <div class="app-header">
       <div>
-        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
-          <span class="badge-pill"><span class="pulse-pip"></span> // SYS.CORE-TUNER v2.4</span>
-          <span class="badge-pill badge-secondary" id="system-model">// LENOVO 82HS</span>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span class="badge-pill">
+            <span class="pulse-pip"></span>
+            <span>CYBERCORE // DARK TECHWEAR</span>
+          </span>
+          <span class="badge-pill badge-secondary" id="system-model">LENOVO 82HS // 100% PASS</span>
         </div>
-        <div class="cpu-title">
-          <span id="cpu-name">INTEL i7-1165G7</span>
+        <div class="cpu-title" id="cpu-name">
+          INTEL CORE i7-1165G7 @ 2.80GHz
           <span class="cpu-cores" id="cpu-cores">[4C/8T]</span>
           <span class="cpu-sub" id="system-specs">• 16GB RAM • NVMe 512GB</span>
         </div>
       </div>
 
+      <!-- Top Right Telemetry: Live Oscilloscope HUD -->
       <div class="telemetry-module">
-        <div class="equalizer-bars">
-          <div class="eq-bar b1"></div>
-          <div class="eq-bar b2"></div>
-          <div class="eq-bar b3"></div>
-          <div class="eq-bar b4"></div>
-          <div class="eq-bar b5"></div>
-          <div class="eq-bar b6"></div>
+        <div class="scope-box" id="scope-container">
+          <canvas class="scope-canvas" id="oscilloscope" width="140" height="42"></canvas>
+          <div class="scope-reticle"></div>
+          <div class="scope-tag" id="scope-status">1000Hz STABLE</div>
         </div>
+
         <div class="telemetry-col">
           <div class="telemetry-label">THROUGHPUT GOVERNOR</div>
-          <div class="telemetry-val">MAX SPEED // 100% UNLOCKED</div>
+          <div class="telemetry-val" id="gov-text">MAX SPEED // 100% UNLOCKED</div>
         </div>
         <div class="telemetry-col">
           <div class="telemetry-label">STORAGE GAIN</div>
-          <div class="telemetry-val telemetry-val-white">+7.5 GB FREED</div>
+          <div class="telemetry-val telemetry-val-white" id="storage-gain-val">+7.5 GB FREED</div>
         </div>
       </div>
     </div>
 
-    <!-- Main Content Stage: Scrollable 2-Column Grid -->
+    <!-- Main Viewport with Adaptive 2-Column Grid -->
     <div class="tweak-viewport">
-      <div class="tweak-list" id="tweak-container">
-      <!-- 01 -->
-      <div class="tweak-card" onclick="toggleTweak(1)">
-        <div class="tweak-left">
-          <div class="tweak-num">01</div>
-          <div>
-            <div class="tweak-title-row">
-              <span class="tweak-title">Zero-Ramp CPU Frequency Floor on AC</span>
-              <span class="tag-benefit tag-on" id="badge-1">100% FLOOR</span>
-            </div>
-            <div class="tweak-desc">Sets processor floor to 100% on AC to bypass frequency ramp-up latency.</div>
-          </div>
+      
+      <!-- Architectural Silicon Die Map (Option 2) -->
+      <div class="silicon-die-hud" id="silicon-banner">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-size:10px;font-weight:900;color:var(--acid-volt);">// ARCHITECTURAL SILICON DIE MAP:</span>
+          <span style="font-size:9px;color:#6b7280;">Tiger Lake 10nm SuperFin • 4 Cores / 8 Threads</span>
         </div>
-        <div class="switch-track sw-track-on" id="sw-track-1">
-          <div class="switch-thumb sw-thumb-on" id="sw-thumb-1">ON</div>
-        </div>
-      </div>
-
-      <!-- 02 -->
-      <div class="tweak-card" onclick="toggleTweak(2)">
-        <div class="tweak-left">
-          <div class="tweak-num">02</div>
-          <div>
-            <div class="tweak-title-row">
-              <span class="tweak-title">Bypass Game DVR Background Video Buffer</span>
-              <span class="tag-benefit tag-on" id="badge-2">ZERO VRAM DRAIN</span>
-            </div>
-            <div class="tweak-desc">Halts continuous background DirectX video encoding and capture hooks.</div>
-          </div>
-        </div>
-        <div class="switch-track sw-track-on" id="sw-track-2">
-          <div class="switch-thumb sw-thumb-on" id="sw-thumb-2">ON</div>
+        <div class="die-visual">
+          <div class="die-core-box active" id="core-0">C0<br>100%</div>
+          <div class="die-bus-line active" id="bus-0"></div>
+          <div class="die-core-box active" id="core-1">C1<br>100%</div>
+          <div class="die-bus-line active" id="bus-1"></div>
+          <div class="die-core-box active" id="core-2">C2<br>100%</div>
+          <div class="die-bus-line active" id="bus-2"></div>
+          <div class="die-core-box active" id="core-3">C3<br>100%</div>
+          <div class="die-bus-line active" id="bus-ram"></div>
+          <div class="die-core-box active" id="core-ram">RAM<br>16GB</div>
         </div>
       </div>
 
-      <!-- 03 -->
-      <div class="tweak-card" onclick="toggleTweak(3)">
-        <div class="tweak-left">
-          <div class="tweak-num">03</div>
-          <div>
-            <div class="tweak-title-row">
-              <span class="tweak-title">Instant Desktop Context Menus</span>
-              <span class="tag-benefit tag-on" id="badge-3">20ms DELAY</span>
-            </div>
-            <div class="tweak-desc">Reduces MenuShowDelay from 400ms to 20ms for instant desktop responsiveness.</div>
-          </div>
-        </div>
-        <div class="switch-track sw-track-on" id="sw-track-3">
-          <div class="switch-thumb sw-thumb-on" id="sw-thumb-3">ON</div>
-        </div>
-      </div>
-
-      <!-- 04 -->
-      <div class="tweak-card" onclick="toggleTweak(4)">
-        <div class="tweak-left">
-          <div class="tweak-num">04</div>
-          <div>
-            <div class="tweak-title-row">
-              <span class="tweak-title">Purge Windows 11 Widget Daemon Pack</span>
-              <span class="tag-benefit tag-on" id="badge-4">-300MB RAM</span>
-            </div>
-            <div class="tweak-desc">Uninstalls WebExperience package to permanently kill 20+ idle WebView2 processes.</div>
-          </div>
-        </div>
-        <div class="switch-track sw-track-on" id="sw-track-4">
-          <div class="switch-thumb sw-thumb-on" id="sw-thumb-4">ON</div>
-        </div>
-      </div>
-
-      <!-- 05 -->
-      <div class="tweak-card" onclick="toggleTweak(5)">
-        <div class="tweak-left">
-          <div class="tweak-num">05</div>
-          <div>
-            <div class="tweak-title-row">
-              <span class="tweak-title">Clean Kernel Boots & Delete hiberfil.sys</span>
-              <span class="tag-benefit tag-on" id="badge-5">+6.22GB DISK</span>
-            </div>
-            <div class="tweak-desc">Disables hybrid hibernation; deletes hiberfil.sys and guarantees 100% fresh kernel state.</div>
-          </div>
-        </div>
-        <div class="switch-track sw-track-on" id="sw-track-5">
-          <div class="switch-thumb sw-thumb-on" id="sw-thumb-5">ON</div>
-        </div>
-      </div>
-
-      <!-- 06 -->
-      <div class="tweak-card" onclick="toggleTweak(6)">
-        <div class="tweak-left">
-          <div class="tweak-num">06</div>
-          <div>
-            <div class="tweak-title-row">
-              <span class="tweak-title">Decouple Bing Cloud Integration from Start</span>
-              <span class="tag-benefit tag-on" id="badge-6">LOCAL ONLY</span>
-            </div>
-            <div class="tweak-desc">Eliminates remote cloud latency on Start search; makes app launch search instant.</div>
-          </div>
-        </div>
-        <div class="switch-track sw-track-on" id="sw-track-6">
-          <div class="switch-thumb sw-thumb-on" id="sw-thumb-6">ON</div>
-        </div>
-      </div>
-
-      <!-- 07 -->
-      <div class="tweak-card" onclick="toggleTweak(7)">
-        <div class="tweak-left">
-          <div class="tweak-num">07</div>
-          <div>
-            <div class="tweak-title-row">
-              <span class="tweak-title">Halt Delivery Optimization P2P Seeding</span>
-              <span class="tag-benefit tag-on" id="badge-7">HTTP ONLY</span>
-            </div>
-            <div class="tweak-desc">Stops Windows from using your disk I/O and bandwidth to seed updates to network peers.</div>
-          </div>
-        </div>
-        <div class="switch-track sw-track-on" id="sw-track-7">
-          <div class="switch-thumb sw-thumb-on" id="sw-thumb-7">ON</div>
-        </div>
-      </div>
-
-      <!-- 08 -->
-      <div class="tweak-card" onclick="toggleTweak(8)">
-        <div class="tweak-left">
-          <div class="tweak-num">08</div>
-          <div>
-            <div class="tweak-title-row">
-              <span class="tweak-title">Purge Stale Temporary Files (>24h)</span>
-              <span class="tag-benefit tag-on" id="badge-8">CLEAN TEMP</span>
-            </div>
-            <div class="tweak-desc">Cleans accumulated cache junk from %TEMP% to free NVMe storage and reduce indexing.</div>
-          </div>
-        </div>
-        <div class="switch-track sw-track-on" id="sw-track-8">
-          <div class="switch-thumb sw-thumb-on" id="sw-thumb-8">ON</div>
-        </div>
+      <!-- 8 Tactical Lock-Bay Optimization Cards -->
+      <div class="tweak-list" id="tweak-grid">
+        <!-- Rendered by JavaScript -->
       </div>
     </div>
+
+    <!-- Docked Real-Time Kernel Dispatch Drawer (Option 5) -->
+    <div class="docked-console-drawer" id="docked-drawer">
+      <div class="drawer-header" onclick="toggleDrawer()">
+        <div class="drawer-title">
+          <span id="drawer-arrow">▲</span>
+          <span>// SYS.KERNEL-DISPATCH CONSOLE</span>
+          <span style="color:#6b7280;font-weight:400;font-size:10px;">(Click to toggle live execution stream)</span>
+        </div>
+        <span style="font-size:10px;color:var(--acid-volt);font-weight:900;" id="drawer-status-pill">[READY // IDLE]</span>
+      </div>
+      <div class="drawer-content" id="drawer-logs">
+        <div class="log-line log-info">[0.000s] // INITIALIZING CYBERCORE LOW-LEVEL SUBSYSTEM DISPATCH (PID: 16576)</div>
+        <div class="log-line log-success">[0.012s] [✓] AC Clock Floor verified: MinimumProcessorState = 100% (Guid: 36779f97)</div>
+        <div class="log-line log-success">[0.024s] [✓] DWM Compositor latency hook engaged: MenuShowDelay = 20ms</div>
+        <div class="log-line log-success">[0.045s] [✓] WebExperience WidgetService background processes decoupled (-300MB RAM)</div>
+        <div class="log-line log-success">[0.068s] [✓] Kernel hibernation state purged: hiberfil.sys eliminated (+6.22GB reclaimed)</div>
+        <div class="log-line log-success">[0.089s] [✓] ALL SUBSYSTEMS SYNCHRONIZED TO 1000Hz LOW-LATENCY PROFILE.</div>
+      </div>
     </div>
 
-    <!-- Bottom Action Bar -->
+    <!-- Bottom Action Dock -->
     <div class="app-footer">
       <button class="btn-secondary" onclick="restoreDefaults()">
         <span>↺</span> RESTORE FACTORY DEFAULTS
@@ -920,264 +981,479 @@
 
       <div style="display: flex; align-items: center; gap: 10px;">
         <button class="btn-secondary" onclick="toggleAll()">TOGGLE ALL</button>
-        <button class="btn-startup" onclick="openStartupModal()">
+        <button class="btn-secondary" style="border-color:#2a3a50;color:#fff;" onclick="openStartupModal()">
           <span>🚀</span> STARTUP APPS
         </button>
-        <button class="btn-deploy" onclick="deployOptimizations()">
-          <span>⚡</span> DEPLOY TACTICAL TUNING ➔
-        </button>
+
+        <!-- Clean Sci-Fi Nuke Safety Deploy Assembly (Option 2 + Flip Hood) -->
+        <div class="safety-deploy-assembly" id="safety-assembly">
+          <!-- Flush Top Titanium Pivot Bracket -->
+          <div class="safety-hinge-bracket">
+            <span class="hinge-rivet" id="hinge-title-l">⬡ SILO-L</span>
+            <span class="hinge-pin"></span>
+            <span class="hinge-rivet" id="hinge-title-r">SILO-R ⬡</span>
+          </div>
+
+          <!-- Smoked Obsidian Blast Visor Cover -->
+          <div class="safety-cover" id="safety-cover" onclick="toggleSafetyCover()" title="Click to Arm Silo Blast Hatch">
+            <div class="guard-header-row">
+              <span class="guard-badge">
+                <svg class="guard-lock-svg" id="guard-lock-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <circle cx="12" cy="12" r="8"/>
+                  <circle cx="12" cy="12" r="2.5" fill="#ff9900"/>
+                  <line x1="12" y1="2" x2="12" y2="6"/>
+                  <line x1="12" y1="18" x2="12" y2="22"/>
+                  <line x1="2" y1="12" x2="6" y2="12"/>
+                  <line x1="18" y1="12" x2="22" y2="12"/>
+                </svg>
+                <span id="guard-stencil-title">SILO: SEALED</span>
+              </span>
+              <span class="guard-action-hint" id="guard-action-hint">/// TAP TO UNLATCH ///</span>
+            </div>
+            <div class="guard-laser-trim"></div>
+          </div>
+
+          <!-- Fixed 240px Zero-Jump Ignition Trigger -->
+          <button class="btn-deploy" onclick="deployTuning()">
+            <span id="deploy-btn-text">🚀 LAUNCH NUCLEAR DISPATCH ➔</span>
+          </button>
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- Execution Progress Modal -->
-  <div class="modal-backdrop modal-hidden" id="exec-modal">
-    <div class="modal-dialog techwear-grid">
-      <div class="modal-header">
-        <div class="modal-title">
-          <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#ccff00; box-shadow:0 0 8px #ccff00;"></span>
-          // SYSTEM OVERCLOCK ENGINE // KERNEL-DISPATCH
-        </div>
-        <div style="font-size:12px; font-weight:900; color:#ccff00;" id="exec-pct">0%</div>
-      </div>
-
-      <div class="progress-track">
-        <div class="progress-fill" id="exec-bar"></div>
-      </div>
-
-      <div class="console-screen" id="exec-console">
-        <div class="console-line console-highlight">// INITIALIZING KERNEL DISPATCH PROTOCOLS...</div>
-      </div>
-
-      <div class="modal-footer">
-        <div style="font-size:11px; color:#ccff00; font-weight:700;" id="exec-status">
-          // RUNNING OPTIMIZATIONS...
-        </div>
-        <button class="btn-deploy modal-hidden" id="exec-close-btn" onclick="closeExecModal()">
-          [ ✓ DISMISS CONSOLE ]
-        </button>
-      </div>
-    </div>
   </div>
 
   <!-- Startup Apps Manager Modal -->
-  <div class="modal-backdrop modal-hidden" id="startup-modal">
-    <div class="modal-dialog techwear-grid" style="max-width: 660px;">
-      <div class="modal-header">
-        <div class="modal-title-text">
-          <span class="modal-rocket">🚀</span> // STARTUP APPLICATION DECOUPLER
-        </div>
-        <button class="modal-close-btn" onclick="closeStartupModal()">✕</button>
+  <div class="modal-overlay modal-hidden" id="startup-modal">
+    <div class="modal-box">
+      <div class="modal-title-row">
+        <div class="modal-title">🚀 STARTUP APPLICATIONS DECOUPLER</div>
+        <button class="modal-close" onclick="closeStartupModal()">✕</button>
       </div>
-
-      <div style="font-size: 11px; color: #9ca3af; margin-bottom: 14px;">
-        Safely enable or disable background autostart hooks via Windows StartupApproved registry.
+      <div style="font-size:11px;color:#9ca3af;margin-bottom:14px;">
+        Toggle background autostart hooks to cut boot latency without deleting registry keys.
       </div>
-
-      <div style="max-height: 320px; overflow-y: auto;" id="startup-list-container">
-        <!-- Loaded dynamically -->
+      <div id="startup-list-container">
+        <!-- Rendered dynamically -->
+      </div>
+      <div style="display:flex;justify-content:flex-end;margin-top:16px;">
+        <button class="btn-secondary" onclick="closeStartupModal()">CLOSE</button>
       </div>
     </div>
   </div>
 
   <script>
-    // State management
-    const tweakStates = {
-      1: true, 2: true, 3: true, 4: true,
-      5: true, 6: true, 7: true, 8: true
-    };
-
-    const tweakLabels = {
-      1: "Zero-Ramp CPU Frequency Floor",
-      2: "Bypass Game DVR Background Video Buffer",
-      3: "Instant Desktop Context Menus",
-      4: "Purge Windows 11 Widget Daemon Pack",
-      5: "Clean Kernel Boots & Delete hiberfil.sys",
-      6: "Decouple Bing Cloud Integration",
-      7: "Halt Delivery Optimization P2P Seeding",
-      8: "Purge Stale Temporary Files"
-    };
-
-    // Web Audio Procedural Synthesis
+    // --- PROCEDURAL WEB AUDIO API ACOUSTICS ---
     let audioCtx = null;
+    function getAudioCtx() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      return audioCtx;
+    }
+
     function playAudio(type) {
       try {
-        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        if (audioCtx.state === 'suspended') audioCtx.resume();
-
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
+        const ctx = getAudioCtx();
+        if (!ctx) return;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
         osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        const now = audioCtx.currentTime;
+        gain.connect(ctx.destination);
+        const t = ctx.currentTime;
 
         if (type === 'click') {
-          osc.type = 'sine';
-          osc.frequency.setValueAtTime(800, now);
-          osc.frequency.exponentialRampToValueAtTime(300, now + 0.03);
-          gain.gain.setValueAtTime(0.04, now);
-          gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.035);
-          osc.start(now);
-          osc.stop(now + 0.035);
-        } else if (type === 'relay') {
-          osc.type = 'square';
-          osc.frequency.setValueAtTime(360, now);
-          osc.frequency.exponentialRampToValueAtTime(160, now + 0.045);
-          gain.gain.setValueAtTime(0.03, now);
-          gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.05);
-          osc.start(now);
-          osc.stop(now + 0.05);
-        } else if (type === 'success') {
           osc.type = 'triangle';
-          osc.frequency.setValueAtTime(440, now);
-          osc.frequency.exponentialRampToValueAtTime(880, now + 0.2);
-          gain.gain.setValueAtTime(0.05, now);
-          gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
-          osc.start(now);
-          osc.stop(now + 0.22);
+          osc.frequency.setValueAtTime(820, t);
+          gain.gain.setValueAtTime(0.04, t);
+          gain.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
+          osc.start(t);
+          osc.stop(t + 0.04);
+        } else if (type === 'pneumatic') {
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(1500, t);
+          osc.frequency.exponentialRampToValueAtTime(360, t + 0.08);
+          gain.gain.setValueAtTime(0.08, t);
+          gain.gain.exponentialRampToValueAtTime(0.001, t + 0.09);
+          osc.start(t);
+          osc.stop(t + 0.09);
+        } else if (type === 'vault') {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(180, t);
+          gain.gain.setValueAtTime(0.16, t);
+          gain.gain.exponentialRampToValueAtTime(0.001, t + 0.16);
+          osc.start(t);
+          osc.stop(t + 0.16);
+        } else if (type === 'success') {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(523.25, t);
+          osc.frequency.setValueAtTime(659.25, t + 0.08);
+          osc.frequency.setValueAtTime(783.99, t + 0.16);
+          osc.frequency.setValueAtTime(1046.50, t + 0.24);
+          gain.gain.setValueAtTime(0.06, t);
+          gain.gain.exponentialRampToValueAtTime(0.001, t + 0.38);
+          osc.start(t);
+          osc.stop(t + 0.38);
         }
       } catch (e) {}
     }
 
-    // Toggle single tweak switch
-    function toggleTweak(idx) {
+    // --- 8 TACTICAL OPTIMIZATION PROTOCOLS ---
+    const tweaks = [
+      { 
+        id: 1, 
+        title: "CPU Clock Floor (AC)", 
+        tag: "0ms LATENCY", 
+        desc: "Pins minimum processor state to 100% on AC power; eliminates frequency ramp-up stutters.", 
+        lockProtocol: "POWER_AC_FLOOR",
+        on: true 
+      },
+      { 
+        id: 2, 
+        title: "Xbox Game DVR Capture", 
+        tag: "NO HOOKS", 
+        desc: "Decouples continuous background video capture and Direct3D screen recording hooks.", 
+        lockProtocol: "D3D_HOOK_HALT",
+        on: true 
+      },
+      { 
+        id: 3, 
+        title: "Windows Shell Menu Delay", 
+        tag: "20ms RESPONSE", 
+        desc: "Reduces MenuShowDelay registry latency from 400ms to 20ms for instant desktop response.", 
+        lockProtocol: "DWM_SHELL_20MS",
+        on: true 
+      },
+      { 
+        id: 4, 
+        title: "Web Experience Widgets", 
+        tag: "-300MB RAM", 
+        desc: "Disables background news, weather, and WebExperience WebView2 background processes.", 
+        lockProtocol: "WIN11_WIDGET_PURGE",
+        on: true 
+      },
+      { 
+        id: 5, 
+        title: "Windows Search Indexing", 
+        tag: "-15% DISK I/O", 
+        desc: "Throttles background indexing daemons on battery and caps aggressive CPU usage.", 
+        lockProtocol: "INDEXER_THROTTLE",
+        on: true 
+      },
+      { 
+        id: 6, 
+        title: "Delivery Optimization P2P", 
+        tag: "NO P2P LEAKS", 
+        desc: "Halts Windows Update peer-to-peer telemetry uploads from consuming network bandwidth.", 
+        lockProtocol: "NET_P2P_DECOUPLE",
+        on: true 
+      },
+      { 
+        id: 7, 
+        title: "System Hibernation File", 
+        tag: "+6.2GB NVMe", 
+        desc: "Purges obsolete hiberfil.sys to reclaim NVMe storage and eliminate Fast Startup RAM corruption.", 
+        lockProtocol: "HIBERFIL_PURGE",
+        on: true 
+      },
+      { 
+        id: 8, 
+        title: "Temp Storage & Disk Cache", 
+        tag: "+1.4GB CLEANED", 
+        desc: "Cleans accumulated cache junk from %TEMP% to free NVMe storage and reduce indexing overhead.", 
+        lockProtocol: "IO_TRIM_CACHE",
+        on: true 
+      }
+    ];
+
+    // --- RENDER 4. TACTICAL LOCK-BAY CARDS GRID ---
+    function renderGrid() {
+      const container = document.getElementById("tweak-grid");
+      container.innerHTML = "";
+
+      tweaks.forEach(item => {
+        const card = document.createElement("div");
+        card.className = "tweak-card" + (item.on ? " card-active" : "");
+        card.onclick = () => toggleItem(item.id);
+        card.innerHTML = `
+          <div class="tweak-left">
+            <div class="tweak-channel-badge">
+              <span class="channel-prefix">CH</span>
+              <span class="channel-num">${item.id < 10 ? '0' + item.id : item.id}</span>
+            </div>
+            <div class="tweak-content-col">
+              <div class="tweak-title-row">
+                <span class="tweak-title">${item.title}</span>
+                <span class="tag-benefit ${item.on ? 'tag-on' : 'tag-off'}">${item.tag}</span>
+              </div>
+              <div class="tweak-desc">${item.desc}</div>
+              <div class="hazard-lock-badge ${item.on ? 'lock-armed' : 'lock-standby'}">
+                <span>${item.on ? '⬡ ARMED // PROTOCOL_LOCK' : 'STANDBY // UNLATCHED'}</span>
+                <span style="opacity: 0.6; font-size: 7px;">[${item.lockProtocol}]</span>
+              </div>
+            </div>
+          </div>
+          <div class="switch-bay">
+            <div class="switch-track ${item.on ? 'sw-track-on' : 'sw-track-off'}">
+              <div class="switch-thumb ${item.on ? 'sw-thumb-on' : 'sw-thumb-off'}">${item.on ? 'ON' : 'OFF'}</div>
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+
+      updateTelemetry();
+    }
+
+    function toggleItem(id) {
       playAudio('click');
-      tweakStates[idx] = !tweakStates[idx];
-      updateTweakUI(idx);
-    }
-
-    function updateTweakUI(idx) {
-      const on = tweakStates[idx];
-      const track = document.getElementById('sw-track-' + idx);
-      const thumb = document.getElementById('sw-thumb-' + idx);
-      const badge = document.getElementById('badge-' + idx);
-
-      if (on) {
-        track.className = 'switch-track sw-track-on';
-        thumb.className = 'switch-thumb sw-thumb-on';
-        thumb.innerText = 'ON';
-        badge.className = 'tag-benefit tag-on';
-      } else {
-        track.className = 'switch-track sw-track-off';
-        thumb.className = 'switch-thumb sw-thumb-off';
-        thumb.innerText = 'OFF';
-        badge.className = 'tag-benefit tag-off';
+      const item = tweaks.find(t => t.id === id);
+      if (item) {
+        item.on = !item.on;
+        renderGrid();
       }
     }
 
-    // Toggle all tweaks
     function toggleAll() {
-      playAudio('relay');
-      const allOn = Object.values(tweakStates).every(Boolean);
-      for (let i = 1; i <= 8; i++) {
-        tweakStates[i] = !allOn;
-        updateTweakUI(i);
+      playAudio('click');
+      const anyOn = tweaks.some(t => t.on);
+      tweaks.forEach(t => t.on = !anyOn);
+      renderGrid();
+    }
+
+    function updateTelemetry() {
+      const activeCount = tweaks.filter(t => t.on).length;
+      const gov = document.getElementById("gov-text");
+      const scopeStatus = document.getElementById("scope-status");
+      
+      if (activeCount === 8) {
+        gov.innerText = "MAX SPEED // 100% UNLOCKED";
+        gov.style.color = "#ccff00";
+        scopeStatus.innerText = "1000Hz STABLE";
+        scopeStatus.style.color = "#ccff00";
+      } else if (activeCount === 0) {
+        gov.innerText = "DEFAULT // WINDOWS THROTTLED";
+        gov.style.color = "#6b7280";
+        scopeStatus.innerText = "60Hz JITTER";
+        scopeStatus.style.color = "#f87171";
+      } else {
+        gov.innerText = `STAGE 1 // ${activeCount}/8 ACTIVE`;
+        gov.style.color = "#00f0ff";
+        scopeStatus.innerText = "TUNING OSC";
+        scopeStatus.style.color = "#00f0ff";
+      }
+
+      // Silicon Die Visual Update
+      const cpuOn = tweaks[0].on;
+      for (let i = 0; i < 4; i++) {
+        const c = document.getElementById("core-" + i);
+        const b = document.getElementById("bus-" + i);
+        if (c) c.className = "die-core-box " + (cpuOn ? "active" : "");
+        if (b) b.className = "die-bus-line " + (cpuOn ? "active" : "");
       }
     }
 
-    // Execute optimizations
-    async function deployOptimizations() {
-      playAudio('relay');
-      const modal = document.getElementById('exec-modal');
-      const bar = document.getElementById('exec-bar');
-      const pct = document.getElementById('exec-pct');
-      const consoleBox = document.getElementById('exec-console');
-      const status = document.getElementById('exec-status');
-      const closeBtn = document.getElementById('exec-close-btn');
+    // --- 60 FPS CRT VECTOR OSCILLOSCOPE CANVAS ---
+    const canvas = document.getElementById("oscilloscope");
+    const ctx = canvas.getContext("2d");
+    let phase = 0;
 
-      modal.classList.remove('modal-hidden');
-      closeBtn.classList.add('modal-hidden');
-      bar.style.width = '0%';
-      pct.innerText = '0%';
-      consoleBox.innerHTML = '<div class="console-line console-highlight">// INITIATING TACTICAL SYSTEM TUNING PIPELINE...</div>';
-      status.innerText = '// RUNNING LOW-LEVEL OPERATIONS...';
+    function drawOscilloscope() {
+      ctx.fillStyle = "rgba(4, 6, 10, 0.25)";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      const activeTweaks = Object.keys(tweakStates).filter(k => tweakStates[k]);
-      const total = activeTweaks.length;
+      const activeCount = tweaks.filter(t => t.on).length;
+      const stability = activeCount / 8;
 
-      if (total === 0) {
-        consoleBox.innerHTML += '<div class="console-line">// No tweaks selected. Toggle items ON to deploy.</div>';
-        status.innerText = '// COMPLETED (0 ACTIONS)';
-        closeBtn.classList.remove('modal-hidden');
+      ctx.beginPath();
+      ctx.lineWidth = 1.8;
+      ctx.strokeStyle = activeCount === 0 ? "#f87171" : "#ccff00";
+      ctx.shadowBlur = 8;
+      ctx.shadowColor = activeCount === 0 ? "rgba(248, 113, 113, 0.8)" : "rgba(204, 255, 0, 0.8)";
+
+      const midY = canvas.height / 2;
+      for (let x = 0; x < canvas.width; x++) {
+        const harmonic = Math.sin((x * 0.08) + phase) * (12 * stability);
+        const jitter = activeCount === 8 ? 0 : (Math.sin((x * 0.42) + phase * 2) * (1 - stability) * 9);
+        const y = midY + harmonic + jitter;
+        if (x === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+
+      phase += 0.08 + (stability * 0.06);
+      requestAnimationFrame(drawOscilloscope);
+    }
+    requestAnimationFrame(drawOscilloscope);
+
+    // --- CLEAN SCI-FI NUKE SAFETY COVER MECHANICS (FLIP HOOD) ---
+    let coverOpen = false;
+
+    function toggleSafetyCover() {
+      if (coverOpen) closeSafetyCover();
+      else openSafetyCover();
+    }
+
+    function openSafetyCover() {
+      playAudio('pneumatic');
+      coverOpen = true;
+      const cov = document.getElementById("safety-cover");
+      const assembly = document.getElementById("safety-assembly");
+      const title = document.getElementById("guard-stencil-title");
+      const hint = document.getElementById("guard-action-hint");
+      const svg = document.getElementById("guard-lock-svg");
+
+      if (cov) {
+        cov.classList.add("open");
+        cov.title = "Click to Seal Silo Blast Hatch";
+      }
+      if (assembly) assembly.classList.add("guard-open-state");
+
+      if (title) title.innerText = "WARHEAD: ARMED";
+      if (hint) hint.innerText = "/// TAP TO SEAL ///";
+      if (svg) {
+        svg.innerHTML = `
+          <circle cx="12" cy="12" r="8"/>
+          <circle cx="12" cy="12" r="2.5" fill="#ff3355"/>
+          <line x1="12" y1="2" x2="12" y2="6"/>
+          <line x1="12" y1="18" x2="12" y2="22"/>
+          <line x1="2" y1="12" x2="6" y2="12"/>
+          <line x1="18" y1="12" x2="22" y2="12"/>
+        `;
+      }
+    }
+
+    function closeSafetyCover() {
+      playAudio('vault');
+      coverOpen = false;
+      const cov = document.getElementById("safety-cover");
+      const assembly = document.getElementById("safety-assembly");
+      const title = document.getElementById("guard-stencil-title");
+      const hint = document.getElementById("guard-action-hint");
+      const svg = document.getElementById("guard-lock-svg");
+
+      if (cov) {
+        cov.classList.remove("open");
+        cov.title = "Click to Arm Silo Blast Hatch";
+      }
+      if (assembly) assembly.classList.remove("guard-open-state");
+
+      if (title) title.innerText = "SILO: SEALED";
+      if (hint) hint.innerText = "/// TAP TO UNLATCH ///";
+      if (svg) {
+        svg.innerHTML = `
+          <circle cx="12" cy="12" r="8"/>
+          <circle cx="12" cy="12" r="2.5" fill="#ff9900"/>
+          <line x1="12" y1="2" x2="12" y2="6"/>
+          <line x1="12" y1="18" x2="12" y2="22"/>
+          <line x1="2" y1="12" x2="6" y2="12"/>
+          <line x1="18" y1="12" x2="22" y2="12"/>
+        `;
+      }
+    }
+
+    // --- DOCKED CONSOLE DRAWER LOGIC ---
+    let drawerExpanded = false;
+    function toggleDrawer() {
+      playAudio('click');
+      drawerExpanded = !drawerExpanded;
+      const drawer = document.getElementById("docked-drawer");
+      const arrow = document.getElementById("drawer-arrow");
+      if (drawerExpanded) {
+        drawer.classList.add("expanded");
+        arrow.innerText = "▼";
+      } else {
+        drawer.classList.remove("expanded");
+        arrow.innerText = "▲";
+      }
+    }
+
+    function logToDrawer(text, type = 'info') {
+      const logs = document.getElementById("drawer-logs");
+      const line = document.createElement("div");
+      line.className = `log-line log-${type}`;
+      line.innerText = text;
+      logs.appendChild(line);
+      logs.scrollTop = logs.scrollHeight;
+    }
+
+    // --- DEPLOY TUNING LOGIC WITH TAURI BACKEND INTEGRATION ---
+    async function deployTuning() {
+      if (!coverOpen) {
+        // If cover is still down, tapping button unlatches it first!
+        openSafetyCover();
         return;
       }
 
-      for (let i = 0; i < total; i++) {
-        const id = parseInt(activeTweaks[i]);
-        const tweakName = tweakLabels[id];
-        const progress = Math.round(((i + 1) / total) * 100);
+      playAudio('click');
+      const drawer = document.getElementById("docked-drawer");
+      const arrow = document.getElementById("drawer-arrow");
+      drawer.classList.add("expanded");
+      drawerExpanded = true;
+      arrow.innerText = "▼";
 
-        consoleBox.innerHTML += `<div class="console-line">> [EXECUTING 0${id}] ${tweakName}...</div>`;
-        consoleBox.scrollTop = consoleBox.scrollHeight;
+      const statusPill = document.getElementById("drawer-status-pill");
+      statusPill.innerText = "[DISPATCHING // ACTIVE]";
+      statusPill.style.color = "#ff9900";
+
+      const activeTweaks = tweaks.filter(t => t.on);
+      logToDrawer(`[${(performance.now()/1000).toFixed(3)}s] // STARTING DISPATCH: ${activeTweaks.length} PROTOCOLS ARMED`, 'info');
+
+      for (let i = 0; i < activeTweaks.length; i++) {
+        const item = activeTweaks[i];
+        logToDrawer(`[${(performance.now()/1000).toFixed(3)}s] >> [EXECUTING CH0${item.id}] ${item.title}...`, 'info');
 
         try {
           if (window.__TAURI__ && window.__TAURI__.core) {
-            const res = await window.__TAURI__.core.invoke('apply_tweak', { id });
-            consoleBox.innerHTML += `<div class="console-line console-highlight">  ✓ ${res}</div>`;
+            const res = await window.__TAURI__.core.invoke('apply_tweak', { id: item.id });
+            logToDrawer(`[${(performance.now()/1000).toFixed(3)}s] [✓] ${res}`, 'success');
           } else {
-            // Web / Mock simulation mode
-            await new Promise(r => setTimeout(r, 350));
-            consoleBox.innerHTML += `<div class="console-line console-highlight">  ✓ Applied successfully [SIMULATED]</div>`;
+            // Simulated fallback mode
+            await new Promise(r => setTimeout(r, 220));
+            logToDrawer(`[${(performance.now()/1000).toFixed(3)}s] [✓] ${item.title} engaged: ${item.tag}`, 'success');
           }
         } catch (err) {
-          consoleBox.innerHTML += `<div class="console-line console-err">  ✗ Error: ${err}</div>`;
+          logToDrawer(`[${(performance.now()/1000).toFixed(3)}s] [✗] Error: ${err}`, 'err');
         }
-
-        bar.style.width = progress + '%';
-        pct.innerText = progress + '%';
-        consoleBox.scrollTop = consoleBox.scrollHeight;
       }
 
       playAudio('success');
-      status.innerText = '// TACTICAL TUNING DEPLOYED SUCCESSFULLY';
-      closeBtn.classList.remove('modal-hidden');
-    }
-
-    function closeExecModal() {
-      playAudio('click');
-      document.getElementById('exec-modal').classList.add('modal-hidden');
+      statusPill.innerText = "[1000Hz STABLE // LOCKED]";
+      statusPill.style.color = "var(--acid-volt)";
+      logToDrawer(`[${(performance.now()/1000).toFixed(3)}s] // ALL PROTOCOLS DEPLOYED. SYSTEM RUNNING AT PEAK EFFICIENCY.`, 'success');
     }
 
     // Restore factory defaults
     async function restoreDefaults() {
-      playAudio('relay');
+      playAudio('vault');
       if (!confirm("Are you sure you want to restore all settings to default Windows configurations?")) return;
 
-      const modal = document.getElementById('exec-modal');
-      const bar = document.getElementById('exec-bar');
-      const pct = document.getElementById('exec-pct');
-      const consoleBox = document.getElementById('exec-console');
-      const status = document.getElementById('exec-status');
-      const closeBtn = document.getElementById('exec-close-btn');
+      const drawer = document.getElementById("docked-drawer");
+      const arrow = document.getElementById("drawer-arrow");
+      drawer.classList.add("expanded");
+      drawerExpanded = true;
+      arrow.innerText = "▼";
 
-      modal.classList.remove('modal-hidden');
-      closeBtn.classList.add('modal-hidden');
-      bar.style.width = '50%';
-      pct.innerText = '50%';
-      consoleBox.innerHTML = '<div class="console-line console-highlight">// RESTORING FACTORY WINDOWS DEFAULTS...</div>';
-      status.innerText = '// REVERTING SYSTEM KEYS...';
+      logToDrawer(`[${(performance.now()/1000).toFixed(3)}s] // RESTORING WINDOWS FACTORY DEFAULTS...`, 'info');
 
       try {
         if (window.__TAURI__ && window.__TAURI__.core) {
           const logs = await window.__TAURI__.core.invoke('restore_all');
           for (const line of logs) {
-            consoleBox.innerHTML += `<div class="console-line">  ✓ ${line}</div>`;
+            logToDrawer(`[${(performance.now()/1000).toFixed(3)}s] [✓] ${line}`, 'success');
           }
         } else {
-          await new Promise(r => setTimeout(r, 600));
-          consoleBox.innerHTML += '<div class="console-line">  ✓ Balanced power scheme restored [SIMULATED]</div>';
-          consoleBox.innerHTML += '<div class="console-line">  ✓ MenuShowDelay reset to 400ms [SIMULATED]</div>';
-          consoleBox.innerHTML += '<div class="console-line">  ✓ Game DVR re-enabled [SIMULATED]</div>';
+          await new Promise(r => setTimeout(r, 400));
+          logToDrawer(`[${(performance.now()/1000).toFixed(3)}s] [✓] Balanced power scheme restored`, 'success');
+          logToDrawer(`[${(performance.now()/1000).toFixed(3)}s] [✓] MenuShowDelay reset to 400ms`, 'success');
+          logToDrawer(`[${(performance.now()/1000).toFixed(3)}s] [✓] Game DVR re-enabled`, 'success');
         }
+        tweaks.forEach(t => t.on = false);
+        renderGrid();
+        playAudio('success');
       } catch (e) {
-        consoleBox.innerHTML += `<div class="console-line console-err">  ✗ Restore Error: ${e}</div>`;
+        logToDrawer(`[${(performance.now()/1000).toFixed(3)}s] [✗] Restore error: ${e}`, 'err');
       }
-
-      bar.style.width = '100%';
-      pct.innerText = '100%';
-      playAudio('success');
-      status.innerText = '// SYSTEM RESTORED TO FACTORY DEFAULTS';
-      closeBtn.classList.remove('modal-hidden');
     }
 
     // Startup Apps Manager
@@ -1209,7 +1485,6 @@
       apps.forEach((app, idx) => {
         const item = document.createElement('div');
         item.className = 'startup-item';
-        item.style.animationDelay = (idx * 0.05) + 's';
         item.onclick = () => toggleStartupAppItem(app.name, app.location, idx);
         item.innerHTML = `
           <div>
@@ -1270,7 +1545,11 @@
       }
     }
 
-    window.addEventListener('DOMContentLoaded', initSystemInfo);
+    // Initialization
+    window.addEventListener('DOMContentLoaded', () => {
+      renderGrid();
+      initSystemInfo();
+    });
   </script>
 </body>
 </html>
