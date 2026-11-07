@@ -1223,71 +1223,96 @@
       background: #dbff33;
     }
 
-    /* Startup items with full drift, reactive glow & staggered cascade */
-    .startup-item {
-      background: #10141e;
-      border: 1px solid #1b2230;
-      border-radius: 8px;
-      padding: 10px 14px;
+    /* Tactical Lock-Bay Startup items */
+    .startup-card {
+      background: repeating-linear-gradient(
+        45deg,
+        #0a0d14,
+        #0a0d14 3px,
+        #0e121c 3px,
+        #0e121c 8px
+      );
+      border: 1px solid #232c40;
+      border-radius: 6px;
+      padding: 12px 16px;
+      min-height: 72px;
+      margin-bottom: 8px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 12px;
       cursor: pointer;
       user-select: none;
+      position: relative;
       transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
       opacity: 0;
       animation: startupCascade 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
-    .startup-item:hover {
-      transform: translateX(6px);
-      border-color: rgba(204, 255, 0, 0.8);
-      box-shadow: 0 0 25px rgba(204, 255, 0, 0.18);
-      background-color: #121724;
+    .startup-card::before {
+      content: "⬡";
+      position: absolute;
+      top: 4px;
+      left: 5px;
+      font-size: 8px;
+      color: #3f4e6b;
+      font-weight: 900;
     }
-    .startup-item:active {
-      transform: translateX(3px) scale(0.995);
+    .startup-card:hover {
+      transform: translateX(4px);
+      border-color: rgba(204, 255, 0, 0.7);
+      box-shadow: 0 0 20px rgba(204, 255, 0, 0.16);
     }
-    .startup-title {
-      font-weight: 800;
-      font-size: 13px;
-      transition: color 0.2s ease, text-shadow 0.2s ease;
+    .startup-card.card-active {
+      border-color: rgba(204, 255, 0, 0.5);
+      border-left: 4px solid var(--acid-volt);
+      box-shadow: 0 0 20px rgba(204, 255, 0, 0.18), inset 0 0 14px rgba(204, 255, 0, 0.04);
     }
-    .startup-item:hover .startup-title {
-      color: var(--acid-volt) !important;
-      text-shadow: 0 0 12px rgba(204, 255, 0, 0.4);
+    .startup-card.card-active::before {
+      color: var(--acid-volt);
+      text-shadow: 0 0 6px var(--acid-volt);
     }
-    .startup-item:hover .app-cyber-switch {
-      border-color: rgba(204, 255, 0, 0.8);
-      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6), 0 0 12px rgba(204, 255, 0, 0.3);
+    .startup-card.card-decoupled {
+      border-left: 4px solid #263045;
+      opacity: 0.75;
     }
-    .startup-item:hover .app-switch-thumb {
-      box-shadow: 0 0 16px rgba(204, 255, 0, 0.95);
-      background: #d8ff26;
+    .startup-card.card-decoupled:hover {
+      opacity: 1;
+      border-color: #3b4b6b;
     }
-    .startup-item:hover .app-cyber-switch.off .app-switch-thumb {
-      box-shadow: none;
-      background: #374151;
-    }
-    .startup-desc {
-      font-size: 10px;
+
+    .su-loc-badge {
+      font-size: 8px;
+      font-weight: 900;
+      background: #0c101a;
+      border: 1px solid #20293c;
       color: #6b7280;
+      padding: 1px 6px;
+      border-radius: 3px;
+      letter-spacing: 0.5px;
+      font-family: var(--font-mono);
+    }
+    .su-cmd-path {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: #8896ad;
+      word-break: break-all;
+      line-height: 1.3;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      margin-top: 2px;
     }
     @keyframes startupCascade {
       0% { opacity: 0; transform: translateX(-12px); }
       100% { opacity: 1; transform: translateX(0); }
     }
     .modal-close-btn {
-      background: #141824;
-      border: 1px solid #242e42;
+      background: #101522;
+      border: 1px solid #253147;
       color: #9ca3af;
-      padding: 4px 10px;
-      border-radius: 6px;
-      font-size: 12px;
+      width: 28px;
+      height: 28px;
+      border-radius: 4px;
+      font-size: 14px;
       font-weight: 800;
       cursor: pointer;
       display: inline-flex;
@@ -1296,8 +1321,11 @@
       transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
     .modal-close-btn:hover {
-      background: #1c2234;
-      color: var(--acid-volt);
+      background: #ff3355;
+      border-color: #ff3355;
+      color: #ffffff;
+      transform: rotate(90deg);
+      box-shadow: 0 0 12px rgba(255, 51, 85, 0.5);
       border-color: var(--acid-volt);
       box-shadow: 0 0 16px rgba(204, 255, 0, 0.4);
       transform: scale(1.1) rotate(90deg);
@@ -1817,25 +1845,43 @@
 
         <!-- In-Window Bespoke Cybercore Startup Applications Modal Dialog -->
         <div id="startup-modal" class="inwindow-modal-overlay">
-          <div class="inwindow-modal-box" style="max-height: 540px;">
+          <div class="inwindow-modal-box" style="max-height: 560px; max-width: 680px; width: 92%;">
             <div class="modal-top-bar" style="padding: 12px 18px;">
-              <div class="modal-top-title">
+              <div class="modal-top-title" style="display:flex;align-items:center;gap:8px;">
                 <div class="pulse-dot"></div>
-                <span>// STARTUP APPLICATIONS MANAGER // AUTOSTART DECOUPLER</span>
+                <span style="color:var(--acid-volt);font-weight:900;">🚀 STARTUP APPLICATIONS DECOUPLER</span>
+                <span style="background:#161b26;border:1px solid #263045;color:var(--acid-volt);font-size:9px;padding:2px 6px;border-radius:4px;font-weight:900;">[AUTORUN_LOCK]</span>
               </div>
               <button onclick="closeStartupModal()" class="modal-close-btn" title="Close">✕</button>
             </div>
-            <div style="padding: 10px 18px; font-size: 11px; color: var(--text-muted); border-bottom: 1px solid var(--border-dark); line-height: 1.4;">
-              Toggle background autostart bloatware without deleting registry keys. Changes persist cleanly with Windows Task Manager.
-            </div>
-            <div class="modal-terminal-viewport" id="startup-app-list" style="max-height: 300px; overflow-y: auto; padding: 12px 18px; display: flex; flex-direction: column; gap: 8px;">
-              <!-- Populated dynamically via JavaScript -->
-            </div>
-            <div class="modal-bottom-bar" style="padding: 12px 18px;">
-              <div class="modal-status-text" id="startup-status-msg">
-                STATUS: 6 STARTUP ENTRIES MONITORED // SAFE REGISTRY SYNC
+            
+            <!-- Real-Time Autostart Telemetry Tally Bar -->
+            <div style="background:#05070a;border-bottom:1px solid #1a2232;padding:8px 18px;display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:10px;font-family:var(--font-mono);">
+              <div style="color:var(--acid-volt);font-weight:900;display:flex;align-items:center;gap:6px;">
+                <span style="font-size:8px;">📡</span>
+                <span>// REGISTRY AUTORUN HOOKS:</span>
               </div>
-              <button onclick="closeStartupModal()" class="btn-dismiss-modal visible">[ ✓ SAVE & CLOSE ]</button>
+              <div style="color:#9ca3af;font-size:9.5px;">
+                DETECTED: <span id="web-su-total" style="color:#ffffff;font-weight:900;">6</span> • 
+                ARMED: <span id="web-su-armed" style="color:var(--acid-volt);font-weight:900;">3</span> • 
+                DECOUPLED: <span id="web-su-decoupled" style="color:#00f0ff;font-weight:900;">3</span>
+              </div>
+            </div>
+
+            <div style="padding: 8px 18px; font-size: 10px; color: #6b7280; font-family: var(--font-mono); line-height: 1.4;">
+              // NON-DESTRUCTIVE REGISTRY MODULATION: Toggles StartupApproved\\Run binary flags without deleting registry keys.
+            </div>
+            <div class="modal-terminal-viewport" id="startup-app-list" style="max-height: 320px; overflow-y: auto; padding: 10px 18px; display: flex; flex-direction: column; gap: 8px;">
+              <!-- Populated dynamically via JavaScript as Tactical Lock-Bay cards -->
+            </div>
+            <div class="modal-bottom-bar" style="padding: 12px 18px; border-top: 1px solid #1a2232;">
+              <div style="font-size: 9.5px; color: #4ade80; display: flex; align-items: center; gap: 6px; font-family: var(--font-mono);">
+                <span class="pulse-pip" style="width:5px;height:5px;background:#4ade80;box-shadow:0 0 6px #4ade80;"></span>
+                <span>[PROTOCOL: 100% REVERSIBLE ROLLBACK SAFE]</span>
+              </div>
+              <button onclick="closeStartupModal()" class="btn-dismiss-modal visible" style="background:#111622;border:1px solid #2a3a50;color:#ffffff;padding:8px 16px;border-radius:6px;font-size:11px;font-weight:900;cursor:pointer;">
+                <span>✕</span> RETURN TO COCKPIT
+              </button>
             </div>
           </div>
         </div>
@@ -2400,7 +2446,7 @@
     }
 
     function toggleStartupApp(index) {
-      playSound("click");
+      playWebSound("click");
       startupApps[index].on = !startupApps[index].on;
       renderStartupList();
     }
@@ -2408,25 +2454,55 @@
     function renderStartupList() {
       const list = document.getElementById("startup-app-list");
       list.innerHTML = "";
+      let armedCount = 0;
+
       startupApps.forEach((app, idx) => {
+        if (app.on) armedCount++;
         const row = document.createElement("div");
-        row.className = "startup-item";
-        row.style.animationDelay = (idx * 0.05) + "s";
+        const isEnabled = app.on;
+        row.className = "startup-card " + (isEnabled ? "card-active" : "card-decoupled");
+        row.style.animationDelay = (idx * 0.04) + "s";
         row.onclick = () => toggleStartupApp(idx);
+
+        const chNum = (idx + 1).toString().padStart(2, "0");
+        const tagText = isEnabled ? "DAEMON HOOK" : "DECOUPLED";
+        const tagClass = isEnabled ? "tag-on" : "tag-off";
+        const lockText = isEnabled ? "🔒 ARMED // AUTORUN_HOOK [ACTIVE]" : "🔓 DECOUPLED // ZERO_LATENCY [HALTED]";
+        const lockClass = isEnabled ? "lock-armed" : "lock-standby";
+
         row.innerHTML = `
-          <div style="display:flex;align-items:center;gap:12px;overflow:hidden;">
-            <span style="background:#182030;border:1px solid #263249;color:#ccff00;font-size:9px;font-weight:900;padding:3px 8px;border-radius:4px;letter-spacing:0.5px;">${app.loc}</span>
-            <div style="overflow:hidden;">
-              <div class="startup-title" style="color:${app.on ? "#fff" : "#9ca3af"};">${app.name}</div>
-              <div class="startup-desc">${app.cmd}</div>
+          <div class="card-left-cluster">
+            <div class="card-channel-box">
+              <span class="card-channel-prefix">ST</span>
+              <span class="card-channel-num" style="color:${isEnabled ? "var(--acid-volt)" : "#9ca3af"};">${chNum}</span>
+            </div>
+            <div class="card-body-cluster">
+              <div class="card-header-line">
+                <span class="card-name" style="color:${isEnabled ? "#fff" : "#9ca3af"};">${app.name}</span>
+                <span class="card-tag ${tagClass}">${tagText}</span>
+                <span class="su-loc-badge">${app.loc}\\RUN</span>
+              </div>
+              <div class="su-cmd-path">${app.cmd}</div>
+              <div class="card-hazard-badge ${lockClass}" style="width:fit-content;margin-top:2px;">
+                <span>${lockText}</span>
+              </div>
             </div>
           </div>
-          <div class="app-cyber-switch ${app.on ? "" : "off"}" style="pointer-events:none;">
-            <div class="app-switch-thumb">${app.on ? "ON" : "OFF"}</div>
+          <div class="card-right-cluster">
+            <div class="app-cyber-switch ${isEnabled ? "" : "off"}" style="pointer-events:none;">
+              <div class="app-switch-thumb">${isEnabled ? "ON" : "OFF"}</div>
+            </div>
           </div>
         `;
         list.appendChild(row);
       });
+
+      const totalEl = document.getElementById("web-su-total");
+      const armedEl = document.getElementById("web-su-armed");
+      const decoupledEl = document.getElementById("web-su-decoupled");
+      if (totalEl) totalEl.innerText = startupApps.length;
+      if (armedEl) armedEl.innerText = armedCount;
+      if (decoupledEl) decoupledEl.innerText = startupApps.length - armedCount;
     }
 
     updateAppUI();
