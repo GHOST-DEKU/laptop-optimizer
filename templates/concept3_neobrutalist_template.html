@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Neo-Brutalist Technical Studio // UI Template</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Space Mono & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800;900&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+  <style>
+    /* ========================================================================= */
+    /* NEO-BRUTALIST TECHNICAL STUDIO // CORE DESIGN TOKENS                      */
+    /* ========================================================================= */
+    :root {
+      --nb-canvas: #f4f4f0;
+      --nb-paper: #fafafa;
+      --nb-ink: #121212;
+      --nb-accent: #ffe600; /* Canary Yellow */
+      --nb-accent-hover: #ffd500;
+      --nb-border: #121212;
+      --nb-shadow: #121212;
+    }
+
+    body {
+      font-family: 'JetBrains Mono', 'Space Mono', monospace;
+      background-color: var(--nb-canvas);
+      color: var(--nb-ink);
+      min-height: 100vh;
+    }
+
+    /* 2.5D Hard Solid Drop Shadows */
+    .shadow-nb-sm {
+      box-shadow: 2px 2px 0px 0px var(--nb-shadow);
+    }
+    .shadow-nb {
+      box-shadow: 4px 4px 0px 0px var(--nb-shadow);
+    }
+    .shadow-nb-lg {
+      box-shadow: 6px 6px 0px 0px var(--nb-shadow);
+    }
+    .shadow-nb-xl {
+      box-shadow: 10px 10px 0px 0px var(--nb-shadow);
+    }
+
+    /* Tactile 2.5D Card Hover & Active Press Physics */
+    .nb-interactive-card {
+      transition: transform 0.12s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.12s cubic-bezier(0.2, 0, 0, 1), background-color 0.12s ease;
+    }
+    .nb-interactive-card:hover {
+      transform: translate(-3px, -3px);
+      box-shadow: 7px 7px 0px 0px var(--nb-shadow);
+    }
+    .nb-interactive-card:active {
+      transform: translate(2px, 2px);
+      box-shadow: 2px 2px 0px 0px var(--nb-shadow);
+    }
+
+    /* Tactile Push Button Physics */
+    .nb-btn {
+      transition: transform 0.1s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.1s cubic-bezier(0.2, 0, 0, 1);
+    }
+    .nb-btn:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 6px 6px 0px 0px var(--nb-shadow);
+    }
+    .nb-btn:active {
+      transform: translate(2px, 2px);
+      box-shadow: 0px 0px 0px 0px var(--nb-shadow);
+    }
+
+    /* Diagnostic Badge Micro-Interactions */
+    .nb-badge {
+      transition: all 0.15s cubic-bezier(0.2, 0, 0, 1);
+      cursor: pointer;
+    }
+    .nb-badge:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0px 0px var(--nb-shadow);
+      background-color: var(--nb-ink);
+      color: var(--nb-accent);
+    }
+
+    /* Hazard Stripe Repeating Pattern */
+    .hazard-stripes {
+      background: repeating-linear-gradient(
+        45deg,
+        #121212,
+        #121212 10px,
+        #ffe600 10px,
+        #ffe600 20px
+      );
+    }
+
+    /* Custom Terminal Scrollbar */
+    .nb-terminal-scroll::-webkit-scrollbar {
+      width: 8px;
+    }
+    .nb-terminal-scroll::-webkit-scrollbar-track {
+      background: #f0f0f0;
+      border-left: 2px solid #121212;
+    }
+    .nb-terminal-scroll::-webkit-scrollbar-thumb {
+      background: #121212;
+    }
+    .nb-terminal-scroll::-webkit-scrollbar-thumb:hover {
+      background: #ffe600;
+      border: 1px solid #121212;
+    }
+  </style>
+</head>
+<body class="p-4 md:p-8 flex items-center justify-center">
+
+  <!-- ========================================================================= -->
+  <!-- MAIN NEO-BRUTALIST STUDIO CONTAINER                                       -->
+  <!-- ========================================================================= -->
+  <main class="w-full max-w-4xl bg-[#fafafa] border-4 border-black p-6 md:p-8 shadow-nb-xl relative">
+    
+    <!-- Top Studio Stencil Bar -->
+    <header class="border-b-4 border-black pb-5 mb-6 flex flex-wrap justify-between items-center gap-4">
+      <div>
+        <div class="inline-flex items-center gap-2 bg-black text-[#ffe600] px-3 py-1 text-xs font-black uppercase tracking-wider mb-2 shadow-nb-sm">
+          <span>📐</span>
+          <span id="template-system-id">STUDIO.SPEC // v1.0.0</span>
+        </div>
+        <h1 id="template-title" class="text-xl md:text-2xl font-black tracking-tight text-black">
+          NEO-BRUTALIST TECHNICAL STUDIO
+        </h1>
+        <p id="template-subtitle" class="text-xs text-gray-700 font-bold mt-0.5">
+          High-contrast architectural engineering interface with 2.5D solid physics.
+        </p>
+      </div>
+
+      <!-- Sound Toggle & Status -->
+      <div class="flex items-center gap-3">
+        <button id="sound-toggle-btn" onclick="toggleHaptics()" class="nb-btn border-2 border-black bg-white px-3 py-1.5 text-xs font-black shadow-nb-sm hover:bg-[#ffe600] flex items-center gap-1.5">
+          <span id="sound-icon">🔊</span>
+          <span id="sound-label">SOUND: ON</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- 4-Tile Interactive Diagnostic Metric Badges Cluster -->
+    <section class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6" aria-label="Diagnostic Readouts">
+      <div class="nb-badge border-2 border-black bg-[#ffe600] text-black p-3 shadow-nb-sm" title="Processor Governor">
+        <div class="text-[10px] font-black uppercase tracking-wider text-black/70">CPU STATUS</div>
+        <div class="text-sm font-black mt-0.5" id="metric-cpu">4.70 GHz [100%]</div>
+      </div>
+      <div class="nb-badge border-2 border-black bg-[#ffe600] text-black p-3 shadow-nb-sm" title="RAM Footprint">
+        <div class="text-[10px] font-black uppercase tracking-wider text-black/70">MEMORY DRAIN</div>
+        <div class="text-sm font-black mt-0.5" id="metric-ram">16 GB [-320MB]</div>
+      </div>
+      <div class="nb-badge border-2 border-black bg-[#ffe600] text-black p-3 shadow-nb-sm" title="Reclaimed Disk Capacity">
+        <div class="text-[10px] font-black uppercase tracking-wider text-black/70">STORAGE FREED</div>
+        <div class="text-sm font-black mt-0.5" id="metric-ssd">+7.50 GB NVMe</div>
+      </div>
+      <div class="nb-badge border-2 border-black bg-[#ffe600] text-black p-3 shadow-nb-sm" title="UI Frame Latency">
+        <div class="text-[10px] font-black uppercase tracking-wider text-black/70">DWM LATENCY</div>
+        <div class="text-sm font-black mt-0.5" id="metric-dwm">20ms SNAP</div>
+      </div>
+    </section>
+
+    <!-- Interactive Modular Options List -->
+    <section class="space-y-3 mb-8" id="options-container" aria-label="Configurable Parameters">
+      <!-- Options will be dynamically rendered via renderOptions() or written statically below -->
+    </section>
+
+    <!-- Bottom Action Controls -->
+    <footer class="flex flex-wrap items-center justify-between pt-5 border-t-4 border-black gap-4">
+      <div class="flex items-center gap-2">
+        <button onclick="restoreDefaults()" class="nb-btn border-2 border-black bg-white px-4 py-2.5 text-xs font-black shadow-nb hover:bg-[#ffe600]">
+          ↺ RESTORE DEFAULTS
+        </button>
+        <button onclick="toggleAll()" class="nb-btn border-2 border-black bg-white px-4 py-2.5 text-xs font-black shadow-nb hover:bg-[#ffe600]">
+          TOGGLE ALL
+        </button>
+      </div>
+
+      <button id="primary-action-btn" onclick="executePipeline()" class="nb-btn border-4 border-black bg-black text-[#ffe600] px-7 py-3 text-xs md:text-sm font-black uppercase tracking-wider shadow-nb-lg hover:bg-[#ffe600] hover:text-black flex items-center gap-2">
+        <span>⚡</span>
+        <span id="primary-action-label">EXECUTE ARCHITECTURAL PIPELINE</span>
+        <span>➔</span>
+      </button>
+    </footer>
+
+    <!-- Template Adaptation Guide Box -->
+    <aside class="mt-8 p-4 border-2 border-dashed border-black/40 bg-white/70 text-xs">
+      <div class="font-black flex items-center gap-2 mb-1">
+        <span>💡</span> DEVELOPER // AGENT ADAPTATION GUIDE:
+      </div>
+      <p class="text-gray-700 leading-relaxed">
+        To reuse this template for any dashboard, settings tool, or CLI wrapper: modify the <code class="bg-black/10 px-1 py-0.5 font-bold">TEMPLATE_CONFIG</code> object in the script below. Add or remove items from <code class="bg-black/10 px-1 py-0.5 font-bold">options</code>, customize the diagnostic cluster values, and bind your backend API or command executor in <code class="bg-black/10 px-1 py-0.5 font-bold">onExecute()</code>.
+      </p>
+    </aside>
+  </main>
+
+  <!-- ========================================================================= -->
+  <!-- BESPOKE NEO-BRUTALIST EXECUTION MODAL DIALOGUE                            -->
+  <!-- ========================================================================= -->
+  <div id="execution-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-[#fafafa] border-4 border-black p-6 max-w-lg w-full shadow-nb-xl relative font-mono text-xs">
+      
+      <!-- Modal Top Title Bar -->
+      <div class="bg-black text-white p-3 flex justify-between items-center -mx-6 -mt-6 mb-5">
+        <div class="flex items-center gap-2">
+          <span class="w-2.5 h-2.5 bg-[#ffe600] inline-block"></span>
+          <span class="font-black text-xs uppercase tracking-wider" id="modal-title">ARCHITECTURAL DISPATCH CONSOLE</span>
+        </div>
+        <span id="modal-pct-badge" class="bg-[#ffe600] text-black border border-black font-black text-xs px-2.5 py-0.5">
+          0%
+        </span>
+      </div>
+
+      <!-- Hazard Striped Animated Progress Bar -->
+      <div class="w-full border-2 border-black h-4 mb-4 bg-white overflow-hidden p-0.5">
+        <div id="modal-progress-bar" class="h-full w-0 transition-all duration-300 hazard-stripes"></div>
+      </div>
+
+      <!-- Monospace Typewriter Console Readout -->
+      <div id="modal-console-log" class="bg-white border-2 border-black p-3.5 text-[11px] space-y-1.5 min-h-[220px] max-h-[260px] overflow-y-auto mb-4 text-black nb-terminal-scroll leading-relaxed font-bold">
+        <div class="text-gray-500 pb-1 border-b border-gray-300">>>> INITIALIZING ARCHITECTURAL BATCH WORKER (PID: 9482)</div>
+      </div>
+
+      <!-- Modal Bottom Actions -->
+      <div class="flex justify-between items-center pt-2 border-t-2 border-black">
+        <span id="modal-status-text" class="text-[11px] font-black text-black">
+          STATUS: IN PROGRESS...
+        </span>
+        <button id="modal-dismiss-btn" onclick="closeModal()" class="hidden nb-btn border-2 border-black bg-[#ffe600] text-black font-black px-5 py-2 text-xs shadow-nb hover:bg-black hover:text-[#ffe600]">
+          [ ✓ DISMISS CONSOLE ]
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- JAVASCRIPT: DATA MODEL, HAPTICS, AND STATE ENGINE                        -->
+  <!-- ========================================================================= -->
+  <script>
+    // --- 1. EASY CONFIGURATION SCHEMA (CUSTOMIZE FOR ANY FUTURE USE CASE) ---
+    const TEMPLATE_CONFIG = {
+      systemId: "STUDIO.SPEC // v1.0.0",
+      title: "NEO-BRUTALIST TECHNICAL STUDIO",
+      subtitle: "High-contrast architectural engineering interface with 2.5D solid physics.",
+      metrics: {
+        cpu: "4.70 GHz [100%]",
+        ram: "16 GB [-320MB]",
+        ssd: "+7.50 GB NVMe",
+        dwm: "20ms SNAP"
+      },
+      options: [
+        {
+          id: 1,
+          title: "LOCK AC POWER TO 100% THROTTLE",
+          desc: "Forces minimum CPU state to 100% on AC to eliminate clock ramp-up stutter.",
+          badge: "100% FLOOR",
+          enabled: true,
+          executionStep: "Unlocking High Performance power scheme and setting AC processor floor to 100%... OK"
+        },
+        {
+          id: 2,
+          title: "DECOUPLE GAME DVR & BACKGROUND VIDEO RECORDING",
+          desc: "Disables rolling DirectX background video encoding hooks and saves GPU VRAM.",
+          badge: "ZERO VRAM DRAIN",
+          enabled: true,
+          executionStep: "Disabling GameDVR and historical background buffer in registry... OK"
+        },
+        {
+          id: 3,
+          title: "SET MENU SHOW DELAY TO 20ms",
+          desc: "Removes 380ms artificial Windows UI animation delay for instant context menus.",
+          badge: "20ms DELAY",
+          enabled: true,
+          executionStep: "Writing MenuShowDelay = 20 to HKCU Control Panel Desktop... OK"
+        },
+        {
+          id: 4,
+          title: "PURGE WINDOWS 11 WIDGET BOARD & WEBVIEWS",
+          desc: "Terminates WidgetService and eliminates 20+ idle WebView2 child daemons.",
+          badge: "-300MB RAM",
+          enabled: true,
+          executionStep: "Uninstalled WebExperience pack; 20+ idle Edge WebView daemons purged... OK"
+        },
+        {
+          id: 5,
+          title: "DISABLE FAST STARTUP & PURGE HIBERFIL.SYS",
+          desc: "Reclaims +6.22 GB NVMe storage permanently and guarantees 100% clean boots.",
+          badge: "+6.22GB SSD",
+          enabled: true,
+          executionStep: "Executing powercfg -h off; hiberfil.sys deleted (+6.22 GB reclaimed)... OK"
+        }
+      ]
+    };
+
+    // --- 2. PROCEDURAL MECHANICAL AUDIO SYNTHESIZER (WEB AUDIO API) ---
+    let audioCtx = null;
+    let soundEnabled = true;
+
+    function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+    }
+
+    function toggleHaptics() {
+      soundEnabled = !soundEnabled;
+      document.getElementById('sound-icon').textContent = soundEnabled ? '🔊' : '🔇';
+      document.getElementById('sound-label').textContent = soundEnabled ? 'SOUND: ON' : 'SOUND: OFF';
+    }
+
+    function playSound(type) {
+      if (!soundEnabled) return;
+      initAudio();
+      const t = audioCtx.currentTime;
+
+      if (type === 'click') {
+        // Crisp mechanical relay snap
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(680, t);
+        osc.frequency.exponentialRampToValueAtTime(140, t + 0.04);
+        gain.gain.setValueAtTime(0.08, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(t);
+        osc.stop(t + 0.04);
+      } else if (type === 'success') {
+        // High harmonic double beep
+        [440, 880].forEach((freq, idx) => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, t + idx * 0.08);
+          gain.gain.setValueAtTime(0.06, t + idx * 0.08);
+          gain.gain.exponentialRampToValueAtTime(0.001, t + idx * 0.08 + 0.12);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(t + idx * 0.08);
+          osc.stop(t + idx * 0.08 + 0.12);
+        });
+      }
+    }
+
+    // --- 3. RENDERING AND STATE LOGIC ---
+    function renderOptions() {
+      const container = document.getElementById('options-container');
+      container.innerHTML = '';
+
+      TEMPLATE_CONFIG.options.forEach((opt, idx) => {
+        const card = document.createElement('div');
+        card.className = `nb-interactive-card border-2 border-black bg-white p-4 shadow-nb flex items-center justify-between cursor-pointer select-none group`;
+        card.onclick = () => toggleOption(opt.id);
+
+        const checkBg = opt.enabled ? 'bg-black text-[#ffe600]' : 'bg-white text-transparent border-gray-400';
+        const statusBg = opt.enabled ? 'bg-[#ffe600] text-black' : 'bg-gray-200 text-gray-500';
+        const titleClass = opt.enabled ? 'text-black' : 'text-gray-400 line-through';
+
+        card.innerHTML = `
+          <div class="flex items-center gap-3">
+            <div class="w-6 h-6 border-2 border-black ${checkBg} flex items-center justify-center font-black text-sm group-hover:scale-110 transition-transform">
+              ✓
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="font-black text-xs md:text-sm block group-hover:underline ${titleClass}">
+                  ${opt.id}. ${opt.title}
+                </span>
+                <span class="border border-black px-1.5 py-0.2 text-[9px] font-black bg-white shadow-nb-sm">
+                  ${opt.badge}
+                </span>
+              </div>
+              <span class="text-xs text-gray-600 block mt-0.5">${opt.desc}</span>
+            </div>
+          </div>
+          <span class="font-black ${statusBg} px-3 py-1 border-2 border-black text-[10px] md:text-xs">
+            ${opt.enabled ? 'ACTIVE' : 'BYPASSED'}
+          </span>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function toggleOption(id) {
+      playSound('click');
+      const item = TEMPLATE_CONFIG.options.find(o => o.id === id);
+      if (item) {
+        item.enabled = !item.enabled;
+        renderOptions();
+      }
+    }
+
+    function restoreDefaults() {
+      playSound('click');
+      TEMPLATE_CONFIG.options.forEach(o => o.enabled = true);
+      renderOptions();
+    }
+
+    function toggleAll() {
+      playSound('click');
+      const allActive = TEMPLATE_CONFIG.options.every(o => o.enabled);
+      TEMPLATE_CONFIG.options.forEach(o => o.enabled = !allActive);
+      renderOptions();
+    }
+
+    // --- 4. BATCH EXECUTION & MODAL SIMULATOR ---
+    function executePipeline() {
+      playSound('click');
+      const activeOptions = TEMPLATE_CONFIG.options.filter(o => o.enabled);
+      if (activeOptions.length === 0) {
+        alert("Please select at least one option to execute.");
+        return;
+      }
+
+      const modal = document.getElementById('execution-modal');
+      const log = document.getElementById('modal-console-log');
+      const bar = document.getElementById('modal-progress-bar');
+      const pctBadge = document.getElementById('modal-pct-badge');
+      const statusText = document.getElementById('modal-status-text');
+      const dismissBtn = document.getElementById('modal-dismiss-btn');
+
+      // Reset Modal State
+      modal.classList.remove('hidden');
+      dismissBtn.classList.add('hidden');
+      bar.style.width = '0%';
+      pctBadge.textContent = '0%';
+      statusText.textContent = 'STATUS: RUNNING ARCHITECTURAL PROTOCOLS...';
+      log.innerHTML = `<div class="text-gray-500 pb-1 border-b border-gray-300">>>> INITIALIZING ARCHITECTURAL BATCH WORKER (PID: 9482)</div>`;
+
+      let currentStep = 0;
+      const totalSteps = activeOptions.length;
+
+      function runNextStep() {
+        if (currentStep < totalSteps) {
+          const opt = activeOptions[currentStep];
+          const pct = Math.round(((currentStep + 1) / totalSteps) * 100);
+
+          setTimeout(() => {
+            bar.style.width = `${pct}%`;
+            pctBadge.textContent = `${pct}%`;
+            playSound('click');
+
+            const entry = document.createElement('div');
+            entry.className = 'text-black py-0.5';
+            entry.innerHTML = `<span class="text-gray-500">[${currentStep + 1}/${totalSteps}]</span> ${opt.executionStep}`;
+            log.appendChild(entry);
+            log.scrollTop = log.scrollHeight;
+
+            currentStep++;
+            runNextStep();
+          }, 320);
+        } else {
+          // Execution Finished
+          setTimeout(() => {
+            playSound('success');
+            bar.style.width = '100%';
+            pctBadge.textContent = '100%';
+            statusText.textContent = 'STATUS: ALL SUBSYSTEMS RUNNING AT PEAK SPEC';
+
+            const doneEntry = document.createElement('div');
+            doneEntry.className = 'bg-[#ffe600] text-black border border-black p-2 mt-2 font-black';
+            doneEntry.textContent = '✓ ARCHITECTURAL EXECUTION COMPLETE: 100% OF TARGET METRICS SATISFIED.';
+            log.appendChild(doneEntry);
+            log.scrollTop = log.scrollHeight;
+
+            dismissBtn.classList.remove('hidden');
+          }, 200);
+        }
+      }
+
+      runNextStep();
+    }
+
+    function closeModal() {
+      playSound('click');
+      document.getElementById('execution-modal').classList.add('hidden');
+    }
+
+    // Initialize UI on load
+    document.addEventListener('DOMContentLoaded', () => {
+      renderOptions();
+    });
+  </script>
+</body>
+</html>

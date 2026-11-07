@@ -151,4 +151,51 @@ public:
     static bool OptimizeDeveloperMode() {
         return SetRegistryDword(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\AppModelUnlock", L"AllowDevelopmentWithoutDevLicense", 1);
     }
+
+    // --- 1-Click Rollback / Restore Windows Defaults ---
+
+    static bool RestorePowerPlan() {
+        // Restore Windows Balanced power scheme (381b4222-f694-41f0-9685-ff5bb260df2e)
+        return ExecuteCommand(L"powercfg -setactive 381b4222-f694-41f0-9685-ff5bb260df2e", true);
+    }
+
+    static bool RestoreGameDVR() {
+        bool ok = true;
+        ok &= SetRegistryDword(HKEY_CURRENT_USER, L"System\\GameConfigStore", L"GameDVR_Enabled", 1);
+        ok &= SetRegistryDword(HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows\\CurrentVersion\\GameDVR", L"AppCaptureEnabled", 1);
+        ok &= SetRegistryDword(HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows\\CurrentVersion\\GameDVR", L"HistoricalCaptureEnabled", 1);
+        return ok;
+    }
+
+    static bool RestoreMenuDelay() {
+        return SetRegistryString(HKEY_CURRENT_USER, L"Control Panel\\Desktop", L"MenuShowDelay", L"400");
+    }
+
+    static bool RestoreWidgets() {
+        return SetRegistryDword(HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced", L"TaskbarDa", 1);
+    }
+
+    static bool RestoreBingSearch() {
+        return SetRegistryDword(HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows\\CurrentVersion\\Search", L"BingSearchEnabled", 1);
+    }
+
+    static bool RestoreDeliveryOptimization() {
+        return SetRegistryDword(HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows\\CurrentVersion\\DeliveryOptimization", L"DODownloadMode", 1);
+    }
+
+    static bool RestoreFastStartup() {
+        return ExecuteCommand(L"powercfg -h on", true);
+    }
+
+    static bool RestoreAllDefaults() {
+        bool ok = true;
+        ok &= RestorePowerPlan();
+        ok &= RestoreGameDVR();
+        ok &= RestoreMenuDelay();
+        ok &= RestoreWidgets();
+        ok &= RestoreBingSearch();
+        ok &= RestoreDeliveryOptimization();
+        ok &= RestoreFastStartup();
+        return ok;
+    }
 };

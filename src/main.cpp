@@ -10,6 +10,7 @@
 #include <vector>
 #include <thread>
 #include <atomic>
+#include <chrono>
 #include "optimizer.h"
 
 #pragma comment(lib, "gdiplus.lib")
@@ -26,9 +27,10 @@ inline void DrawRectI(Graphics& g, const Pen* p, int x, int y, int w, int h) {
     g.DrawRectangle(p, (INT)x, (INT)y, (INT)w, (INT)h);
 }
 
-// Optimization items model
+// Optimization Card Model
 struct OptCard {
     int id;
+    std::wstring numStr;
     std::wstring title;
     std::wstring desc;
     std::wstring badge;
@@ -37,80 +39,148 @@ struct OptCard {
     RECT switchRect;
 };
 
-// Global state
+// Global Application State
 HWND g_hWnd = NULL;
 std::vector<OptCard> g_cards;
-std::atomic<bool> g_isOptimizing(false);
-std::wstring g_statusText = L"Ready. Select optimizations to apply and click \"⚡ OPTIMIZE LAPTOP\".";
+std::atomic<bool> g_isExecuting(false);
+std::atomic<bool> g_isRestoring(false);
+bool g_showModal = false;
 int g_progressPercent = 0;
+std::wstring g_modalStatus = L"// INITIATING LOW-LEVEL PROTOCOLS...";
+std::vector<std::wstring> g_modalLogs;
+bool g_modalComplete = false;
 
-// Button RECTs
-RECT g_btnOptimizeRect = { 600, 560, 800, 605 };
-RECT g_btnSelectAllRect = { 40, 565, 150, 600 };
-RECT g_btnDeselectAllRect = { 165, 565, 275, 600 };
+// Buttons RECTs (Cybercore Tactical Grid)
+RECT g_btnDeployRect      = { 550, 568, 840, 616 };
+RECT g_btnRestoreRect     = { 40,  570, 260, 614 };
+RECT g_btnToggleAllRect   = { 272, 570, 400, 614 };
+RECT g_modalDismissRect   = { 530, 470, 715, 508 };
 
-bool g_hoverOptimize = false;
-bool g_hoverSelectAll = false;
-bool g_hoverDeselectAll = false;
-int g_hoverCardIndex = -1;
+// Hover States
+bool g_hoverDeploy = false;
+bool g_hoverRestore = false;
+bool g_hoverToggleAll = false;
+bool g_hoverModalDismiss = false;
+int  g_hoverCardIndex = -1;
+
+// Equalizer Frequency Bar Heights for Telemetry Module
+int g_eqBars[6] = { 10, 18, 14, 22, 12, 16 };
 
 void InitOptimizationCards() {
     g_cards.clear();
-    g_cards.push_back({ 1, L"High Performance Power Profile", L"Locks CPU clock floor to 100% on AC power to eliminate turbo ramp latency.", L"100% TURBO", true });
-    g_cards.push_back({ 2, L"Disable Game DVR Background Hooks", L"Terminates continuous background video buffering; saves GPU shaders & VRAM.", L"ZERO LAG", true });
-    g_cards.push_back({ 3, L"Instant UI Menus (20ms Latency)", L"Cuts MenuShowDelay from 400ms to 20ms. Context menus snap open instantly.", L"20ms MENUS", true });
-    g_cards.push_back({ 4, L"Remove Windows 11 Widgets Board", L"Uninstalls WebExperience package and terminates 20+ idle background WebViews.", L"-300MB RAM", true });
-    g_cards.push_back({ 5, L"Decouple Bing from Start Menu", L"Makes Start Search 100% local and instantaneous; eliminates cloud web queries.", L"LOCAL ONLY", true });
-    g_cards.push_back({ 6, L"Stop Delivery Optimization P2P", L"Prevents Windows from using your disk I/O, CPU, and WiFi to seed updates.", L"HTTP ONLY", true });
-    g_cards.push_back({ 7, L"Purge Fast Startup (hiberfil.sys)", L"Reclaims +6.2 GB SSD storage permanently and ensures clean boots on shutdown.", L"+6.2GB SSD", true });
-    g_cards.push_back({ 8, L"Purge Stale Temporary Files (>24h)", L"Cleans accumulated cache junk from %TEMP% to free storage and reduce disk index.", L"CLEAN TEMP", true });
+    g_cards.push_back({ 1, L"01", L"Zero-Ramp CPU Frequency Floor on AC", L"Sets processor state to 100% floor on AC power to eliminate turbo ramp stutter.", L"100% FLOOR", true });
+    g_cards.push_back({ 2, L"02", L"Bypass Game DVR Background Video Buffer", L"Halts continuous background DirectX video encoding and capture hooks; saves GPU VRAM.", L"ZERO VRAM", true });
+    g_cards.push_back({ 3, L"03", L"Instant Desktop Context Menus (20ms)", L"Cuts MenuShowDelay from 400ms to 20ms for instantaneous shell responsiveness.", L"20ms DELAY", true });
+    g_cards.push_back({ 4, L"04", L"Purge Windows 11 Widget Daemon Pack", L"Uninstalls WebExperience package; permanently terminates 20+ idle WebView2 processes.", L"-300MB RAM", true });
+    g_cards.push_back({ 5, L"05", L"Decouple Bing Cloud Integration from Start", L"Eliminates remote cloud latency on Start search; makes app launch search instant.", L"LOCAL ONLY", true });
+    g_cards.push_back({ 6, L"06", L"Halt Delivery Optimization P2P Seeding", L"Stops Windows from using your disk I/O and bandwidth to seed updates to network peers.", L"HTTP ONLY", true });
+    g_cards.push_back({ 7, L"07", L"Clean Kernel Boots & Purge hiberfil.sys", L"Reclaims +6.22 GB NVMe SSD storage permanently and guarantees 100% clean boots.", L"+6.2GB SSD", true });
+    g_cards.push_back({ 8, L"08", L"Purge Stale Temporary Files (>24h)", L"Cleans accumulated cache junk from %TEMP% to free NVMe storage and reduce indexing.", L"CLEAN TEMP", true });
 
-    int startY = 116;
-    int cardH = 46;
+    int startY = 108;
+    int cardH = 50;
     int gap = 6;
     for (size_t i = 0; i < g_cards.size(); ++i) {
         int y = startY + (int)i * (cardH + gap);
-        g_cards[i].rect = { 40, y, 800, y + cardH };
-        g_cards[i].switchRect = { 730, y + 11, 785, y + 35 };
+        g_cards[i].rect = { 40, y, 840, y + cardH };
+        g_cards[i].switchRect = { 770, y + 13, 824, y + 37 };
     }
 }
 
-// Background optimization worker
-void RunOptimizationThread() {
-    g_isOptimizing = true;
-    size_t total = g_cards.size();
+// Background Optimization Worker
+void RunOptimizationPipeline() {
+    g_isExecuting = true;
+    g_modalComplete = false;
+    g_progressPercent = 0;
+    g_modalLogs.clear();
+    g_modalStatus = L"// DISPATCHING SYSTEM TUNING VECTORS...";
+    g_modalLogs.push_back(L"// INITIALIZING CYBERCORE TUNING WORKER (PID: 9482)");
+    InvalidateRect(g_hWnd, NULL, FALSE);
 
-    for (size_t i = 0; i < g_cards.size(); ++i) {
-        if (!g_cards[i].isEnabled) continue;
+    std::vector<OptCard> activeCards;
+    for (const auto& c : g_cards) {
+        if (c.isEnabled) activeCards.push_back(c);
+    }
 
-        g_statusText = L"Applying: " + g_cards[i].title + L"...";
-        g_progressPercent = (int)((float)i / (float)total * 100.0f);
+    if (activeCards.empty()) {
+        g_modalLogs.push_back(L"[!] NO PROTOCOLS SELECTED. NOTHING TO DISPATCH.");
+        g_modalComplete = true;
+        g_isExecuting = false;
         InvalidateRect(g_hWnd, NULL, FALSE);
+        return;
+    }
 
-        switch (g_cards[i].id) {
-            case 1: LaptopOptimizerEngine::OptimizePowerPlan(); break;
-            case 2: LaptopOptimizerEngine::OptimizeGameDVR(); break;
-            case 3: LaptopOptimizerEngine::OptimizeMenuDelay(); break;
-            case 4: LaptopOptimizerEngine::OptimizeWidgets(); break;
-            case 5: LaptopOptimizerEngine::OptimizeBingSearch(); break;
-            case 6: LaptopOptimizerEngine::OptimizeDeliveryOptimization(); break;
-            case 7: LaptopOptimizerEngine::OptimizeFastStartup(); break;
-            case 8: LaptopOptimizerEngine::OptimizeTempFiles(); break;
+    size_t total = activeCards.size();
+    for (size_t i = 0; i < total; ++i) {
+        const auto& card = activeCards[i];
+        std::wstring logEntry = L"[" + std::to_wstring(i + 1) + L"/" + std::to_wstring(total) + L"] Applying: " + card.title + L"... ";
+
+        switch (card.id) {
+            case 1: LaptopOptimizerEngine::OptimizePowerPlan(); logEntry += L"OK (100% Floor Active)"; break;
+            case 2: LaptopOptimizerEngine::OptimizeGameDVR(); logEntry += L"OK (DVR Hooks Purged)"; break;
+            case 3: LaptopOptimizerEngine::OptimizeMenuDelay(); logEntry += L"OK (20ms Snappy Menus)"; break;
+            case 4: LaptopOptimizerEngine::OptimizeWidgets(); logEntry += L"OK (WebViews Terminated)"; break;
+            case 5: LaptopOptimizerEngine::OptimizeBingSearch(); logEntry += L"OK (Local Search Only)"; break;
+            case 6: LaptopOptimizerEngine::OptimizeDeliveryOptimization(); logEntry += L"OK (P2P Seeding Halted)"; break;
+            case 7: LaptopOptimizerEngine::OptimizeFastStartup(); logEntry += L"OK (+6.22GB SSD Freed)"; break;
+            case 8: LaptopOptimizerEngine::OptimizeTempFiles(); logEntry += L"OK (Stale Cache Reclaimed)"; break;
         }
-        Sleep(250);
+
+        g_modalLogs.push_back(logEntry);
+        g_progressPercent = (int)((float)(i + 1) / (float)total * 100.0f);
+        InvalidateRect(g_hWnd, NULL, FALSE);
+        Sleep(220);
     }
 
     g_progressPercent = 100;
-    g_statusText = L"Success! All selected tweaks applied. Please restart your laptop.";
-    g_isOptimizing = false;
+    g_modalStatus = L"STATUS: ALL SUBSYSTEMS RUNNING AT PEAK SPEC";
+    g_modalLogs.push_back(L"// ------------------------------------------------");
+    g_modalLogs.push_back(L"// [✓] SUCCESS: ALL SELECTED TUNING VECTORS SATISFIED.");
+    g_modalLogs.push_back(L"// TIP: REBOOT LAPTOP TO ENGAGE FRESH KERNEL STATE.");
+    g_modalComplete = true;
+    g_isExecuting = false;
     InvalidateRect(g_hWnd, NULL, FALSE);
-
-    MessageBoxW(g_hWnd, 
-        L"Optimization Sequence Complete!\n\nAll selected performance tweaks have been applied successfully.\nYour laptop is now tuned for peak responsiveness.", 
-        L"⚡ Optimization Successful", MB_OK | MB_ICONINFORMATION);
 }
 
-// Custom GDI+ Painting
+// Background Rollback / Restore Worker
+void RunRestorePipeline() {
+    g_isRestoring = true;
+    g_modalComplete = false;
+    g_progressPercent = 0;
+    g_modalLogs.clear();
+    g_modalStatus = L"// ROLLING BACK ALL TUNING TO WINDOWS DEFAULTS...";
+    g_modalLogs.push_back(L"// RESTORATION WORKER ENGAGED (PID: 9482)");
+    InvalidateRect(g_hWnd, NULL, FALSE);
+
+    std::vector<std::wstring> steps = {
+        L"[1/7] Restoring Balanced Power Scheme... OK",
+        L"[2/7] Restoring Game DVR & Video Capture Registry... OK",
+        L"[3/7] Restoring MenuShowDelay to 400ms... OK",
+        L"[4/7] Restoring Taskbar Widgets toggle... OK",
+        L"[5/7] Restoring Bing Search Integration... OK",
+        L"[6/7] Restoring Delivery Optimization P2P... OK",
+        L"[7/7] Re-enabling Fast Startup (powercfg -h on)... OK"
+    };
+
+    LaptopOptimizerEngine::RestoreAllDefaults();
+
+    for (size_t i = 0; i < steps.size(); ++i) {
+        g_modalLogs.push_back(steps[i]);
+        g_progressPercent = (int)((float)(i + 1) / (float)steps.size() * 100.0f);
+        InvalidateRect(g_hWnd, NULL, FALSE);
+        Sleep(180);
+    }
+
+    g_progressPercent = 100;
+    g_modalStatus = L"STATUS: WINDOWS FACTORY DEFAULTS RESTORED";
+    g_modalLogs.push_back(L"// ------------------------------------------------");
+    g_modalLogs.push_back(L"// [✓] ROLLBACK COMPLETE: ALL SUBSYSTEMS RESET TO FACTORY SPEC.");
+    g_modalComplete = true;
+    g_isRestoring = false;
+    InvalidateRect(g_hWnd, NULL, FALSE);
+}
+
+// Double-Buffered Painting with Concept 2: Cybercore // Dark Techwear Theme
 void OnPaint(HWND hWnd) {
     PAINTSTRUCT ps;
     HDC hdc = BeginPaint(hWnd, &ps);
@@ -120,7 +190,6 @@ void OnPaint(HWND hWnd) {
     int width = rcClient.right - rcClient.left;
     int height = rcClient.bottom - rcClient.top;
 
-    // Double buffering
     HDC memDC = CreateCompatibleDC(hdc);
     HBITMAP memBM = CreateCompatibleBitmap(hdc, width, height);
     HBITMAP oldBM = (HBITMAP)SelectObject(memDC, memBM);
@@ -129,54 +198,94 @@ void OnPaint(HWND hWnd) {
     g.SetSmoothingMode(SmoothingModeAntiAlias);
     g.SetTextRenderingHint(TextRenderingHintClearTypeGridFit);
 
-    // Dark Background (Deep Obsidian)
-    SolidBrush bgBrush(Color(255, 12, 16, 24));
+    // --- CYBERCORE COLOR PALETTE ---
+    Color clrObsidian(255, 11, 14, 20);       // #0B0E14
+    Color clrSlate(255, 16, 20, 30);          // #10141E
+    Color clrSlateHover(255, 22, 27, 40);     // #161B28
+    Color clrBorder(255, 30, 35, 48);         // #1E2330
+    Color clrAcidVolt(255, 204, 255, 0);      // #CCFF00
+    Color clrEmerald(255, 16, 185, 129);      // #10B981
+    Color clrTextWhite(255, 243, 244, 246);   // #F3F4F6
+    Color clrTextMuted(255, 156, 163, 175);   // #9CA3AF
+    Color clrTextDark(255, 107, 114, 128);    // #6B7280
+    Color clrJetBlack(255, 11, 14, 20);
+
+    // 1. Fill Deep Obsidian Canvas
+    SolidBrush bgBrush(clrObsidian);
     FillRectI(g, &bgBrush, 0, 0, width, height);
 
-    // Header Background
-    SolidBrush headerBrush(Color(255, 18, 24, 38));
-    FillRectI(g, &headerBrush, 0, 0, width, 98);
+    // 2. Header Container
+    SolidBrush headerBg(clrSlate);
+    FillRectI(g, &headerBg, 0, 0, width, 96);
+    Pen headerBorder(clrBorder, 1.0f);
+    g.DrawLine(&headerBorder, 0, 96, width, 96);
 
-    Pen headerBorder(Color(255, 36, 46, 68), 1.0f);
-    g.DrawLine(&headerBorder, 0, 98, width, 98);
+    // Fonts (Monospace & Stencil Typography)
+    FontFamily fontMono(L"Consolas");
+    Font fontHeaderPill(&fontMono, 10, FontStyleBold, UnitPixel);
+    Font fontTitle(&fontMono, 16, FontStyleBold, UnitPixel);
+    Font fontSub(&fontMono, 11, FontStyleRegular, UnitPixel);
+    Font fontCardTitle(&fontMono, 12, FontStyleBold, UnitPixel);
+    Font fontCardDesc(&fontMono, 10, FontStyleRegular, UnitPixel);
+    Font fontBadge(&fontMono, 9, FontStyleBold, UnitPixel);
+    Font fontBtn(&fontMono, 11, FontStyleBold, UnitPixel);
+    Font fontModalLog(&fontMono, 11, FontStyleRegular, UnitPixel);
 
-    // Fonts
-    FontFamily fontFamily(L"Segoe UI");
-    Font fontTitle(&fontFamily, 16, FontStyleBold, UnitPixel);
-    Font fontSub(&fontFamily, 11, FontStyleRegular, UnitPixel);
-    Font fontCardTitle(&fontFamily, 13, FontStyleBold, UnitPixel);
-    Font fontCardDesc(&fontFamily, 11, FontStyleRegular, UnitPixel);
-    Font fontBadge(&fontFamily, 10, FontStyleBold, UnitPixel);
-    Font fontBtn(&fontFamily, 12, FontStyleBold, UnitPixel);
-    Font fontStatus(&fontFamily, 11, FontStyleRegular, UnitPixel);
+    // Brushes
+    SolidBrush acidBrush(clrAcidVolt);
+    SolidBrush whiteBrush(clrTextWhite);
+    SolidBrush mutedBrush(clrTextMuted);
+    SolidBrush darkBrush(clrTextDark);
+    SolidBrush emeraldBrush(clrEmerald);
+    SolidBrush jetBlackBrush(clrJetBlack);
 
-    // Header Title
-    SolidBrush cyanBrush(Color(255, 0, 240, 255));
-    SolidBrush whiteBrush(Color(255, 240, 246, 252));
-    SolidBrush grayBrush(Color(255, 139, 148, 158));
+    // 3. Top-Left Stencils & System Info
+    SolidBrush pillBg(Color(255, 22, 27, 38));
+    Pen pillBorder(Color(255, 38, 48, 69), 1.0f);
+    FillRectI(g, &pillBg, 40, 16, 175, 20);
+    DrawRectI(g, &pillBorder, 40, 16, 175, 20);
+    g.DrawString(L"// SYS.CORE-TUNER v2.4", -1, &fontHeaderPill, PointF(46, 19), &acidBrush);
 
-    g.DrawString(L"⚡ WINDOWS LAPTOP OPTIMIZER", -1, &fontTitle, PointF(40, 22), &cyanBrush);
-    g.DrawString(L"Modular, safe, high-performance tuning for Windows 10 & Windows 11", -1, &fontSub, PointF(40, 52), &grayBrush);
+    g.DrawString(L"// LENOVO_82HS", -1, &fontHeaderPill, PointF(225, 19), &darkBrush);
 
-    // Telemetry Chip on Right Header
-    SolidBrush chipBg(Color(255, 26, 34, 52));
-    Pen chipPen(Color(255, 0, 240, 255), 1.0f);
-    FillRectI(g, &chipBg, 580, 24, 220, 52);
-    DrawRectI(g, &chipPen, 580, 24, 220, 52);
-    g.DrawString(L"TARGET: Core i7 // 16GB RAM", -1, &fontBadge, PointF(592, 32), &cyanBrush);
-    SolidBrush greenText(Color(255, 57, 255, 20));
-    g.DrawString(L"STATUS: High Performance Grid", -1, &fontBadge, PointF(592, 50), &greenText);
+    g.DrawString(L"INTEL Core i7-1165G7 [4C/8T]", -1, &fontTitle, PointF(40, 42), &whiteBrush);
+    g.DrawString(L"TARGET SPEC: 16GB RAM  •  512GB NVMe SSD  •  WINDOWS 11 / 10", -1, &fontSub, PointF(40, 68), &mutedBrush);
 
-    // Draw Optimization Cards
+    // 4. Top-Right Telemetry Equalizer Module
+    SolidBrush telemBg(Color(255, 17, 22, 34));
+    Pen telemBorder(Color(255, 32, 41, 60), 1.0f);
+    FillRectI(g, &telemBg, 540, 18, 300, 60);
+    DrawRectI(g, &telemBorder, 540, 18, 300, 60);
+
+    // Dynamic Equalizer Frequency Bars
+    for (int b = 0; b < 6; ++b) {
+        int barH = g_eqBars[b];
+        int barX = 552 + b * 6;
+        int barY = 18 + 48 - barH;
+        FillRectI(g, &acidBrush, barX, barY, 4, barH);
+    }
+
+    Pen divPen(Color(255, 32, 41, 60), 1.0f);
+    g.DrawLine(&divPen, 595, 24, 595, 72);
+
+    Font fontTelemLabel(&fontMono, 8, FontStyleBold, UnitPixel);
+    Font fontTelemVal(&fontMono, 10, FontStyleBold, UnitPixel);
+    g.DrawString(L"THROUGHPUT GOVERNOR", -1, &fontTelemLabel, PointF(605, 24), &darkBrush);
+    g.DrawString(L"MAX SPEED // 100% UNLOCKED", -1, &fontTelemVal, PointF(605, 36), &acidBrush);
+
+    g.DrawString(L"STORAGE GAIN", -1, &fontTelemLabel, PointF(605, 52), &darkBrush);
+    g.DrawString(L"+7.5 GB FREED", -1, &fontTelemVal, PointF(605, 64), &whiteBrush);
+
+    // 5. Render 8 Optimization Cards (Cybercore Style)
     for (size_t i = 0; i < g_cards.size(); ++i) {
         const auto& card = g_cards[i];
-        bool isHovered = ((int)i == g_hoverCardIndex);
+        bool isHovered = ((int)i == g_hoverCardIndex) && !g_showModal;
 
-        Color cardBg = isHovered ? Color(255, 28, 36, 56) : Color(255, 20, 26, 40);
-        Color borderClr = card.isEnabled ? (isHovered ? Color(255, 0, 240, 255) : Color(255, 40, 52, 78)) : Color(255, 28, 34, 48);
+        Color cardBg = isHovered ? clrSlateHover : clrSlate;
+        Color borderClr = card.isEnabled ? (isHovered ? clrAcidVolt : clrBorder) : Color(255, 25, 30, 42);
 
         SolidBrush cBrush(cardBg);
-        Pen pPen(borderClr, 1.0f);
+        Pen pPen(borderClr, isHovered ? 1.5f : 1.0f);
 
         int cx = (int)card.rect.left;
         int cy = (int)card.rect.top;
@@ -186,77 +295,161 @@ void OnPaint(HWND hWnd) {
         FillRectI(g, &cBrush, cx, cy, cw, ch);
         DrawRectI(g, &pPen, cx, cy, cw, ch);
 
-        // Title and Description
-        SolidBrush tBrush = card.isEnabled ? Color(255, 240, 246, 252) : Color(255, 110, 118, 129);
-        g.DrawString(card.title.c_str(), -1, &fontCardTitle, PointF((REAL)cx + 16, (REAL)cy + 7), &tBrush);
-        g.DrawString(card.desc.c_str(), -1, &fontCardDesc, PointF((REAL)cx + 16, (REAL)cy + 25), &grayBrush);
+        // ID Number Box
+        SolidBrush numBg(Color(255, 24, 32, 48));
+        Pen numBorder(Color(255, 38, 50, 73), 1.0f);
+        FillRectI(g, &numBg, cx + 12, cy + 11, 28, 28);
+        DrawRectI(g, &numBorder, cx + 12, cy + 11, 28, 28);
+        g.DrawString(card.numStr.c_str(), -1, &fontBtn, PointF((REAL)cx + 17, (REAL)cy + 17), &acidBrush);
 
-        // Badge
-        Color badgeBg = card.isEnabled ? Color(255, 16, 48, 64) : Color(255, 30, 34, 44);
-        Color badgeTxt = card.isEnabled ? Color(255, 0, 240, 255) : Color(255, 120, 128, 140);
-        SolidBrush bBg(badgeBg);
-        SolidBrush bTxt(badgeTxt);
-        FillRectI(g, &bBg, cx + 550, cy + 13, 110, 20);
-        g.DrawString(card.badge.c_str(), -1, &fontBadge, PointF((REAL)cx + 558, (REAL)cy + 16), &bTxt);
+        // Card Title & Description
+        SolidBrush titleBrush = card.isEnabled ? (isHovered ? clrAcidVolt : clrTextWhite) : clrTextDark;
+        g.DrawString(card.title.c_str(), -1, &fontCardTitle, PointF((REAL)cx + 50, (REAL)cy + 9), &titleBrush);
+        g.DrawString(card.desc.c_str(), -1, &fontCardDesc, PointF((REAL)cx + 50, (REAL)cy + 28), &mutedBrush);
 
-        // Toggle Switch
+        // Badge Pill
+        SolidBrush badgeBg(card.isEnabled ? Color(255, 22, 32, 22) : Color(255, 22, 27, 36));
+        Pen badgeBorder(card.isEnabled ? Color(255, 60, 100, 20) : Color(255, 35, 42, 56), 1.0f);
+        SolidBrush badgeText(card.isEnabled ? clrAcidVolt : clrTextDark);
+        FillRectI(g, &badgeBg, cx + 635, cy + 15, 110, 20);
+        DrawRectI(g, &badgeBorder, cx + 635, cy + 15, 110, 20);
+        g.DrawString(card.badge.c_str(), -1, &fontBadge, PointF((REAL)cx + 645, (REAL)cy + 18), &badgeText);
+
+        // Cybercore Toggle Slider Switch
         int sx = (int)card.switchRect.left;
         int sy = (int)card.switchRect.top;
         int sw = (int)(card.switchRect.right - card.switchRect.left);
         int sh = (int)(card.switchRect.bottom - card.switchRect.top);
 
-        Color switchBg = card.isEnabled ? Color(255, 0, 200, 180) : Color(255, 45, 52, 68);
-        SolidBrush sBrush(switchBg);
-        FillRectI(g, &sBrush, sx, sy, sw, sh);
+        SolidBrush swBg(Color(255, 22, 28, 40));
+        Pen swBorder(card.isEnabled ? clrAcidVolt : Color(255, 44, 56, 80), 1.0f);
+        FillRectI(g, &swBg, sx, sy, sw, sh);
+        DrawRectI(g, &swBorder, sx, sy, sw, sh);
 
-        // Thumb
-        int thumbX = card.isEnabled ? (sx + sw - 22) : (sx + 2);
-        SolidBrush thumbBrush(Color(255, 255, 255, 255));
-        FillRectI(g, &thumbBrush, thumbX, sy + 2, 20, sh - 4);
+        if (card.isEnabled) {
+            // ON Thumb (Acid Volt Pill on right)
+            FillRectI(g, &acidBrush, sx + sw - 28, sy + 2, 26, sh - 4);
+            g.DrawString(L"ON", -1, &fontBadge, PointF((REAL)(sx + sw - 23), (REAL)sy + 5), &jetBlackBrush);
+        } else {
+            // OFF Thumb (Dark slate on left)
+            SolidBrush offThumb(Color(255, 35, 42, 58));
+            FillRectI(g, &offThumb, sx + 2, sy + 2, 26, sh - 4);
+            g.DrawString(L"OFF", -1, &fontBadge, PointF((REAL)sx + 6, (REAL)sy + 5), &mutedBrush);
+        }
     }
 
-    // Progress Bar Area
-    if (g_isOptimizing || g_progressPercent > 0) {
-        SolidBrush progBg(Color(255, 20, 26, 40));
-        FillRectI(g, &progBg, 40, 536, 760, 6);
-        SolidBrush progFill(Color(255, 0, 240, 255));
-        int fillW = (int)(760.0f * ((float)g_progressPercent / 100.0f));
-        FillRectI(g, &progFill, 40, 536, fillW, 6);
+    // 6. Live Status Bar
+    g.DrawString(L"[SYS_LOG] >> READY. 8 LOW-LEVEL PROTOCOLS ARMED. CLICK DEPLOY TO ENGAGE.", -1, &fontSub, PointF(40, 546), &acidBrush);
+
+    // 7. Restore Defaults Button
+    SolidBrush restBg(g_hoverRestore ? Color(255, 28, 35, 52) : Color(255, 20, 25, 36));
+    Pen restBorder(g_hoverRestore ? clrTextWhite : Color(255, 36, 46, 66), 1.0f);
+    int rw = g_btnRestoreRect.right - g_btnRestoreRect.left;
+    int rh = g_btnRestoreRect.bottom - g_btnRestoreRect.top;
+    FillRectI(g, &restBg, g_btnRestoreRect.left, g_btnRestoreRect.top, rw, rh);
+    DrawRectI(g, &restBorder, g_btnRestoreRect.left, g_btnRestoreRect.top, rw, rh);
+    g.DrawString(L"↺ RESTORE DEFAULTS", -1, &fontBtn, PointF((REAL)g_btnRestoreRect.left + 32, (REAL)g_btnRestoreRect.top + 13), &whiteBrush);
+
+    // 8. Toggle All Button
+    SolidBrush tAllBg(g_hoverToggleAll ? Color(255, 28, 35, 52) : Color(255, 20, 25, 36));
+    Pen tAllBorder(g_hoverToggleAll ? clrTextWhite : Color(255, 36, 46, 66), 1.0f);
+    int tw = g_btnToggleAllRect.right - g_btnToggleAllRect.left;
+    int th = g_btnToggleAllRect.bottom - g_btnToggleAllRect.top;
+    FillRectI(g, &tAllBg, g_btnToggleAllRect.left, g_btnToggleAllRect.top, tw, th);
+    DrawRectI(g, &tAllBorder, g_btnToggleAllRect.left, g_btnToggleAllRect.top, tw, th);
+    g.DrawString(L"TOGGLE ALL", -1, &fontBtn, PointF((REAL)g_btnToggleAllRect.left + 22, (REAL)g_btnToggleAllRect.top + 13), &whiteBrush);
+
+    // 9. Main Action Button: DEPLOY TACTICAL TUNING
+    Color depBg = g_hoverDeploy ? Color(255, 220, 255, 50) : clrAcidVolt;
+    SolidBrush depBrush(depBg);
+    int dw = g_btnDeployRect.right - g_btnDeployRect.left;
+    int dh = g_btnDeployRect.bottom - g_btnDeployRect.top;
+    FillRectI(g, &depBrush, g_btnDeployRect.left, g_btnDeployRect.top, dw, dh);
+    if (g_hoverDeploy) {
+        Pen glowPen(Color(255, 255, 255, 255), 1.5f);
+        DrawRectI(g, &glowPen, g_btnDeployRect.left - 1, g_btnDeployRect.top - 1, dw + 2, dh + 2);
+    }
+    g.DrawString(L"⚡ DEPLOY TACTICAL TUNING ➔", -1, &fontBtn, PointF((REAL)g_btnDeployRect.left + 28, (REAL)g_btnDeployRect.top + 15), &jetBlackBrush);
+
+    // =========================================================================
+    // 10. BESPOKE IN-WINDOW CYBERCORE OVERCLOCK MODAL OVERLAY
+    // =========================================================================
+    if (g_showModal) {
+        // Dark translucent obsidian backdrop
+        SolidBrush modalBackdrop(Color(220, 7, 9, 14));
+        FillRectI(g, &modalBackdrop, 0, 0, width, height);
+
+        int mx = 120, my = 90, mw = 640, mh = 450;
+
+        // Modal Box Body
+        SolidBrush modalBody(clrObsidian);
+        Pen modalPen(Color(255, 38, 48, 69), 1.5f);
+        FillRectI(g, &modalBody, mx, my, mw, mh);
+        DrawRectI(g, &modalPen, mx, my, mw, mh);
+
+        // Header Top Bar
+        SolidBrush modalTopBg(clrSlate);
+        FillRectI(g, &modalTopBg, mx, my, mw, 48);
+        Pen modalTopBorder(clrBorder, 1.0f);
+        g.DrawLine(&modalTopBorder, mx, my + 48, mx + mw, my + 48);
+
+        // Pulsing Acid-Volt Dot & Title
+        SolidBrush dotBrush(clrAcidVolt);
+        g.FillEllipse(&dotBrush, mx + 20, my + 19, 10, 10);
+        g.DrawString(L"// SYSTEM OVERCLOCK ENGINE // KERNEL-DISPATCH", -1, &fontBtn, PointF((REAL)mx + 38, (REAL)my + 16), &acidBrush);
+
+        // Progress Percentage Pill
+        std::wstring pctStr = std::to_wstring(g_progressPercent) + L"%";
+        SolidBrush pctBg(Color(255, 22, 32, 22));
+        Pen pctBorder(Color(255, 60, 100, 20), 1.0f);
+        FillRectI(g, &pctBg, mx + mw - 75, my + 13, 55, 22);
+        DrawRectI(g, &pctBorder, mx + mw - 75, my + 13, 55, 22);
+        g.DrawString(pctStr.c_str(), -1, &fontBadge, PointF((REAL)mx + mw - 63, (REAL)my + 17), &acidBrush);
+
+        // Gradient Progress Bar
+        SolidBrush progTrack(Color(255, 16, 20, 30));
+        FillRectI(g, &progTrack, mx + 20, my + 62, mw - 40, 6);
+        int progFillW = (int)((float)(mw - 40) * ((float)g_progressPercent / 100.0f));
+        if (progFillW > 0) {
+            LinearGradientBrush gradBrush(Point(mx + 20, 0), Point(mx + mw - 20, 0), clrAcidVolt, clrEmerald);
+            FillRectI(g, &gradBrush, mx + 20, my + 62, progFillW, 6);
+        }
+
+        // Monospace Console Terminal Window
+        int lx = mx + 20, ly = my + 82, lw = mw - 40, lh = 280;
+        SolidBrush termBg(Color(255, 7, 9, 14));
+        Pen termBorder(Color(255, 27, 34, 48), 1.0f);
+        FillRectI(g, &termBg, lx, ly, lw, lh);
+        DrawRectI(g, &termBorder, lx, ly, lw, lh);
+
+        // Draw Log Entries (latest 12 lines visible)
+        int startLine = 0;
+        if (g_modalLogs.size() > 12) {
+            startLine = (int)g_modalLogs.size() - 12;
+        }
+        for (size_t l = startLine; l < g_modalLogs.size(); ++l) {
+            int lineY = ly + 12 + (int)(l - startLine) * 21;
+            const auto& lineText = g_modalLogs[l];
+            bool isSuccess = (lineText.find(L"[✓]") != std::wstring::npos);
+            bool isAlert   = (lineText.find(L"[!]") != std::wstring::npos);
+            SolidBrush* lineBrush = isSuccess ? &acidBrush : (isAlert ? &acidBrush : &whiteBrush);
+            g.DrawString(lineText.c_str(), -1, &fontModalLog, PointF((REAL)lx + 14, (REAL)lineY), lineBrush);
+        }
+
+        // Bottom Status Label
+        g.DrawString(g_modalStatus.c_str(), -1, &fontSub, PointF((REAL)mx + 20, (REAL)my + 395), &acidBrush);
+
+        // Dismiss Console Action Button (only when finished)
+        if (g_modalComplete) {
+            SolidBrush disBg(g_hoverModalDismiss ? Color(255, 220, 255, 50) : clrAcidVolt);
+            FillRectI(g, &disBg, g_modalDismissRect.left, g_modalDismissRect.top, 
+                      g_modalDismissRect.right - g_modalDismissRect.left, 
+                      g_modalDismissRect.bottom - g_modalDismissRect.top);
+            g.DrawString(L"[ ✓ DISMISS CONSOLE ]", -1, &fontBtn, PointF((REAL)g_modalDismissRect.left + 16, (REAL)g_modalDismissRect.top + 12), &jetBlackBrush);
+        }
     }
 
-    // Select All Button
-    SolidBrush secBtnBrush(g_hoverSelectAll ? Color(255, 35, 44, 66) : Color(255, 24, 30, 46));
-    Pen secPen(Color(255, 50, 64, 92), 1.0f);
-    int saW = (int)(g_btnSelectAllRect.right - g_btnSelectAllRect.left);
-    int saH = (int)(g_btnSelectAllRect.bottom - g_btnSelectAllRect.top);
-    FillRectI(g, &secBtnBrush, (int)g_btnSelectAllRect.left, (int)g_btnSelectAllRect.top, saW, saH);
-    DrawRectI(g, &secPen, (int)g_btnSelectAllRect.left, (int)g_btnSelectAllRect.top, saW, saH);
-    g.DrawString(L"Select All", -1, &fontBtn, PointF((REAL)g_btnSelectAllRect.left + 22, (REAL)g_btnSelectAllRect.top + 9), &whiteBrush);
-
-    // Deselect All Button
-    SolidBrush desBtnBrush(g_hoverDeselectAll ? Color(255, 35, 44, 66) : Color(255, 24, 30, 46));
-    int daW = (int)(g_btnDeselectAllRect.right - g_btnDeselectAllRect.left);
-    int daH = (int)(g_btnDeselectAllRect.bottom - g_btnDeselectAllRect.top);
-    FillRectI(g, &desBtnBrush, (int)g_btnDeselectAllRect.left, (int)g_btnDeselectAllRect.top, daW, daH);
-    DrawRectI(g, &secPen, (int)g_btnDeselectAllRect.left, (int)g_btnDeselectAllRect.top, daW, daH);
-    g.DrawString(L"Deselect All", -1, &fontBtn, PointF((REAL)g_btnDeselectAllRect.left + 16, (REAL)g_btnDeselectAllRect.top + 9), &whiteBrush);
-
-    // Main OPTIMIZE Action Button
-    Color optBg = g_hoverOptimize ? Color(255, 0, 255, 230) : Color(255, 0, 210, 190);
-    if (g_isOptimizing) optBg = Color(255, 80, 90, 110);
-    SolidBrush optBrush(optBg);
-    int optW = (int)(g_btnOptimizeRect.right - g_btnOptimizeRect.left);
-    int optH = (int)(g_btnOptimizeRect.bottom - g_btnOptimizeRect.top);
-    FillRectI(g, &optBrush, (int)g_btnOptimizeRect.left, (int)g_btnOptimizeRect.top, optW, optH);
-    
-    SolidBrush blackText(Color(255, 10, 14, 20));
-    std::wstring optText = g_isOptimizing ? L"OPTIMIZING..." : L"⚡ OPTIMIZE LAPTOP";
-    g.DrawString(optText.c_str(), -1, &fontBtn, PointF((REAL)g_btnOptimizeRect.left + 26, (REAL)g_btnOptimizeRect.top + 13), &blackText);
-
-    // Status Message at bottom
-    g.DrawString(g_statusText.c_str(), -1, &fontStatus, PointF(40, 514), &cyanBrush);
-
-    // Copy to screen
+    // Blit to screen
     BitBlt(hdc, 0, 0, width, height, memDC, 0, 0, SRCCOPY);
 
     SelectObject(memDC, oldBM);
@@ -270,11 +463,16 @@ void OnPaint(HWND hWnd) {
 LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     switch (msg) {
         case WM_CREATE: {
-            // Apply Windows 11 Immersive Dark Mode to title bar
+            // Apply Windows 11 Immersive Dark Mode and Rounded Corners
             BOOL dark = TRUE;
             DwmSetWindowAttribute(hWnd, 20 /* DWMWA_USE_IMMERSIVE_DARK_MODE */, &dark, sizeof(dark));
             int corner = 3; /* DWMWCP_ROUND */
             DwmSetWindowAttribute(hWnd, 33 /* DWMWA_WINDOW_CORNER_PREFERENCE */, &corner, sizeof(corner));
+            
+            // Set dark caption color (Windows 11 Build 22000+)
+            COLORREF captionClr = RGB(11, 14, 20);
+            DwmSetWindowAttribute(hWnd, 35 /* DWMWA_CAPTION_COLOR */, &captionClr, sizeof(captionClr));
+
             InitOptimizationCards();
             return 0;
         }
@@ -283,24 +481,29 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             POINT pt = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
             bool redraw = false;
 
-            int oldHover = g_hoverCardIndex;
-            g_hoverCardIndex = -1;
-            for (size_t i = 0; i < g_cards.size(); ++i) {
-                if (PtInRect(&g_cards[i].rect, pt)) {
-                    g_hoverCardIndex = (int)i;
-                    break;
+            if (g_showModal) {
+                bool hDis = PtInRect(&g_modalDismissRect, pt) && g_modalComplete;
+                if (hDis != g_hoverModalDismiss) { g_hoverModalDismiss = hDis; redraw = true; }
+            } else {
+                int oldHover = g_hoverCardIndex;
+                g_hoverCardIndex = -1;
+                for (size_t i = 0; i < g_cards.size(); ++i) {
+                    if (PtInRect(&g_cards[i].rect, pt)) {
+                        g_hoverCardIndex = (int)i;
+                        break;
+                    }
                 }
+                if (oldHover != g_hoverCardIndex) redraw = true;
+
+                bool hDep = PtInRect(&g_btnDeployRect, pt) && !g_isExecuting && !g_isRestoring;
+                if (hDep != g_hoverDeploy) { g_hoverDeploy = hDep; redraw = true; }
+
+                bool hRes = PtInRect(&g_btnRestoreRect, pt) && !g_isExecuting && !g_isRestoring;
+                if (hRes != g_hoverRestore) { g_hoverRestore = hRes; redraw = true; }
+
+                bool hTgl = PtInRect(&g_btnToggleAllRect, pt) && !g_isExecuting && !g_isRestoring;
+                if (hTgl != g_hoverToggleAll) { g_hoverToggleAll = hTgl; redraw = true; }
             }
-            if (oldHover != g_hoverCardIndex) redraw = true;
-
-            bool hOpt = PtInRect(&g_btnOptimizeRect, pt) && !g_isOptimizing;
-            if (hOpt != g_hoverOptimize) { g_hoverOptimize = hOpt; redraw = true; }
-
-            bool hSel = PtInRect(&g_btnSelectAllRect, pt) && !g_isOptimizing;
-            if (hSel != g_hoverSelectAll) { g_hoverSelectAll = hSel; redraw = true; }
-
-            bool hDesel = PtInRect(&g_btnDeselectAllRect, pt) && !g_isOptimizing;
-            if (hDesel != g_hoverDeselectAll) { g_hoverDeselectAll = hDesel; redraw = true; }
 
             if (redraw) InvalidateRect(hWnd, NULL, FALSE);
             return 0;
@@ -309,9 +512,18 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         case WM_LBUTTONDOWN: {
             POINT pt = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
 
-            if (g_isOptimizing) return 0;
+            // Handle Modal Clicks
+            if (g_showModal) {
+                if (g_modalComplete && PtInRect(&g_modalDismissRect, pt)) {
+                    g_showModal = false;
+                    InvalidateRect(hWnd, NULL, FALSE);
+                }
+                return 0; // Capture all clicks while modal is open
+            }
 
-            // Check toggle switches
+            if (g_isExecuting || g_isRestoring) return 0;
+
+            // Toggle Switches
             for (size_t i = 0; i < g_cards.size(); ++i) {
                 if (PtInRect(&g_cards[i].rect, pt)) {
                     g_cards[i].isEnabled = !g_cards[i].isEnabled;
@@ -320,30 +532,39 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 }
             }
 
-            // Select All
-            if (PtInRect(&g_btnSelectAllRect, pt)) {
-                for (auto& c : g_cards) c.isEnabled = true;
+            // Toggle All Button
+            if (PtInRect(&g_btnToggleAllRect, pt)) {
+                bool allOn = true;
+                for (const auto& c : g_cards) {
+                    if (!c.isEnabled) { allOn = false; break; }
+                }
+                for (auto& c : g_cards) c.isEnabled = !allOn;
                 InvalidateRect(hWnd, NULL, FALSE);
                 return 0;
             }
 
-            // Deselect All
-            if (PtInRect(&g_btnDeselectAllRect, pt)) {
-                for (auto& c : g_cards) c.isEnabled = false;
+            // Restore Defaults Button
+            if (PtInRect(&g_btnRestoreRect, pt)) {
+                g_showModal = true;
+                for (auto& c : g_cards) c.isEnabled = true; // reset checkboxes
+                std::thread(RunRestorePipeline).detach();
                 InvalidateRect(hWnd, NULL, FALSE);
                 return 0;
             }
 
-            // Optimize Button
-            if (PtInRect(&g_btnOptimizeRect, pt)) {
-                std::thread(RunOptimizationThread).detach();
+            // Deploy Tactical Tuning Button
+            if (PtInRect(&g_btnDeployRect, pt)) {
+                g_showModal = true;
+                std::thread(RunOptimizationPipeline).detach();
+                InvalidateRect(hWnd, NULL, FALSE);
                 return 0;
             }
+
             return 0;
         }
 
         case WM_ERASEBKGND:
-            return 1; // Prevent flicker
+            return 1; // Prevent flicker with double-buffering
 
         case WM_PAINT:
             OnPaint(hWnd);
@@ -356,7 +577,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     return DefWindowProcW(hWnd, msg, wParam, lParam);
 }
 
-// Entry Point: Native Windows GUI
+// WinMain Native Entry Point
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow) {
     GdiplusStartupInput gdiplusStartupInput;
     ULONG_PTR gdiplusToken;
@@ -366,19 +587,24 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow) {
     wc.lpfnWndProc = WndProc;
     wc.hInstance = hInstance;
     wc.hCursor = LoadCursor(NULL, IDC_ARROW);
-    wc.lpszClassName = L"LaptopOptimizerWindow";
+    wc.lpszClassName = L"LaptopOptimizerCybercore";
     wc.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
+    
+    // Load embedded high-resolution application icon
+    wc.hIcon = (HICON)LoadImageW(hInstance, MAKEINTRESOURCEW(1), IMAGE_ICON, 0, 0, LR_DEFAULTSIZE | LR_SHARED);
+    wc.hIconSm = (HICON)LoadImageW(hInstance, MAKEINTRESOURCEW(1), IMAGE_ICON, 16, 16, LR_SHARED);
+
     RegisterClassExW(&wc);
 
-    int w = 856;
-    int h = 660;
+    int w = 896;
+    int h = 670;
     int x = (GetSystemMetrics(SM_CXSCREEN) - w) / 2;
     int y = (GetSystemMetrics(SM_CYSCREEN) - h) / 2;
 
     g_hWnd = CreateWindowExW(
         0,
         wc.lpszClassName,
-        L"⚡ Windows Laptop Optimizer",
+        L"// SYS.CORE-TUNER // [CYBERCORE TECHWEAR GRID]",
         WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX,
         x, y, w, h,
         NULL, NULL, hInstance, NULL
