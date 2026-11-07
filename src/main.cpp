@@ -130,6 +130,24 @@ bool CheckIsAdmin() {
     return isAdmin != FALSE;
 }
 
+// Native Win32 Self-Unblock: Deletes NTFS Alternate Data Stream Zone.Identifier
+void SelfUnblockExecutable() {
+    wchar_t szPath[MAX_PATH];
+    if (GetModuleFileNameW(NULL, szPath, MAX_PATH)) {
+        // 1. Unblock self (deletes LaptopOptimizer.exe:Zone.Identifier)
+        std::wstring adsPath = std::wstring(szPath) + L":Zone.Identifier";
+        DeleteFileW(adsPath.c_str());
+
+        // 2. Also unblock companion files in the same directory (e.g. Run-Optimizer.bat)
+        wchar_t* lastSlash = wcsrchr(szPath, L'\\');
+        if (lastSlash) {
+            *lastSlash = L'\0';
+            std::wstring batAds = std::wstring(szPath) + L"\\Run-Optimizer.bat:Zone.Identifier";
+            DeleteFileW(batAds.c_str());
+        }
+    }
+}
+
 // Request Windows UAC Elevation via runas
 bool ElevateProcessViaUAC(HWND hWnd) {
     wchar_t szPath[MAX_PATH];
@@ -1009,6 +1027,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 
 // WinMain Native Entry Point
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow) {
+    // 0. Automatically unblock executable by deleting NTFS Zone.Identifier stream
+    SelfUnblockExecutable();
+
     // 1. Check if running with Administrator privileges
     g_isAdmin = CheckIsAdmin();
     if (!g_isAdmin) {
