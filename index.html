@@ -667,6 +667,20 @@
       color: #3f4e6b;
       font-weight: 900;
     }
+    /* Top-right corner arrow marker — sits below the ON switch */
+    .app-opt-card::after {
+      content: "▲";
+      position: absolute;
+      top: 40px;
+      right: 18px;
+      font-size: 7px;
+      color: #3f4e6b;
+      font-weight: 900;
+    }
+    .app-opt-card.active-card::after {
+      color: var(--acid-volt);
+      text-shadow: 0 0 6px var(--acid-volt);
+    }
     .app-opt-card:hover {
       transform: translateX(4px);
       border-color: rgba(204, 255, 0, 0.7);
@@ -812,17 +826,17 @@
     }
 
     .hazard-lock-badge {
-      display: inline-flex;
+      display: flex;
       align-items: center;
-      gap: 4px;
+      gap: 6px;
       font-size: 8px;
       font-weight: 900;
-      padding: 2px 6px;
-      border-radius: 3px;
+      padding: 4px 10px;
       letter-spacing: 0.5px;
       font-family: var(--font-mono);
-      margin-top: 3px;
-      width: fit-content;
+      margin-top: 6px;
+      width: 100%;
+      border-radius: 0 0 4px 4px;
     }
     .lock-armed {
       background: #182218;
@@ -840,7 +854,73 @@
       flex-shrink: 0;
     }
 
-    /* 58x28px Sliding Mechanical Switch Track */
+    /* Recessed Milled Switch Bay */
+    .switch-bay {
+      position: absolute;
+      top: 10px;
+      right: 12px;
+      background: #080b11;
+      border: 1px solid #1a2232;
+      border-radius: 8px;
+      padding: 3px;
+      box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.8), 0 1px 0 rgba(255, 255, 255, 0.05);
+    }
+
+    /* 48x24px Rectangular Cyber Switch with sliding thumb */
+    .switch-track {
+      position: relative;
+      width: 48px;
+      height: 24px;
+      border-radius: 6px;
+      padding: 2px;
+      display: flex;
+      align-items: center;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6);
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+    .sw-track-on {
+      background: #161c28;
+      border: 1px solid #2c3850;
+    }
+    .sw-track-off {
+      background: #0e1118;
+      border: 1px solid #1b2230;
+    }
+    .app-opt-card:hover .sw-track-on {
+      border-color: rgba(204, 255, 0, 0.8);
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.6), 0 0 10px rgba(204,255,0,0.25);
+    }
+    .switch-thumb {
+      position: absolute;
+      top: 2px;
+      bottom: 2px;
+      left: 2px;
+      width: 20px;
+      font-size: 8px;
+      font-weight: 900;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      letter-spacing: 0.5px;
+      transition: transform 0.24s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
+    }
+    .sw-thumb-on {
+      transform: translateX(22px);
+      background: var(--acid-volt);
+      color: #000;
+      box-shadow: 0 0 10px rgba(204, 255, 0, 0.7);
+    }
+    .sw-thumb-off {
+      transform: translateX(0px);
+      background: #374151;
+      color: #9ca3af;
+      box-shadow: none;
+    }
+
+    /* 58x28px Sliding Mechanical Switch Track (legacy, keep for startup modal) */
     .app-cyber-switch {
       width: 58px;
       height: 28px;
@@ -1100,6 +1180,21 @@
       border-radius: 1px;
     }
 
+    .knurled-grip-ridge {
+      width: 70%;
+      height: 4px;
+      background: repeating-linear-gradient(
+        90deg,
+        #1e293b,
+        #1e293b 2px,
+        #0a0e17 2px,
+        #0a0e17 4px
+      );
+      border-radius: 2px;
+      border-top: 1px solid rgba(255, 255, 255, 0.15);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+    }
+
     .safety-cover.open {
       transform: translateY(-44px) rotateX(-26deg) scale(0.97);
       background: linear-gradient(135deg, rgba(16, 8, 10, 0.98) 0%, rgba(8, 4, 6, 0.98) 100%);
@@ -1124,6 +1219,10 @@
     .safety-cover.open .guard-laser-trim {
       background: #2a0b12;
       border-top: 1px solid rgba(255, 51, 85, 0.4);
+    }
+    .safety-cover.open .knurled-grip-ridge {
+      border-top: 1px solid rgba(255, 51, 85, 0.4);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.8), 0 0 6px rgba(255, 51, 85, 0.2);
     }
 
     .btn-app-deploy {
@@ -1770,7 +1869,7 @@
             </button>
 
             <!-- Clean Sci-Fi Nuke Safety Deploy Assembly -->
-            <div class="safety-deploy-assembly" id="web-safety-assembly">
+            <div class="safety-deploy-assembly guard-style-nuke" id="web-safety-assembly">
               <div class="safety-hinge-bracket">
                 <span class="hinge-rivet">⬡ SILO-L</span>
                 <span class="hinge-pin"></span>
@@ -1792,7 +1891,7 @@
                   </span>
                   <span class="guard-action-hint" id="web-guard-hint">/// TAP TO UNLATCH ///</span>
                 </div>
-                <div class="guard-laser-trim"></div>
+                <div class="knurled-grip-ridge"></div>
               </div>
 
               <button class="btn-app-deploy" onclick="deployTuning()">
@@ -2187,7 +2286,7 @@
         card.className = "app-opt-card" + (item.on ? " active-card" : "");
         card.onclick = () => toggleAppSwitch(item.id);
         card.innerHTML = `
-          <div class="card-left-cluster">
+          <div class="card-left-cluster" style="padding-right:64px;">
             <div class="card-id-box">
               <span class="card-channel-prefix">CH</span>
               <span class="card-channel-num">${item.id < 10 ? '0' + item.id : item.id}</span>
@@ -2209,9 +2308,9 @@
               </div>
             </div>
           </div>
-          <div class="card-right-cluster">
-            <div class="app-cyber-switch ${item.on ? '' : 'off'}">
-              <div class="app-switch-thumb">${item.on ? 'ON' : 'OFF'}</div>
+          <div class="switch-bay">
+            <div class="switch-track ${item.on ? 'sw-track-on' : 'sw-track-off'}">
+              <div class="switch-thumb ${item.on ? 'sw-thumb-on' : 'sw-thumb-off'}">${item.on ? 'ON' : 'OFF'}</div>
             </div>
           </div>
         `;
@@ -2240,10 +2339,16 @@
     function updateWebTelemetry() {
       const activeCount = appTweaks.filter(t => t.on).length;
       const tag = document.getElementById("web-scope-tag");
+      const cpuVal = document.getElementById("web-cpu-val");
       if (tag) {
         if (activeCount === 8) { tag.innerText = "1000Hz STABLE"; tag.style.color = "#ccff00"; }
         else if (activeCount === 0) { tag.innerText = "60Hz JITTER"; tag.style.color = "#f87171"; }
         else { tag.innerText = "TUNING OSC"; tag.style.color = "#00f0ff"; }
+      }
+      if (cpuVal) {
+        if (activeCount === 8) { cpuVal.innerText = "MAX SPEED // 100% UNLOCKED"; cpuVal.style.color = "#ccff00"; }
+        else if (activeCount === 0) { cpuVal.innerText = "DEFAULT // WINDOWS THROTTLED"; cpuVal.style.color = "#6b7280"; }
+        else { cpuVal.innerText = `STAGE 1 // ${activeCount}/8 ACTIVE`; cpuVal.style.color = "#00f0ff"; }
       }
 
       const cpuOn = appTweaks[0].on;
@@ -2433,13 +2538,8 @@
 
     // Dynamic Simulated Hardware Telemetry Polling
     function updateWebLiveTelemetry() {
-      const cpuEl = document.getElementById("web-cpu-val");
-      const ramEl = document.getElementById("web-ram-val");
       const ssdEl = document.getElementById("web-ssd-val");
-      const jitter = Math.floor(Math.random() * 20) - 10;
-      if (cpuEl) cpuEl.innerText = `${2803 + jitter} MHz`;
-      if (ramEl) ramEl.innerText = "8.2 / 16.0 GB (51%)";
-      if (ssdEl) ssdEl.innerText = "116.1 GB // HEALTHY";
+      if (ssdEl) ssdEl.innerText = "+7.5 GB FREED";
     }
     setInterval(updateWebLiveTelemetry, 1500);
 
@@ -2553,7 +2653,7 @@
       if (decoupledEl) decoupledEl.innerText = startupApps.length - armedCount;
     }
 
-    updateAppUI();
+    renderWebCards();
   </script>
 </body>
 </html>
