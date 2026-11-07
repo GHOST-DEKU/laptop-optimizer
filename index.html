@@ -419,10 +419,9 @@
 
     /* App Header Container (Height: 96px, Background #10141E) */
     .app-header-container {
-      background: var(--bg-slate);
+      background: transparent;
       border-bottom: 1px solid var(--border-dark);
-      height: 96px;
-      padding: 16px 40px;
+      padding: 18px 40px 18px;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -1183,17 +1182,19 @@
           </div>
         </div>
 
-        <!-- App Header Container (Height: 96px, Background #10141E) -->
+        <!-- App Header Banner (Clean Canvas Header matching Concept 2) -->
         <div class="app-header-container">
           <div class="app-header-left">
-            <div class="app-pill-row">
-              <span class="header-pill">// SYS.CORE-TUNER v2.4</span>
-              <span class="header-airframe">// LENOVO_82HS</span>
-              <span class="header-pill" style="border-color:#3c6414;color:#ccff00;background:#142218;display:inline-flex;align-items:center;gap:4px;"><span>✓</span> ADMIN: ELEVATED (UAC)</span>
+            <div class="app-pill-row" style="margin-bottom:6px;">
+              <span class="header-pill" style="display:inline-flex;align-items:center;gap:6px;">
+                <span style="width:6px;height:6px;border-radius:50%;background:#ccff00;display:inline-block;animation:pulse 2s infinite;"></span>
+                // SYS.CORE-TUNER v2.4
+              </span>
+              <span class="header-airframe">// LEN_82HS</span>
             </div>
             <div style="display:flex;align-items:center;gap:10px;margin-top:2px;">
-              <span class="header-cpu-title" style="color:var(--acid-volt);">INTEL i7-1165G7 [4C/8T]</span>
-              <span class="header-cpu-specs" style="margin-top:0;">•  16GB RAM  •  NVMe 512GB</span>
+              <span class="header-cpu-title" style="color:#ffffff;font-weight:900;">INTEL i7-1165G7 <span style="color:var(--acid-volt);font-weight:700;">[4C/8T]</span></span>
+              <span class="header-cpu-specs" style="margin-top:0;color:#64748b;">• 16GB RAM • NVMe 512GB</span>
             </div>
           </div>
 
@@ -1233,7 +1234,7 @@
                   <div class="card-title">Zero-Ramp CPU Frequency Floor on AC</div>
                   <div class="card-badge-pill" id="badge-1" style="width:auto;padding:2px 8px;height:18px;border-radius:4px;">100% FLOOR</div>
                 </div>
-                <div class="card-desc" style="margin-top:2px;">Sets processor state to 100% floor on AC power to eliminate turbo ramp stutter.</div>
+                <div class="card-desc" style="margin-top:2px;">Sets processor floor to 100% on AC to bypass frequency ramp-up latency.</div>
               </div>
             </div>
             <div class="card-right-cluster">
@@ -1250,9 +1251,9 @@
               <div class="card-text-block">
                 <div style="display:flex;align-items:center;gap:10px;">
                   <div class="card-title">Bypass Game DVR Background Video Buffer</div>
-                  <div class="card-badge-pill" id="badge-2" style="width:auto;padding:2px 8px;height:18px;border-radius:4px;">ZERO VRAM</div>
+                  <div class="card-badge-pill" id="badge-2" style="width:auto;padding:2px 8px;height:18px;border-radius:4px;">ZERO VRAM DRAIN</div>
                 </div>
-                <div class="card-desc" style="margin-top:2px;">Halts continuous background DirectX video encoding and capture hooks; saves GPU VRAM.</div>
+                <div class="card-desc" style="margin-top:2px;">Halts continuous background DirectX video encoding and capture hooks.</div>
               </div>
             </div>
             <div class="card-right-cluster">
@@ -1268,10 +1269,10 @@
               <div class="card-id-box">03</div>
               <div class="card-text-block">
                 <div style="display:flex;align-items:center;gap:10px;">
-                  <div class="card-title">Instant Desktop Context Menus (20ms)</div>
+                  <div class="card-title">Instant Desktop Context Menus</div>
                   <div class="card-badge-pill" id="badge-3" style="width:auto;padding:2px 8px;height:18px;border-radius:4px;">20ms DELAY</div>
                 </div>
-                <div class="card-desc" style="margin-top:2px;">Cuts MenuShowDelay from 400ms to 20ms for instantaneous shell responsiveness.</div>
+                <div class="card-desc" style="margin-top:2px;">Reduces MenuShowDelay from 400ms to 20ms for instant desktop responsiveness.</div>
               </div>
             </div>
             <div class="card-right-cluster">
@@ -1290,7 +1291,7 @@
                   <div class="card-title">Purge Windows 11 Widget Daemon Pack</div>
                   <div class="card-badge-pill" id="badge-4" style="width:auto;padding:2px 8px;height:18px;border-radius:4px;">-300MB RAM</div>
                 </div>
-                <div class="card-desc" style="margin-top:2px;">Uninstalls WebExperience package; permanently terminates 20+ idle WebView2 processes.</div>
+                <div class="card-desc" style="margin-top:2px;">Uninstalls WebExperience package to permanently kill 20+ idle WebView2 processes.</div>
               </div>
             </div>
             <div class="card-right-cluster">
@@ -1306,10 +1307,10 @@
               <div class="card-id-box">05</div>
               <div class="card-text-block">
                 <div style="display:flex;align-items:center;gap:10px;">
-                  <div class="card-title">Decouple Bing Cloud Integration from Start</div>
-                  <div class="card-badge-pill" id="badge-5" style="width:auto;padding:2px 8px;height:18px;border-radius:4px;">LOCAL ONLY</div>
+                  <div class="card-title">Clean Kernel Boots & Delete hiberfil.sys</div>
+                  <div class="card-badge-pill" id="badge-5" style="width:auto;padding:2px 8px;height:18px;border-radius:4px;">+6.22GB DISK</div>
                 </div>
-                <div class="card-desc" style="margin-top:2px;">Eliminates remote cloud latency on Start search; makes app launch search instant.</div>
+                <div class="card-desc" style="margin-top:2px;">Disables hybrid hibernation; deletes hiberfil.sys and guarantees 100% fresh kernel state.</div>
               </div>
             </div>
             <div class="card-right-cluster">
@@ -1325,10 +1326,10 @@
               <div class="card-id-box">06</div>
               <div class="card-text-block">
                 <div style="display:flex;align-items:center;gap:10px;">
-                  <div class="card-title">Halt Delivery Optimization P2P Seeding</div>
-                  <div class="card-badge-pill" id="badge-6" style="width:auto;padding:2px 8px;height:18px;border-radius:4px;">HTTP ONLY</div>
+                  <div class="card-title">Decouple Bing Cloud Integration from Start</div>
+                  <div class="card-badge-pill" id="badge-6" style="width:auto;padding:2px 8px;height:18px;border-radius:4px;">LOCAL ONLY</div>
                 </div>
-                <div class="card-desc" style="margin-top:2px;">Stops Windows from using your disk I/O and bandwidth to seed updates to network peers.</div>
+                <div class="card-desc" style="margin-top:2px;">Eliminates remote cloud latency on Start search; makes app launch search instant.</div>
               </div>
             </div>
             <div class="card-right-cluster">
@@ -1344,10 +1345,10 @@
               <div class="card-id-box">07</div>
               <div class="card-text-block">
                 <div style="display:flex;align-items:center;gap:10px;">
-                  <div class="card-title">Clean Kernel Boots & Purge hiberfil.sys</div>
-                  <div class="card-badge-pill" id="badge-7" style="width:auto;padding:2px 8px;height:18px;border-radius:4px;">+6.2GB SSD</div>
+                  <div class="card-title">Halt Delivery Optimization P2P Seeding</div>
+                  <div class="card-badge-pill" id="badge-7" style="width:auto;padding:2px 8px;height:18px;border-radius:4px;">HTTP ONLY</div>
                 </div>
-                <div class="card-desc" style="margin-top:2px;">Reclaims +6.22 GB NVMe SSD storage permanently and guarantees 100% clean boots.</div>
+                <div class="card-desc" style="margin-top:2px;">Stops Windows from using your disk I/O and bandwidth to seed updates to network peers.</div>
               </div>
             </div>
             <div class="card-right-cluster">
@@ -1378,26 +1379,24 @@
 
         </div>
 
-        <!-- Bottom Controls & Status Line -->
-        <div class="app-window-footer">
-          <div class="app-syslog-text" id="app-syslog">
-            [SYS_LOG] >> READY. 8 LOW-LEVEL PROTOCOLS ARMED. CLICK DEPLOY TO ENGAGE.
-          </div>
-
+        <!-- Bottom Action Bar (Matching Concept 2 exactly) -->
+        <div class="app-window-footer" style="border-top:1px solid var(--border-dark);padding:18px 40px;">
           <div class="app-footer-buttons">
-            <div class="app-footer-left-btns">
-              <button onclick="restoreDefaults()" class="btn-app-restore">
-                ↺ RESTORE DEFAULTS
-              </button>
+            <button onclick="restoreDefaults()" class="btn-app-restore">
+              ↺ RESTORE FACTORY DEFAULTS
+            </button>
+
+            <div style="display:flex;align-items:center;gap:10px;">
               <button onclick="toggleAll()" class="btn-app-toggleall">
                 TOGGLE ALL
               </button>
-              <button onclick="openStartupModal()" class="btn-app-toggleall" style="color:var(--acid-volt);border-color:#2a3a50;display:flex;align-items:center;gap:6px;"><span>🚀</span> STARTUP APPS</button>
+              <button onclick="openStartupModal()" class="btn-app-toggleall" style="color:#ffffff;border-color:#2a3a50;display:flex;align-items:center;gap:6px;">
+                <span>🚀</span> STARTUP APPS
+              </button>
+              <button onclick="deployTuning()" class="btn-app-deploy">
+                ⚡ DEPLOY TACTICAL TUNING ➔
+              </button>
             </div>
-
-            <button onclick="deployTuning()" class="btn-app-deploy">
-              ⚡ DEPLOY TACTICAL TUNING ➔
-            </button>
           </div>
         </div>
 
