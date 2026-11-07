@@ -6,7 +6,7 @@
 ![Rust](https://img.shields.io/badge/Backend-Rust%201.95-DEA584?style=for-the-badge&logo=rust&logoColor=white)
 ![Tauri](https://img.shields.io/badge/GUI-Tauri%20v2%20(WebView2)-FFC131?style=for-the-badge&logo=tauri&logoColor=white)
 ![Theme](https://img.shields.io/badge/Theme-Cybercore%20Techwear-CCFF00?style=for-the-badge&labelColor=0B0E14)
-![License](https://img.shields.io/badge/License-MIT-purple?style=for-the-badge)
+![Release](https://img.shields.io/badge/Release-v2.4%20Production-00E5FF?style=for-the-badge)
 
 ---
 
@@ -95,6 +95,6 @@ g++ -O2 -mwindows -static -Isrc src/main.cpp src/resource.res -o LaptopOptimizer
 
 ---
 
-## 📄 License
+## 🛡️ Terms & Guarantee
 
-Distributed under the **MIT License**. See `LICENSE` for details.
+Engineered and distributed as a free, open utility. Provided "as is" with zero warranty or liability. All optimizations are 100% reversible via the in-app Restore button. See `LICENSE` for legal terms.
