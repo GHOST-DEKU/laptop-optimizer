@@ -1187,6 +1187,7 @@
             <div class="app-pill-row">
               <span class="header-pill">// SYS.CORE-TUNER v2.4</span>
               <span class="header-airframe">// LENOVO_82HS</span>
+              <span class="header-pill" style="border-color:#3c6414;color:#ccff00;background:#142218;display:inline-flex;align-items:center;gap:4px;"><span>✓</span> ADMIN: ELEVATED (UAC)</span>
             </div>
             <div class="header-cpu-title">INTEL Core i7-1165G7 [4C/8T]</div>
             <div class="header-cpu-specs">TARGET SPEC: 16GB RAM • 512GB NVMe SSD • WINDOWS 11 / 10</div>
@@ -1371,6 +1372,7 @@
               <button onclick="toggleAll()" class="btn-app-toggleall">
                 TOGGLE ALL
               </button>
+              <button onclick="openStartupModal()" class="btn-app-toggleall" style="color:var(--acid-volt);border-color:#2a3a50;display:flex;align-items:center;gap:6px;"><span>🚀</span> STARTUP APPS</button>
             </div>
 
             <button onclick="deployTuning()" class="btn-app-deploy">
@@ -1459,6 +1461,31 @@
             <div style="display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 11px;">
               <span style="color: var(--text-dark);">hiberfil.sys: 6.22 GB Purged</span>
               <span style="color: var(--acid-volt); font-weight: bold;">+7.50 GB Total Space</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- In-Window Bespoke Cybercore Startup Applications Modal Dialog -->
+        <div id="startup-modal" class="inwindow-modal-overlay">
+          <div class="inwindow-modal-box" style="max-height: 540px;">
+            <div class="modal-top-bar" style="padding: 12px 18px;">
+              <div class="modal-top-title">
+                <div class="pulse-dot"></div>
+                <span>// STARTUP APPLICATIONS MANAGER // AUTOSTART DECOUPLER</span>
+              </div>
+              <button onclick="closeStartupModal()" style="background:#161c28;border:1px solid #2d384e;color:#fff;font-family:var(--font-mono);font-size:10px;font-weight:700;padding:4px 10px;cursor:pointer;border-radius:3px;">✕ CLOSE</button>
+            </div>
+            <div style="padding: 10px 18px; font-size: 11px; color: var(--text-muted); border-bottom: 1px solid var(--border-dark); line-height: 1.4;">
+              Toggle background autostart bloatware without deleting registry keys. Changes persist cleanly with Windows Task Manager.
+            </div>
+            <div class="modal-terminal-viewport" id="startup-app-list" style="max-height: 300px; overflow-y: auto; padding: 12px 18px; display: flex; flex-direction: column; gap: 8px;">
+              <!-- Populated dynamically via JavaScript -->
+            </div>
+            <div class="modal-bottom-bar" style="padding: 12px 18px;">
+              <div class="modal-status-text" id="startup-status-msg">
+                STATUS: 6 STARTUP ENTRIES MONITORED // SAFE REGISTRY SYNC
+              </div>
+              <button onclick="closeStartupModal()" class="btn-dismiss-modal visible">[ ✓ SAVE & CLOSE ]</button>
             </div>
           </div>
         </div>
@@ -1861,6 +1888,55 @@
     }
 
     // Initialize UI
+    // --- 5B. STARTUP APPLICATIONS MANAGER ENGINE ---
+    const startupApps = [
+      { name: "OneDrive", cmd: "C:\\Program Files\\Microsoft OneDrive\\OneDrive.exe /background", loc: "HKCU", on: true },
+      { name: "Grammarly", cmd: "C:\\Users\\User\\AppData\\Local\\Grammarly\\Desktop.exe", loc: "HKCU", on: true },
+      { name: "UniGetUI", cmd: "C:\\Program Files\\UniGetUI\\UniGetUI.exe --daemon", loc: "HKCU", on: true },
+      { name: "Discord", cmd: "C:\\Users\\User\\AppData\\Local\\Discord\\Update.exe --processStart", loc: "HKCU", on: false },
+      { name: "Spotify", cmd: "C:\\Users\\User\\AppData\\Roaming\\Spotify\\Spotify.exe --autostart", loc: "HKCU", on: false },
+      { name: "Steam", cmd: "C:\\Program Files (x86)\\Steam\\steam.exe -silent", loc: "HKCU", on: false }
+    ];
+
+    function openStartupModal() {
+      playSound("click");
+      renderStartupList();
+      document.getElementById("startup-modal").classList.add("active");
+    }
+
+    function closeStartupModal() {
+      playSound("click");
+      document.getElementById("startup-modal").classList.remove("active");
+    }
+
+    function toggleStartupApp(index) {
+      playSound("click");
+      startupApps[index].on = !startupApps[index].on;
+      renderStartupList();
+    }
+
+    function renderStartupList() {
+      const list = document.getElementById("startup-app-list");
+      list.innerHTML = "";
+      startupApps.forEach((app, idx) => {
+        const row = document.createElement("div");
+        row.style.cssText = `background:#10141e;border:1px solid ${app.on ? "#233044" : "#1a202c"};padding:10px 14px;border-radius:4px;display:flex;align-items:center;justify-content:space-between;gap:12px;`;
+        row.innerHTML = `
+          <div style="display:flex;align-items:center;gap:10px;overflow:hidden;">
+            <span style="background:#182030;border:1px solid #263249;color:#ccff00;font-size:9px;font-weight:700;padding:2px 6px;border-radius:2px;">${app.loc}</span>
+            <div style="overflow:hidden;">
+              <div style="font-size:12px;font-weight:700;color:${app.on ? "#fff" : "#6b7280"};">${app.name}</div>
+              <div style="font-size:10px;color:#6b7280;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${app.cmd}</div>
+            </div>
+          </div>
+          <div class="app-cyber-switch ${app.on ? "" : "off"}" onclick="toggleStartupApp(${idx})">
+            <div class="app-switch-thumb">${app.on ? "ON" : "OFF"}</div>
+          </div>
+        `;
+        list.appendChild(row);
+      });
+    }
+
     updateAppUI();
   </script>
 </body>

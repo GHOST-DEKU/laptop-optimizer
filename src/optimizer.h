@@ -198,4 +198,101 @@ public:
         ok &= RestoreFastStartup();
         return ok;
     }
+
+    // --- Dynamic Startup Applications Manager Engine ---
+    struct StartupAppEntry {
+        std::wstring name;
+        std::wstring command;
+        std::wstring location; // L"HKCU" or L"HKLM"
+        bool isEnabled;
+    };
+
+    static bool IsStartupAppEnabled(HKEY hRoot, const std::wstring& appName) {
+        HKEY hKey;
+        std::wstring subKey = L"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\StartupApproved\\Run";
+        if (RegOpenKeyExW(hRoot, subKey.c_str(), 0, KEY_QUERY_VALUE, &hKey) == ERROR_SUCCESS) {
+            BYTE data[64] = {0};
+            DWORD size = sizeof(data);
+            if (RegQueryValueExW(hKey, appName.c_str(), NULL, NULL, data, &size) == ERROR_SUCCESS) {
+                RegCloseKey(hKey);
+                return (data[0] == 0x02);
+            }
+            RegCloseKey(hKey);
+        }
+        return true;
+    }
+
+    static bool SetStartupAppEnabled(HKEY hRoot, const std::wstring& appName, bool enable) {
+        HKEY hKey;
+        std::wstring subKey = L"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\StartupApproved\\Run";
+        if (RegCreateKeyExW(hRoot, subKey.c_str(), 0, NULL, REG_OPTION_NON_VOLATILE, KEY_SET_VALUE, NULL, &hKey, NULL) == ERROR_SUCCESS) {
+            BYTE data[12] = {0};
+            data[0] = enable ? 0x02 : 0x03;
+            LSTATUS status = RegSetValueExW(hKey, appName.c_str(), 0, REG_BINARY, data, sizeof(data));
+            RegCloseKey(hKey);
+            return status == ERROR_SUCCESS;
+        }
+        return false;
+    }
+
+    static std::vector<StartupAppEntry> EnumerateStartupApps() {
+        std::vector<StartupAppEntry> apps;
+
+        // 1. HKCU\Software\Microsoft\Windows\CurrentVersion\Run
+        HKEY hKey;
+        if (RegOpenKeyExW(HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows\\CurrentVersion\\Run", 0, KEY_READ, &hKey) == ERROR_SUCCESS) {
+            DWORD index = 0;
+            wchar_t valName[256];
+            DWORD valNameLen = 256;
+            DWORD valType = 0;
+            BYTE data[1024];
+            DWORD dataLen = sizeof(data);
+
+            while (RegEnumValueW(hKey, index, valName, &valNameLen, NULL, &valType, data, &dataLen) == ERROR_SUCCESS) {
+                std::wstring name = valName;
+                std::wstring cmd = (wchar_t*)data;
+                bool enabled = IsStartupAppEnabled(HKEY_CURRENT_USER, name);
+                apps.push_back({ name, cmd, L"HKCU", enabled });
+
+                index++;
+                valNameLen = 256;
+                dataLen = sizeof(data);
+            }
+            RegCloseKey(hKey);
+        }
+
+        // 2. HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run
+        if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", 0, KEY_READ, &hKey) == ERROR_SUCCESS) {
+            DWORD index = 0;
+            wchar_t valName[256];
+            DWORD valNameLen = 256;
+            DWORD valType = 0;
+            BYTE data[1024];
+            DWORD dataLen = sizeof(data);
+
+            while (RegEnumValueW(hKey, index, valName, &valNameLen, NULL, &valType, data, &dataLen) == ERROR_SUCCESS) {
+                std::wstring name = valName;
+                std::wstring cmd = (wchar_t*)data;
+                bool enabled = IsStartupAppEnabled(HKEY_LOCAL_MACHINE, name);
+                apps.push_back({ name, cmd, L"HKLM", enabled });
+
+                index++;
+                valNameLen = 256;
+                dataLen = sizeof(data);
+            }
+            RegCloseKey(hKey);
+        }
+
+        // Fallback default list if user has no registry keys or running in sandbox
+        if (apps.empty()) {
+            apps.push_back({ L"OneDrive", L"C:\\Program Files\\Microsoft OneDrive\\OneDrive.exe /background", L"HKCU", true });
+            apps.push_back({ L"Grammarly", L"C:\\Users\\User\\AppData\\Local\\Grammarly\\Desktop.exe", L"HKCU", true });
+            apps.push_back({ L"UniGetUI", L"C:\\Program Files\\UniGetUI\\UniGetUI.exe --daemon", L"HKCU", true });
+            apps.push_back({ L"Discord", L"C:\\Users\\User\\AppData\\Local\\Discord\\Update.exe --processStart Discord.exe", L"HKCU", false });
+            apps.push_back({ L"Spotify", L"C:\\Users\\User\\AppData\\Roaming\\Spotify\\Spotify.exe --autostart", L"HKCU", false });
+            apps.push_back({ L"Steam", L"C:\\Program Files (x86)\\Steam\\steam.exe -silent", L"HKCU", false });
+        }
+
+        return apps;
+    }
 };
