@@ -617,6 +617,57 @@
       box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 0 35px rgba(204, 255, 0, 0.12);
     }
 
+    /* ========================================================================= */
+    /* 7. FLIGHT PLAN (install + after-install steps)                            */
+    /* ========================================================================= */
+    .flight-section { padding: 10px 0 80px; }
+    .fp { display: grid; max-width: 760px; margin: 0 auto; }
+    .fp-step { position: relative; display: grid; grid-template-columns: 34px minmax(0, 1fr); column-gap: 14px; padding-bottom: 14px; }
+    .fp-dot { position: relative; z-index: 1; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center;
+      font: 900 11px var(--font-mono); background: var(--bg-surface); border: 2px solid var(--border-focus); color: var(--text-dark);
+      transition: all .5s cubic-bezier(.16, 1, .3, 1); }
+    .fp-dot svg { position: absolute; width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round;
+      stroke-dasharray: 24; stroke-dashoffset: 24; transition: stroke-dashoffset .5s .15s cubic-bezier(.16, 1, .3, 1); }
+    .fp-dot span { transition: opacity .3s; }
+    .fp-line { position: absolute; left: 16px; top: 34px; bottom: 0; width: 2px; background: var(--border-dark); }
+    .fp-line::after { content: ""; position: absolute; inset: 0; background: var(--acid-volt); box-shadow: 0 0 10px var(--acid-glow);
+      transform: scaleY(0); transform-origin: top; transition: transform .7s cubic-bezier(.16, 1, .3, 1); }
+    .fp-step:last-child .fp-line { display: none; }
+    .fp-step.done .fp-line::after { transform: scaleY(1); }
+    .fp-step.done .fp-dot { background: var(--acid-volt); border-color: var(--acid-volt); color: #000; box-shadow: 0 0 18px var(--acid-glow); }
+    .fp-step.done .fp-dot svg { stroke-dashoffset: 0; }
+    .fp-step.done .fp-dot span { opacity: 0; }
+    .fp-step.active .fp-dot { border-color: var(--acid-volt); color: var(--acid-volt); animation: fp-pulse 2.2s ease-in-out infinite; }
+    @keyframes fp-pulse { 0%, 100% { box-shadow: 0 0 0 0 var(--acid-glow); } 50% { box-shadow: 0 0 0 7px transparent; } }
+    .fp-card { background: var(--bg-surface); border: 1px solid var(--border-dark); border-radius: 12px; min-width: 0;
+      transition: border-color .3s, transform .4s cubic-bezier(.16, 1, .3, 1); }
+    .fp-step .fp-card:hover { border-color: var(--border-focus); transform: translateX(2px); }
+    .fp-step.active .fp-card { border-color: var(--acid-volt); }
+    .fp-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 13px 16px; width: 100%; text-align: left;
+      background: none; border: 0; color: inherit; font: inherit; cursor: pointer; }
+    .fp-head:focus-visible { outline: 2px solid var(--cyan-vector); outline-offset: 2px; border-radius: 10px; }
+    .fp-phase { display: block; font: 900 11px var(--font-mono); letter-spacing: 1.2px; color: var(--acid-volt); text-transform: uppercase; }
+    .fp-head strong { display: block; font-size: 15px; color: var(--text-white); }
+    .fp-head em { font: normal 11px var(--font-mono); color: var(--text-dark); white-space: nowrap; }
+    .fp-drawer { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .55s cubic-bezier(.16, 1, .3, 1); }
+    .fp-step.active .fp-drawer { grid-template-rows: 1fr; }
+    .fp-drawer > div { overflow: hidden; }
+    .fp-body { padding: 0 16px 14px; color: var(--text-muted); font-size: 13.5px; display: grid; gap: 8px;
+      opacity: 0; transform: translateY(-4px); transition: opacity .4s .1s, transform .5s .1s cubic-bezier(.16, 1, .3, 1); }
+    .fp-step.active .fp-body { opacity: 1; transform: none; }
+    .fp-body ul { padding-left: 18px; display: grid; gap: 4px; }
+    .fp-body b { color: var(--text-white); }
+    .fp-body .fp-warn { color: #f5b942; }
+    .fp-actions { display: flex; gap: 10px; margin-top: 8px; flex-wrap: wrap; justify-content: center; }
+    .fp-btn { background: var(--acid-volt); color: #000; border: 0; font: 900 12px var(--font-mono); letter-spacing: .5px; padding: 10px 18px; border-radius: 8px;
+      cursor: pointer; box-shadow: 0 0 22px rgba(204, 255, 0, .35); transition: transform .35s cubic-bezier(.16, 1, .3, 1), box-shadow .35s; }
+    .fp-btn:hover { transform: translateY(-1px); box-shadow: 0 0 30px var(--acid-glow); }
+    .fp-btn:active { transform: scale(.97); }
+    .fp-btn.ghost { background: var(--bg-slate); color: var(--text-white); box-shadow: none; border: 1px solid var(--border-focus); }
+    .fp-btn:focus-visible { outline: 2px solid var(--cyan-vector); outline-offset: 2px; }
+    @media (max-width: 560px) { .fp-head em { display: none; } }
+    @media (prefers-reduced-motion: reduce) { .fp-dot, .fp-dot svg, .fp-line::after, .fp-card, .fp-drawer, .fp-body, .fp-btn { transition: none; } .fp-step.active .fp-dot { animation: none; } }
+
     /* Footer */
     footer {
       border-top: 1px solid var(--border-dark);
@@ -851,6 +902,21 @@
       </div>
     </section>
 
+    <!-- ========================================================================= -->
+    <!-- 7. FLIGHT PLAN: install + after-install steps (facts from the app source) -->
+    <!-- ========================================================================= -->
+    <section class="flight-section" id="install">
+      <div class="section-header">
+        <span class="section-tag">// FLIGHT PLAN</span>
+        <h2 class="section-title">From download to deployed in five steps</h2>
+      </div>
+      <div class="fp" id="fp"></div>
+      <div class="fp-actions">
+        <button class="fp-btn" id="fp-next" type="button">NEXT STEP →</button>
+        <button class="fp-btn ghost" id="fp-reset" type="button">RESET</button>
+      </div>
+    </section>
+
   </div>
 
   <!-- Footer -->
@@ -957,7 +1023,43 @@
       }, 160);
     }
 
-    // --- 7. APP PREVIEW SCALING: the desktop window is never narrower than 700px, so shrink it instead of squeezing it ---
+    // --- 7. FLIGHT PLAN ---
+    (function () {
+      const root = document.getElementById('fp');
+      if (!root) return;
+      const STEPS = [
+        ['PRE-FLIGHT', 'Download the file', '9.2 MB', '<p>Download <code>LaptopOptimizer.exe</code>. It is one portable file. There is no installer to run.</p><p>Optional: compare its SHA-256 with the one shown above.</p>'],
+        ['CLEARANCE', 'Pass the two Windows prompts', '2 prompts', '<p>The file is not code-signed, so SmartScreen may warn. Choose <b>More info</b>, then <b>Run anyway</b>.</p><p>Then accept the <b>User Account Control</b> prompt. The app needs administrator rights.</p><p class="fp-warn">If you decline the UAC prompt, some steps will fail later.</p>'],
+        ['ARMING', 'Choose your tweaks', '8 cards', '<p>All eight cards start <b>switched on</b>. Turn off any you do not want.</p><ul><li>Temp files: deletes everything it can in <code>%TEMP%</code>.</li><li>Widgets: removes a Windows package that Restore does not reinstall.</li></ul><p>The app does not make a restore point. You can make one in Windows first.</p>'],
+        ['DEPLOY', 'Open the cover, launch', '1 click', '<p>Click the cover (<b>SILO: SEALED</b>). It becomes <b>WARHEAD: ARMED</b>. Then press <b>LAUNCH NUCLEAR DISPATCH</b>.</p><p>The console lists every step. A <code>[✗]</code> means that step failed.</p>'],
+        ['POST-FLIGHT', 'After deployment', 'afterwards', '<p>Some changes, such as the menu delay, show after you sign out and back in.</p><ul><li><b>STARTUP APPS</b>: switch programs off for the next sign-in.</li><li><b>RESTORE FACTORY DEFAULTS</b>: puts Windows defaults back.</li><li>To remove the app, delete the file. Applied settings stay until you restore them.</li></ul>']
+      ];
+      let cur = 0;
+      STEPS.forEach((s, i) => {
+        const el = document.createElement('div');
+        el.className = 'fp-step';
+        el.innerHTML = '<div class="fp-dot"><span>' + (i + 1) + '</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div><i class="fp-line"></i>' +
+          '<div class="fp-card"><button class="fp-head" type="button" aria-expanded="false" aria-controls="fp-d' + i + '"><span><span class="fp-phase">' + s[0] + '</span><strong>' + s[1] + '</strong></span><em>' + s[2] + '</em></button>' +
+          '<div class="fp-drawer" id="fp-d' + i + '"><div><div class="fp-body">' + s[3] + '</div></div></div></div>';
+        el.querySelector('.fp-head').addEventListener('click', () => go(i));
+        root.appendChild(el);
+      });
+      function go(n, silent) {
+        if (!silent) playSound('click');
+        cur = Math.max(0, Math.min(STEPS.length, n));
+        root.querySelectorAll('.fp-step').forEach((el, i) => {
+          el.classList.toggle('done', i < cur);
+          el.classList.toggle('active', i === cur);
+          el.querySelector('.fp-head').setAttribute('aria-expanded', String(i === cur));
+        });
+        document.getElementById('fp-next').textContent = cur >= STEPS.length ? 'DONE ✓' : (cur === STEPS.length - 1 ? 'FINISH ✓' : 'NEXT STEP →');
+      }
+      document.getElementById('fp-next').addEventListener('click', () => go(cur + 1));
+      document.getElementById('fp-reset').addEventListener('click', () => go(0));
+      go(0, true);
+    })();
+
+    // --- 8. APP PREVIEW SCALING: the desktop window is never narrower than 700px, so shrink it instead of squeezing it ---
     (function () {
       const wrap = document.getElementById('app-live-wrap');
       const frame = document.getElementById('app-live-frame');
