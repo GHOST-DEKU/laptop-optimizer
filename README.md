@@ -118,10 +118,6 @@ pnpm tauri build    # production build: MSI and NSIS installers
 
 Open `laptop-optimizer-tauri/src/index.html` in any browser. Outside Tauri the page uses built-in sample data and makes no system changes. The website preview embeds this same file, so a change to it shows up on the site as well.
 
-### Older C++ version
-
-`src/` holds an earlier native Win32/GDI+ version of the app (`main.cpp`, `optimizer.h`). It is not the build that the release workflow produces, and its button labels and layout differ from the Tauri app. `build.bat` compiles it with MinGW-w64 into `LaptopOptimizer.exe`, which would replace the Tauri executable in the repository root. `src/resource.rc` contains absolute paths from the author's machine, so the `windres` step in `build.bat` only works if those paths exist. The C++ build was not compiled while preparing this document.
-
 ## Project structure
 
 ```text
@@ -136,10 +132,8 @@ Open `laptop-optimizer-tauri/src/index.html` in any browser. Outside Tauri the p
 │       ├── tauri.conf.json       Window size, bundle targets, icons
 │       └── capabilities/         Tauri permission set
 ├── index.html                    Project website (GitHub Pages), embeds the app UI
-├── src/                          Older C++ implementation
 ├── LaptopOptimizer.exe           Committed portable build (Tauri)
 ├── Run-Optimizer.bat             Unblock-and-run helper
-├── build.bat                     Builds the C++ version
 ├── docs/screenshots/             Images used in this README
 └── .github/workflows/release.yml Release build on `v*` tags
 ```
