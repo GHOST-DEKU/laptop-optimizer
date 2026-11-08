@@ -529,6 +529,13 @@
       color: var(--acid-volt);
     }
 
+    .delay-row { display: grid; grid-template-columns: 112px 1fr 56px; gap: 10px; align-items: center; margin-top: 8px; font: 11px var(--font-mono); color: var(--text-muted); text-align: left; }
+    .delay-track { height: 8px; border-radius: 4px; background: #121724; overflow: hidden; }
+    .delay-fill { height: 100%; width: 100%; border-radius: 4px; background: var(--border-focus); transform: scaleX(0); transform-origin: left; transition: transform .8s cubic-bezier(.16, 1, .3, 1); }
+    .delay-fill.new { background: var(--acid-volt); box-shadow: 0 0 10px var(--acid-glow); }
+    .delay-row b { color: var(--text-white); text-align: right; }
+    @media (prefers-reduced-motion: reduce) { .delay-fill { transition: none; } }
+
     .storage-tank-bar {
       width: 100%;
       height: 14px;
@@ -792,16 +799,16 @@
         <!-- Interactive Context Menu Latency Snapper -->
         <div class="dyno-bench-card">
           <div>
-            <span class="header-pill">// DWM CONTEXT BENCHMARK</span>
-            <h3 style="font-size: 20px; font-weight: 800; color: #fff; margin-top: 8px;">Context Menu Snappiness</h3>
+            <span class="header-pill">// MENU DELAY SETTING</span>
+            <h3 style="font-size: 20px; font-weight: 800; color: #fff; margin-top: 8px;">Submenu Delay</h3>
             <p style="font-size: 13px; color: var(--text-muted); margin-top: 6px;">
-              Windows intentionally injects a 400ms artificial animation delay on right-clicks and start menu popouts. Click below to probe optimized snap speed:
+              Windows waits 400 ms before it opens a submenu when you hover over it (the <code>MenuShowDelay</code> value). The Menu delay tweak sets it to 20 ms. This is a setting, not a measured speed-up.
             </p>
           </div>
 
           <div>
             <button id="snap-test-btn" onclick="runSnapBenchmark()" class="snapper-btn">
-              <span>⏱️</span> CLICK TO PROBE RESPONSE SNAP
+              <span>⏱️</span> SHOW THE TWO VALUES
             </button>
             <div id="snap-result" style="text-align: center; font-family: var(--font-mono); font-size: 13px; font-weight: 900; color: var(--acid-volt); min-height: 24px;"></div>
           </div>
@@ -1009,18 +1016,17 @@
       } catch(e) {}
     }
 
-    // --- 6. DWM LATENCY SNAP TESTER ---
+    // --- 6. MENU DELAY VALUES (shows the setting, measures nothing) ---
     function runSnapBenchmark() {
       playSound('snap');
       const btn = document.getElementById('snap-test-btn');
       const res = document.getElementById('snap-result');
-      btn.innerText = 'PROBING HOOK...';
-      res.innerText = '';
-      setTimeout(() => {
-        playSound('click');
-        btn.innerHTML = '<span>⏱️</span> CLICK TO PROBE RESPONSE SNAP';
-        res.innerHTML = '⚡ 20.2ms SNAP RESPONSE [OPTIMIZED // 20X FASTER]';
-      }, 160);
+      btn.innerHTML = '<span>⏱️</span> SHOW AGAIN';
+      res.innerHTML =
+        '<div class="delay-row"><span>WINDOWS DEFAULT</span><div class="delay-track"><div class="delay-fill"></div></div><b>400 ms</b></div>' +
+        '<div class="delay-row"><span>AFTER THE TWEAK</span><div class="delay-track"><div class="delay-fill new" style="width:5%"></div></div><b>20 ms</b></div>';
+      requestAnimationFrame(() => requestAnimationFrame(() =>
+        res.querySelectorAll('.delay-fill').forEach(f => { f.style.transform = 'scaleX(1)'; })));
     }
 
     // --- 7. FLIGHT PLAN ---
