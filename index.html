@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Windows Laptop Optimizer // Cybercore Dark Techwear</title>
-  <meta name="description" content="High-performance, standalone native desktop utility powered by Tauri v2 and Rust designed to unlock full CPU clock responsiveness, purge bloated WebViews, and reclaim 7.5GB NVMe SSD storage.">
+  <meta name="description" content="A Windows 10/11 desktop app (Tauri v2 + Rust) that applies eight performance and cleanup tweaks, manages startup programs, and can restore Windows defaults. Open source.">
 
   <!-- ========================================================================= -->
   <!-- 100% EMBEDDED PURE CSS (ZERO EXTERNAL CDN DEPENDENCIES)                   -->
@@ -599,7 +599,7 @@
     }
 
     /* ========================================================================= */
-    /* 6. CRYPTOGRAPHIC DISPATCH STATION & POWERSHELL HUB                        */
+    /* 6. DISPATCH STATION (download + checksum)                        */
     /* ========================================================================= */
     .dispatch-section {
       padding: 50px 0 90px;
@@ -615,41 +615,6 @@
       max-width: 840px;
       margin: 0 auto;
       box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 0 35px rgba(204, 255, 0, 0.12);
-    }
-
-    .ps-snippet-box {
-      background: #04060a;
-      border: 1px solid var(--border-dark);
-      border-radius: 6px;
-      padding: 12px 18px;
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      margin: 20px auto;
-      max-width: 660px;
-      font-family: var(--font-mono);
-      font-size: 12px;
-      color: var(--cyan-vector);
-    }
-
-    .btn-copy {
-      background: #161e2e;
-      border: 1px solid var(--border-focus);
-      color: #fff;
-      padding: 6px 14px;
-      border-radius: 4px;
-      font-family: var(--font-mono);
-      font-size: 11px;
-      font-weight: bold;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .btn-copy:hover {
-      background: var(--acid-volt);
-      color: #000;
-      border-color: var(--acid-volt);
     }
 
     /* Footer */
@@ -679,7 +644,7 @@
         <div class="brand-icon-box">⚡</div>
         <div class="brand-text-block">
           <span class="brand-name">LAPTOP_OPTIMIZER</span>
-          <span class="brand-version">// WIN32 NATIVE • v2.4</span>
+          <span class="brand-version">// TAURI + RUST • v2.4</span>
         </div>
       </a>
 
@@ -730,8 +695,8 @@
       </div>
 
       <div class="spec-chips">
-        <div class="spec-chip">Architecture: <span>Tauri v2 + Rust 1.95 (WebView2)</span></div>
-        <div class="spec-chip">Footprint: <span>9.2 MB (Zero Runtime)</span></div>
+        <div class="spec-chip">Architecture: <span>Tauri v2 + Rust (WebView2)</span></div>
+        <div class="spec-chip">Footprint: <span>9.2 MB (needs WebView2)</span></div>
         <div class="spec-chip">Compatibility: <span>Windows 11 / 10 (Intel & AMD)</span></div>
         <div class="spec-chip">Safety: <span>1-Click Restore Defaults</span></div>
       </div>
@@ -806,8 +771,8 @@
               <div class="storage-fill"></div>
             </div>
             <div style="display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 11px;">
-              <span style="color: var(--text-dark);">hiberfil.sys: 6.22 GB Purged</span>
-              <span style="color: var(--acid-volt); font-weight: bold;">+7.50 GB Total Space</span>
+              <span style="color: var(--text-dark);">Example: hiberfil.sys 6.22 GB removed</span>
+              <span style="color: var(--acid-volt); font-weight: bold;">Example total: 7.50 GB</span>
             </div>
           </div>
         </div>
@@ -864,7 +829,7 @@
     </section>
 
     <!-- ========================================================================= -->
-    <!-- 6. CRYPTOGRAPHIC DISPATCH STATION & POWERSHELL HUB                        -->
+    <!-- 6. DISPATCH STATION (download + checksum)                        -->
     <!-- ========================================================================= -->
     <section class="dispatch-section">
       <div class="dispatch-card">
@@ -873,20 +838,12 @@
           Deploy to your laptop now.
         </h2>
         <p style="font-size: 15px; color: var(--text-muted); max-width: 600px; margin: 0 auto 28px;">
-          Zero installers. Zero dependencies. Download the standalone 64-bit binary or launch it directly from an elevated PowerShell terminal.
+          Download the standalone 64-bit .exe. It needs Microsoft Edge WebView2 (already included in Windows 10 1803+ and Windows 11). Windows SmartScreen may warn because the file is not code-signed.
         </p>
 
         <a href="https://github.com/GHOST-DEKU/laptop-optimizer/raw/main/LaptopOptimizer.exe" class="hero-btn-primary" style="font-size: 14px; padding: 18px 44px;">
           ⚡ DOWNLOAD LAPTOPOPTIMIZER.EXE (9.2 MB)
         </a>
-
-        <!-- Remote PowerShell Runner -->
-        <div class="ps-snippet-box">
-          <span id="ps-cmd">irm https://git.io/laptop-opt | iex</span>
-          <button onclick="copyPowerShellCommand()" class="btn-copy" id="copy-btn">
-            COPY SCRIPT
-          </button>
-        </div>
 
         <div style="font-family: var(--font-mono); font-size: 11px; color: var(--text-dark); margin-top: 14px;">
           SHA-256 of the committed LaptopOptimizer.exe: <code style="display:block;word-break:break-all;margin:4px 0">78d37c8061729af64eec2cb1c9f4564aebdc8d51e1da85cb95e8a3082d72ac34</code><br>Unsigned, and not scanned by any service. Compare this hash with the downloaded file (<code>Get-FileHash .\LaptopOptimizer.exe</code>).
@@ -901,7 +858,7 @@
     <div class="main-wrap">
       <div>LAPTOP_OPTIMIZER // OPEN SOURCE PUBLIC UTILITY // GHOST-DEKU</div>
       <div style="margin-top: 6px; color: #475569;">
-        CYBERCORE TECHWEAR WORKSTATION • Tauri v2 + Rust Engine • Windows 11 & 10 Certified
+        CYBERCORE TECHWEAR WORKSTATION • Tauri v2 + Rust Engine • Built for Windows 10 &amp; 11 (64-bit)
       </div>
     </div>
   </footer>
@@ -1000,17 +957,7 @@
       }, 160);
     }
 
-    // --- 7. POWERSHELL SCRIPT COPY ---
-    function copyPowerShellCommand() {
-      playSound('click');
-      const text = document.getElementById('ps-cmd').innerText;
-      navigator.clipboard.writeText(text).catch(() => {});
-      const btn = document.getElementById('copy-btn');
-      btn.innerText = 'COPIED!';
-      setTimeout(() => { btn.innerText = 'COPY SCRIPT'; }, 1600);
-    }
-
-    // --- 8. APP PREVIEW SCALING: the desktop window is never narrower than 700px, so shrink it instead of squeezing it ---
+    // --- 7. APP PREVIEW SCALING: the desktop window is never narrower than 700px, so shrink it instead of squeezing it ---
     (function () {
       const wrap = document.getElementById('app-live-wrap');
       const frame = document.getElementById('app-live-frame');

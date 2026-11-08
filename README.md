@@ -62,7 +62,7 @@ The labels in the app such as "−380ms", "−300MB" and "+7.5 GB FREED" are fix
 
 ## Installation
 
-**Option 1: portable executable.** Download [`LaptopOptimizer.exe`](https://github.com/GHOST-DEKU/laptop-optimizer/raw/main/LaptopOptimizer.exe) from the repository root. It is a Tauri build (about 9 MB) committed to the repository. No checksum or code signature is published, so Windows SmartScreen may warn about it. If you prefer not to trust a committed binary, build it yourself (see [Development](#development)).
+**Option 1: portable executable.** Download [`LaptopOptimizer.exe`](https://github.com/GHOST-DEKU/laptop-optimizer/raw/main/LaptopOptimizer.exe) from the repository root. It is a Tauri build (about 9 MB) committed to the repository. The website shows its SHA-256 (`scripts/check-site-hash.sh` checks it matches); the file is not code-signed, so Windows SmartScreen may warn about it. If you prefer not to trust a committed binary, build it yourself (see [Development](#development)).
 
 You can also run `Run-Optimizer.bat`, which unblocks the executable and starts it with administrator rights. It must sit in the same folder as `LaptopOptimizer.exe`.
 
@@ -135,7 +135,8 @@ Open `laptop-optimizer-tauri/src/index.html` in any browser. Outside Tauri the p
 ├── LaptopOptimizer.exe           Committed portable build (Tauri)
 ├── Run-Optimizer.bat             Unblock-and-run helper
 ├── docs/screenshots/             Images used in this README
-└── .github/workflows/release.yml Release build on `v*` tags
+├── scripts/check-site-hash.sh    Checks the SHA-256 on the website matches the .exe
+└── .github/workflows/             release.yml (build on `v*` tags), check-site-hash.yml
 ```
 
 The interface talks to Rust through seven commands: `get_system_info`, `get_live_telemetry`, `apply_tweak`, `restore_tweak`, `restore_all`, `get_startup_apps` and `toggle_startup_app`.

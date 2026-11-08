@@ -1,0 +1,12 @@
+name: Check site checksum
+on:
+  push:
+    paths: [LaptopOptimizer.exe, index.html, scripts/check-site-hash.sh]
+  pull_request:
+    paths: [LaptopOptimizer.exe, index.html, scripts/check-site-hash.sh]
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: bash scripts/check-site-hash.sh
