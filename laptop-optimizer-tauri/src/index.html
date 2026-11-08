@@ -684,6 +684,20 @@
     .log-err {
       color: #f87171;
     }
+    .log-warn {
+      color: #ff9900;
+    }
+    .admin-banner {
+      display: none;
+      flex-shrink: 0;
+      padding: 8px 14px;
+      background: #3a2600;
+      color: #ffb84d;
+      border-bottom: 1px solid #ff9900;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      line-height: 1.4;
+    }
 
     /* ========================================================
        BOTTOM ACTION DOCK
@@ -1090,6 +1104,10 @@
 
   <div class="app-chassis" id="app-chassis">
 
+    <div class="admin-banner" id="admin-banner" role="alert">
+      Not running as administrator. Power plan, Widgets removal and hibernation changes will be skipped. Close the app and start it with "Run as administrator" to use them.
+    </div>
+
     <!-- Top Docked Header -->
     <div class="app-header">
       <div>
@@ -1169,12 +1187,7 @@
         <span style="font-size:10px;color:var(--acid-volt);font-weight:900;" id="drawer-status-pill">[READY // IDLE]</span>
       </div>
       <div class="drawer-content" id="drawer-logs">
-        <div class="log-line log-info">[0.000s] // INITIALIZING CYBERCORE LOW-LEVEL SUBSYSTEM DISPATCH (PID: 16576)</div>
-        <div class="log-line log-success">[0.012s] [✓] AC Clock Floor verified: MinimumProcessorState = 100% (Guid: 36779f97)</div>
-        <div class="log-line log-success">[0.024s] [✓] DWM Compositor latency hook engaged: MenuShowDelay = 20ms</div>
-        <div class="log-line log-success">[0.045s] [✓] WebExperience WidgetService background processes decoupled (-300MB RAM)</div>
-        <div class="log-line log-success">[0.068s] [✓] Kernel hibernation state purged: hiberfil.sys eliminated (+6.22GB reclaimed)</div>
-        <div class="log-line log-success">[0.089s] [✓] ALL SUBSYSTEMS SYNCHRONIZED TO 1000Hz LOW-LATENCY PROFILE.</div>
+        <div class="log-line log-info">Ready. Nothing has been applied yet.</div>
       </div>
     </div>
 
@@ -1646,6 +1659,13 @@
       logs.scrollTop = logs.scrollHeight;
     }
 
+    // Shows one backend result with a marker that matches what really happened.
+    function logResult(r) {
+      const marks = { ok: ['[✓]', 'success'], partial: ['[!]', 'warn'], skipped: ['[-]', 'warn'], failed: ['[✗]', 'err'] };
+      const [mark, type] = marks[r.status] || marks.failed;
+      logToDrawer(`[${(performance.now()/1000).toFixed(3)}s] ${mark} ${r.message}`, type);
+    }
+
     // --- DEPLOY TUNING LOGIC WITH TAURI BACKEND INTEGRATION ---
     async function deployTuning() {
       if (!coverOpen) {
@@ -1668,28 +1688,42 @@
       const activeTweaks = tweaks.filter(t => t.on);
       logToDrawer(`[${(performance.now()/1000).toFixed(3)}s] // STARTING DISPATCH: ${activeTweaks.length} PROTOCOLS ARMED`, 'info');
 
+      const counts = { ok: 0, partial: 0, skipped: 0, failed: 0 };
+      const inApp = !!(window.__TAURI__ && window.__TAURI__.core);
       for (let i = 0; i < activeTweaks.length; i++) {
         const item = activeTweaks[i];
-        logToDrawer(`[${(performance.now()/1000).toFixed(3)}s] >> [EXECUTING CH0${item.id}] ${item.title}...`, 'info');
+        logToDrawer(`[${(performance.now()/1000).toFixed(3)}s] >> [CH0${item.id}] ${item.title}...`, 'info');
 
-        try {
-          if (window.__TAURI__ && window.__TAURI__.core) {
-            const res = await window.__TAURI__.core.invoke('apply_tweak', { id: item.id });
-            logToDrawer(`[${(performance.now()/1000).toFixed(3)}s] [✓] ${res}`, 'success');
-          } else {
-            // Simulated fallback mode
-            await new Promise(r => setTimeout(r, 220));
-            logToDrawer(`[${(performance.now()/1000).toFixed(3)}s] [✓] ${item.title} engaged: ${item.tag}`, 'success');
+        let r;
+        if (inApp) {
+          try {
+            r = await window.__TAURI__.core.invoke('apply_tweak', { id: item.id });
+          } catch (err) {
+            r = { status: 'failed', message: String(err) };
           }
-        } catch (err) {
-          logToDrawer(`[${(performance.now()/1000).toFixed(3)}s] [✗] Error: ${err}`, 'err');
+        } else {
+          // Browser demo: nothing is changed on the visitor's device.
+          await new Promise(res => setTimeout(res, 220));
+          r = { status: 'ok', message: `${item.title}: simulated (demo only, nothing changed)` };
         }
+        counts[r.status] = (counts[r.status] || 0) + 1;
+        logResult(r);
       }
 
-      playAudio('success');
-      statusPill.innerText = "[1000Hz STABLE // LOCKED]";
-      statusPill.style.color = "var(--acid-volt)";
-      logToDrawer(`[${(performance.now()/1000).toFixed(3)}s] // ALL PROTOCOLS DEPLOYED. SYSTEM RUNNING AT PEAK EFFICIENCY.`, 'success');
+      const total = activeTweaks.length;
+      const issues = counts.partial + counts.skipped + counts.failed;
+      if (issues === 0) {
+        playAudio('success');
+        statusPill.innerText = inApp ? "[ALL APPLIED]" : "[DEMO // NOTHING CHANGED]";
+        statusPill.style.color = "var(--acid-volt)";
+        logToDrawer(inApp
+          ? `// DONE: ${counts.ok} of ${total} changes applied and checked.`
+          : `// DEMO ONLY: no changes were made. Download the app to apply them.`, 'success');
+      } else {
+        statusPill.innerText = `[${counts.ok} OK // ${issues} NEED ATTENTION]`;
+        statusPill.style.color = "#ff9900";
+        logToDrawer(`// DONE WITH PROBLEMS: ${counts.ok} ok, ${counts.partial} partial, ${counts.skipped} skipped, ${counts.failed} failed (of ${total}).`, 'warn');
+      }
     }
 
     // Restore factory defaults
@@ -1707,17 +1741,24 @@
 
       try {
         if (window.__TAURI__ && window.__TAURI__.core) {
-          const logs = await window.__TAURI__.core.invoke('restore_all');
-          for (const line of logs) {
-            logToDrawer(`[${(performance.now()/1000).toFixed(3)}s] [✓] ${line}`, 'success');
-          }
+          const results = await window.__TAURI__.core.invoke('restore_all');
+          const ids = [1, 2, 3, 4, 5, 6, 7]; // same order the backend returns them
+          results.forEach((r, i) => {
+            logResult(r);
+            if (r.status === 'ok' || r.status === 'partial') {
+              const t = tweaks.find(x => x.id === ids[i]);
+              if (t) t.on = false;
+            }
+          });
+          const bad = results.filter(r => r.status !== 'ok').length;
+          logToDrawer(bad === 0
+            ? '// RESTORE DONE: all settings back to Windows defaults.'
+            : `// RESTORE DONE WITH PROBLEMS: ${bad} of ${results.length} not fully restored.`, bad === 0 ? 'success' : 'warn');
         } else {
           await new Promise(r => setTimeout(r, 400));
-          logToDrawer(`[${(performance.now()/1000).toFixed(3)}s] [✓] Balanced power scheme restored`, 'success');
-          logToDrawer(`[${(performance.now()/1000).toFixed(3)}s] [✓] MenuShowDelay reset to 400ms`, 'success');
-          logToDrawer(`[${(performance.now()/1000).toFixed(3)}s] [✓] Game DVR re-enabled`, 'success');
+          logToDrawer(`// DEMO ONLY: nothing was changed on this device.`, 'success');
+          tweaks.forEach(t => t.on = false);
         }
-        tweaks.forEach(t => t.on = false);
         renderGrid();
         playAudio('success');
       } catch (e) {
@@ -1862,6 +1903,9 @@
     async function initSystemInfo() {
       try {
         if (window.__TAURI__ && window.__TAURI__.core) {
+          if (!(await window.__TAURI__.core.invoke('get_elevation'))) {
+            document.getElementById('admin-banner').style.display = 'block';
+          }
           const info = await window.__TAURI__.core.invoke('get_system_info');
           if (info) {
             if (info.cpu_name) document.getElementById('cpu-name').innerText = info.cpu_name;

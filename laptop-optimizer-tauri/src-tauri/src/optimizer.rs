@@ -1,11 +1,27 @@
+use crate::safety::{
+    dir_is_allowed, powershell_exe, purge_old_entries, run_with_timeout, system32_exe, Outcome, TweakResult,
+};
 use serde::{Deserialize, Serialize};
 use std::os::windows::process::CommandExt;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::process::Command;
+use std::time::{Duration, SystemTime};
 use winreg::enums::*;
 use winreg::{RegKey, HKEY};
 
 const CREATE_NO_WINDOW: u32 = 0x08000000;
+const HIGH_PERFORMANCE: &str = "8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c";
+const BALANCED: &str = "381b4222-f694-41f0-9685-ff5bb260df2e";
+const POWER_THROTTLING_KEY: &str = "SYSTEM\\CurrentControlSet\\Control\\Power\\PowerThrottling";
+const ACTIVE_SCHEME_KEY: &str = "SYSTEM\\CurrentControlSet\\Control\\Power\\User\\PowerSchemes";
+const POWER_KEY: &str = "SYSTEM\\CurrentControlSet\\Control\\Power";
+const WEBEXPERIENCE: &str = "MicrosoftWindows.Client.WebExperience";
+const NOT_FOUND: u32 = u32::MAX; // marker for "registry value missing"
+
+#[link(name = "shell32")]
+extern "system" {
+    fn IsUserAnAdmin() -> i32;
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OptimizationItem {
@@ -47,22 +63,51 @@ pub struct StartupAppEntry {
 pub struct OptimizerEngine;
 
 impl OptimizerEngine {
-    // Helper to run command silently
-    pub fn execute_command(cmd: &str) -> bool {
-        let parts: Vec<&str> = cmd.split_whitespace().collect();
-        if parts.is_empty() {
-            return false;
-        }
+    /// True when this process has administrator rights.
+    pub fn is_elevated() -> bool {
+        unsafe { IsUserAnAdmin() != 0 }
+    }
 
-        let mut command = Command::new("cmd");
-        command
-            .args(&["/C", cmd])
-            .creation_flags(CREATE_NO_WINDOW);
+    fn system_root() -> String {
+        std::env::var("SystemRoot").or_else(|_| std::env::var("windir")).unwrap_or_else(|_| "C:\\Windows".into())
+    }
 
-        match command.status() {
-            Ok(status) => status.success(),
-            Err(_) => false,
-        }
+    // Runs a program by absolute path (never through cmd.exe or the PATH) and stops it after `secs`.
+    fn run(exe: &str, args: &[&str], secs: u64) -> Outcome {
+        let mut command = Command::new(exe);
+        command.args(args).creation_flags(CREATE_NO_WINDOW);
+        run_with_timeout(command, Duration::from_secs(secs))
+    }
+
+    fn system32(name: &str, args: &[&str], secs: u64) -> Outcome {
+        Self::run(&system32_exe(&Self::system_root(), name), args, secs)
+    }
+
+    fn powershell(script: &str, secs: u64) -> Outcome {
+        Self::run(
+            &powershell_exe(&Self::system_root()),
+            &["-NoProfile", "-NonInteractive", "-Command", script],
+            secs,
+        )
+    }
+
+    // Writes a DWORD, then reads it back to confirm it stuck.
+    fn set_dword_verified(root: HKEY, subkey: &str, name: &str, val: u32) -> bool {
+        Self::set_registry_dword(root, subkey, name, val) && Self::get_registry_dword(root, subkey, name, NOT_FOUND) == val
+    }
+
+    fn set_string_verified(root: HKEY, subkey: &str, name: &str, val: &str) -> bool {
+        Self::set_registry_string(root, subkey, name, val) && Self::get_registry_string(root, subkey, name) == val
+    }
+
+    fn active_power_scheme() -> String {
+        Self::get_registry_string(HKEY_LOCAL_MACHINE, ACTIVE_SCHEME_KEY, "ActivePowerScheme").to_lowercase()
+    }
+
+    fn webexperience_installed_check() -> Outcome {
+        // exit 0 = package gone, exit 1 = still installed
+        let script = format!("if (Get-AppxPackage -Name {}) {{ exit 1 }} else {{ exit 0 }}", WEBEXPERIENCE);
+        Self::powershell(&script, 60)
     }
 
     // Helper: set DWORD in registry
@@ -101,172 +146,229 @@ impl OptimizerEngine {
         }
     }
 
-    // 01. Power Plan (High Performance & 100% Floor on AC with Modern Standby S0 Fallback)
-    pub fn optimize_power_plan() -> Result<String, String> {
-        // Attempt standard High Performance duplication and activation
-        Self::execute_command("powercfg -duplicatescheme 8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c");
-        let ok = Self::execute_command("powercfg -setactive 8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c")
-            || Self::execute_command("powercfg -setactive 36779f97-38bc-4a49-95c2-71efe9e2771f");
+    // 01. Power plan: High Performance + Power Throttling off (needs admin; throttling flag needs a restart)
+    pub fn optimize_power_plan() -> TweakResult {
+        let plan_ran = Self::system32("powercfg.exe", &["-setactive", HIGH_PERFORMANCE], 20).succeeded();
+        let plan_confirmed = plan_ran && Self::active_power_scheme() == HIGH_PERFORMANCE;
+        let throttle_set = Self::set_dword_verified(HKEY_LOCAL_MACHINE, POWER_THROTTLING_KEY, "PowerThrottlingOff", 1);
 
-        // Modern Standby (S0) Fallback: Disable Power Throttling globally & engage max performance overlay
-        let throttle_ok = Self::execute_command("powercfg /powerthrottling disable /flags none");
-        let _ = Self::set_registry_dword(
-            HKEY_LOCAL_MACHINE,
-            "SYSTEM\\CurrentControlSet\\Control\\Power\\PowerThrottling",
-            "PowerThrottlingOff",
-            1,
-        );
-
-        if ok || throttle_ok {
-            Ok("High Performance Profile active; Power Throttling disabled & 100% Clock Floor engaged on AC.".into())
+        if plan_confirmed && throttle_set {
+            TweakResult::ok("High Performance plan is active. Power Throttling flag set; it applies after a restart.")
+        } else if !plan_ran && !throttle_set {
+            TweakResult::failed("Nothing changed. This PC may not offer the High Performance plan (common with Modern Standby laptops).")
         } else {
-            Err("Failed to set active High Performance power plan.".into())
+            let plan = if plan_confirmed {
+                "High Performance plan is active"
+            } else if plan_ran {
+                "Plan switch was accepted but could not be confirmed"
+            } else {
+                "High Performance plan not available on this PC, plan unchanged"
+            };
+            let throttle = if throttle_set { "Power Throttling flag set (applies after restart)" } else { "Power Throttling flag not saved" };
+            TweakResult::partial(format!("{}; {}.", plan, throttle))
         }
     }
 
-    pub fn restore_power_plan() -> Result<String, String> {
-        let _ = Self::execute_command("powercfg /powerthrottling enable /flags none");
-        let _ = Self::set_registry_dword(
-            HKEY_LOCAL_MACHINE,
-            "SYSTEM\\CurrentControlSet\\Control\\Power\\PowerThrottling",
-            "PowerThrottlingOff",
+    pub fn restore_power_plan() -> TweakResult {
+        let plan_ran = Self::system32("powercfg.exe", &["-setactive", BALANCED], 20).succeeded();
+        let plan_confirmed = plan_ran && Self::active_power_scheme() == BALANCED;
+        let throttle_reset = Self::set_dword_verified(HKEY_LOCAL_MACHINE, POWER_THROTTLING_KEY, "PowerThrottlingOff", 0);
+        if plan_confirmed && throttle_reset {
+            TweakResult::ok("Balanced power plan restored; Power Throttling flag reset.")
+        } else if !plan_ran && !throttle_reset {
+            TweakResult::failed("Could not restore the Balanced plan or the Power Throttling flag.")
+        } else {
+            TweakResult::partial(format!(
+                "Balanced plan {}; Power Throttling flag {}.",
+                if plan_confirmed { "restored" } else { "not confirmed" },
+                if throttle_reset { "reset" } else { "not reset" }
+            ))
+        }
+    }
+
+    // 02. Game DVR background capture
+    pub fn optimize_game_dvr() -> TweakResult {
+        const GCS: &str = "System\\GameConfigStore";
+        const DVR: &str = "Software\\Microsoft\\Windows\\CurrentVersion\\GameDVR";
+        let checks = [
+            Self::set_dword_verified(HKEY_CURRENT_USER, GCS, "GameDVR_Enabled", 0),
+            Self::set_dword_verified(HKEY_CURRENT_USER, GCS, "GameDVR_FSEBehaviorMode", 2),
+            Self::set_dword_verified(HKEY_CURRENT_USER, GCS, "GameDVR_HonorUserFSEBehaviorMode", 1),
+            Self::set_dword_verified(HKEY_CURRENT_USER, DVR, "AppCaptureEnabled", 0),
+            Self::set_dword_verified(HKEY_CURRENT_USER, DVR, "HistoricalCaptureEnabled", 0),
+        ];
+        let passed = checks.iter().filter(|c| **c).count();
+        TweakResult::from_counts(passed, checks.len(), format!("Game DVR settings saved: {} of {}.", passed, checks.len()))
+    }
+
+    pub fn restore_game_dvr() -> TweakResult {
+        const GCS: &str = "System\\GameConfigStore";
+        const DVR: &str = "Software\\Microsoft\\Windows\\CurrentVersion\\GameDVR";
+        let checks = [
+            Self::set_dword_verified(HKEY_CURRENT_USER, GCS, "GameDVR_Enabled", 1),
+            Self::set_dword_verified(HKEY_CURRENT_USER, DVR, "AppCaptureEnabled", 1),
+            Self::set_dword_verified(HKEY_CURRENT_USER, DVR, "HistoricalCaptureEnabled", 1),
+        ];
+        let passed = checks.iter().filter(|c| **c).count();
+        TweakResult::from_counts(passed, checks.len(), format!("Game DVR defaults restored: {} of {}.", passed, checks.len()))
+    }
+
+    // 03. Context menu delay
+    pub fn optimize_menu_delay() -> TweakResult {
+        if Self::set_string_verified(HKEY_CURRENT_USER, "Control Panel\\Desktop", "MenuShowDelay", "20") {
+            TweakResult::ok("MenuShowDelay saved as 20 ms. You may need to sign out and back in to see it.")
+        } else {
+            TweakResult::failed("Could not save MenuShowDelay.")
+        }
+    }
+
+    pub fn restore_menu_delay() -> TweakResult {
+        if Self::set_string_verified(HKEY_CURRENT_USER, "Control Panel\\Desktop", "MenuShowDelay", "400") {
+            TweakResult::ok("MenuShowDelay restored to 400 ms.")
+        } else {
+            TweakResult::failed("Could not restore MenuShowDelay.")
+        }
+    }
+
+    // 04. Widgets: hide the taskbar button, stop the service, remove the Web Experience pack (needs admin)
+    pub fn optimize_widgets() -> TweakResult {
+        let button_hidden = Self::set_dword_verified(
+            HKEY_CURRENT_USER,
+            "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+            "TaskbarDa",
             0,
         );
-        // Balanced scheme GUID
-        if Self::execute_command("powercfg -setactive 381b4222-f694-41f0-9685-ff5bb260df2e") {
-            Ok("Restored standard Windows Balanced power scheme.".into())
+        // Not running is fine, so the result of taskkill is ignored.
+        let _ = Self::system32("taskkill.exe", &["/f", "/im", "WidgetService.exe"], 10);
+
+        let winget = std::env::var("LOCALAPPDATA")
+            .map(|p| PathBuf::from(p).join("Microsoft\\WindowsApps\\winget.exe"))
+            .ok()
+            .filter(|p| p.exists());
+        if let Some(winget) = winget {
+            let _ = Self::run(
+                &winget.to_string_lossy(),
+                &["uninstall", "--id", "MicrosoftWindows.Client.WebExperience_cw5n1h2txyewy", "--silent", "--accept-source-agreements"],
+                120,
+            );
+        }
+        let mut gone = Self::webexperience_installed_check().succeeded();
+        if !gone {
+            let _ = Self::powershell(&format!("Get-AppxPackage -Name {} | Remove-AppxPackage", WEBEXPERIENCE), 120);
+            gone = Self::webexperience_installed_check().succeeded();
+        }
+
+        match (button_hidden, gone) {
+            (true, true) => TweakResult::ok("Widgets button hidden and the Widgets pack is removed."),
+            (true, false) => TweakResult::partial("Widgets button hidden, but the Widgets pack is still installed."),
+            (false, true) => TweakResult::partial("Widgets pack removed, but the taskbar setting was not saved."),
+            (false, false) => TweakResult::failed("Could not hide Widgets or remove the Widgets pack."),
+        }
+    }
+
+    pub fn restore_widgets() -> TweakResult {
+        if Self::set_dword_verified(
+            HKEY_CURRENT_USER,
+            "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+            "TaskbarDa",
+            1,
+        ) {
+            TweakResult::partial("Widgets taskbar button restored. The removed Widgets pack is not reinstalled; get it from the Microsoft Store if you want it back.")
         } else {
-            Ok("Restored default Windows power scheme & throttling policies.".into())
+            TweakResult::failed("Could not restore the Widgets taskbar button.")
         }
     }
 
-    // 02. Game DVR Background Video Buffer
-    pub fn optimize_game_dvr() -> Result<String, String> {
-        let mut ok = true;
-        ok &= Self::set_registry_dword(HKEY_CURRENT_USER, "System\\GameConfigStore", "GameDVR_Enabled", 0);
-        ok &= Self::set_registry_dword(HKEY_CURRENT_USER, "System\\GameConfigStore", "GameDVR_FSEBehaviorMode", 2);
-        ok &= Self::set_registry_dword(HKEY_CURRENT_USER, "System\\GameConfigStore", "GameDVR_HonorUserFSEBehaviorMode", 1);
-        ok &= Self::set_registry_dword(HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\GameDVR", "AppCaptureEnabled", 0);
-        ok &= Self::set_registry_dword(HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\GameDVR", "HistoricalCaptureEnabled", 0);
-        if ok {
-            Ok("Game DVR background video hooks halted; zero continuous VRAM drain.".into())
+    // 05. Turn hibernation (and Fast Startup) off (needs admin)
+    pub fn optimize_fast_startup() -> TweakResult {
+        Self::set_hibernation(false)
+    }
+
+    pub fn restore_fast_startup() -> TweakResult {
+        Self::set_hibernation(true)
+    }
+
+    fn set_hibernation(on: bool) -> TweakResult {
+        let outcome = Self::system32("powercfg.exe", &["-h", if on { "on" } else { "off" }], 30);
+        let state = Self::get_registry_dword(HKEY_LOCAL_MACHINE, POWER_KEY, "HibernateEnabled", NOT_FOUND);
+        let word = if on { "on" } else { "off" };
+        if outcome.succeeded() && state == on as u32 {
+            TweakResult::ok(format!("Hibernation turned {}.", word))
+        } else if outcome.succeeded() {
+            TweakResult::partial(format!("powercfg reported success but hibernation could not be confirmed {}.", word))
         } else {
-            Err("Failed to update GameDVR registry keys.".into())
+            TweakResult::failed(format!("Hibernation not changed: powercfg {}.", outcome.describe()))
         }
     }
 
-    pub fn restore_game_dvr() -> Result<String, String> {
-        let mut ok = true;
-        ok &= Self::set_registry_dword(HKEY_CURRENT_USER, "System\\GameConfigStore", "GameDVR_Enabled", 1);
-        ok &= Self::set_registry_dword(HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\GameDVR", "AppCaptureEnabled", 1);
-        ok &= Self::set_registry_dword(HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\GameDVR", "HistoricalCaptureEnabled", 1);
-        if ok {
-            Ok("Restored default Windows GameDVR capture settings.".into())
+    // 06. Bing results in Start search
+    pub fn optimize_bing_search() -> TweakResult {
+        const KEY: &str = "Software\\Microsoft\\Windows\\CurrentVersion\\Search";
+        let saved = Self::set_dword_verified(HKEY_CURRENT_USER, KEY, "BingSearchEnabled", 0);
+        let _ = Self::system32("taskkill.exe", &["/f", "/im", "SearchHost.exe"], 10); // restarts on its own
+        if saved {
+            TweakResult::ok("Bing search setting saved. Start may need a moment or a sign-out to reflect it.")
         } else {
-            Err("Failed to restore GameDVR registry keys.".into())
+            TweakResult::failed("Could not save the Bing search setting.")
         }
     }
 
-    // 03. Instant Context Menu Show Delay
-    pub fn optimize_menu_delay() -> Result<String, String> {
-        if Self::set_registry_string(HKEY_CURRENT_USER, "Control Panel\\Desktop", "MenuShowDelay", "20") {
-            Ok("MenuShowDelay set to 20ms for instant desktop responsiveness.".into())
+    pub fn restore_bing_search() -> TweakResult {
+        if Self::set_dword_verified(
+            HKEY_CURRENT_USER,
+            "Software\\Microsoft\\Windows\\CurrentVersion\\Search",
+            "BingSearchEnabled",
+            1,
+        ) {
+            TweakResult::ok("Bing search setting restored.")
         } else {
-            Err("Failed to set MenuShowDelay.".into())
+            TweakResult::failed("Could not restore the Bing search setting.")
         }
     }
 
-    pub fn restore_menu_delay() -> Result<String, String> {
-        if Self::set_registry_string(HKEY_CURRENT_USER, "Control Panel\\Desktop", "MenuShowDelay", "400") {
-            Ok("Restored default 400ms MenuShowDelay.".into())
+    // 07. Delivery Optimization peer sharing
+    pub fn optimize_delivery_optimization() -> TweakResult {
+        if Self::set_dword_verified(
+            HKEY_CURRENT_USER,
+            "Software\\Microsoft\\Windows\\CurrentVersion\\DeliveryOptimization",
+            "DODownloadMode",
+            0,
+        ) {
+            TweakResult::ok("DODownloadMode saved as 0 (HTTP only).")
         } else {
-            Err("Failed to restore MenuShowDelay.".into())
+            TweakResult::failed("Could not save DODownloadMode.")
         }
     }
 
-    // 04. Purge Widgets & WebExperience Pack (with Winget missing fallback)
-    pub fn optimize_widgets() -> Result<String, String> {
-        Self::set_registry_dword(HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced", "TaskbarDa", 0);
-        Self::execute_command("taskkill /f /im WidgetService.exe");
-        let winget_ok = Self::execute_command("winget uninstall MicrosoftWindows.Client.WebExperience_cw5n1h2txyewy --silent --accept-source-agreements");
-        if !winget_ok {
-            // Fallback for systems where winget is uninitialized or missing: PowerShell Appx removal
-            Self::execute_command("powershell -NoProfile -Command \"Get-AppxPackage *WebExperience* | Remove-AppxPackage\"");
-        }
-        Ok("Purged Windows 11 Widget pack and killed idle WebView2 processes (-300MB RAM).".into())
-    }
-
-    pub fn restore_widgets() -> Result<String, String> {
-        Self::set_registry_dword(HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced", "TaskbarDa", 1);
-        Ok("Restored taskbar widget toggle icon.".into())
-    }
-
-    // 05. Clean Kernel Boots & Delete hiberfil.sys
-    pub fn optimize_fast_startup() -> Result<String, String> {
-        if Self::execute_command("powercfg -h off") {
-            Ok("Fast Startup disabled; deleted hiberfil.sys (+6.22GB SSD reclaimed, clean kernel boots guaranteed).".into())
+    pub fn restore_delivery_optimization() -> TweakResult {
+        if Self::set_dword_verified(
+            HKEY_CURRENT_USER,
+            "Software\\Microsoft\\Windows\\CurrentVersion\\DeliveryOptimization",
+            "DODownloadMode",
+            1,
+        ) {
+            TweakResult::ok("DODownloadMode restored to 1.")
         } else {
-            Err("Failed to execute powercfg -h off.".into())
+            TweakResult::failed("Could not restore DODownloadMode.")
         }
     }
 
-    pub fn restore_fast_startup() -> Result<String, String> {
-        if Self::execute_command("powercfg -h on") {
-            Ok("Re-enabled Windows Hibernation and Fast Startup.".into())
-        } else {
-            Err("Failed to execute powercfg -h on.".into())
+    // 08. Delete temp files untouched for 24 hours, only inside the current user's Temp folder
+    pub fn optimize_temp_files() -> TweakResult {
+        let (Ok(temp), Ok(local)) = (std::env::var("TEMP"), std::env::var("LOCALAPPDATA")) else {
+            return TweakResult::skipped("TEMP or LOCALAPPDATA is not set; nothing was deleted.");
+        };
+        let allowed = [PathBuf::from(local).join("Temp")];
+        if !dir_is_allowed(Path::new(&temp), &allowed) {
+            return TweakResult::skipped("TEMP does not point to your own Temp folder; nothing was deleted.");
         }
-    }
-
-    // 06. Decouple Bing Cloud Integration from Start
-    pub fn optimize_bing_search() -> Result<String, String> {
-        Self::set_registry_dword(HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Search", "BingSearchEnabled", 0);
-        Self::execute_command("taskkill /f /im SearchHost.exe");
-        Ok("Decoupled Bing cloud search; Start menu indexing restricted to local apps & files.".into())
-    }
-
-    pub fn restore_bing_search() -> Result<String, String> {
-        Self::set_registry_dword(HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Search", "BingSearchEnabled", 1);
-        Ok("Restored Bing cloud search integration in Start menu.".into())
-    }
-
-    // 07. Halt Delivery Optimization P2P Seeding
-    pub fn optimize_delivery_optimization() -> Result<String, String> {
-        if Self::set_registry_dword(HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\DeliveryOptimization", "DODownloadMode", 0) {
-            Ok("Halted Windows Update Delivery Optimization background P2P seeding.".into())
-        } else {
-            Err("Failed to set DODownloadMode.".into())
+        match purge_old_entries(Path::new(&temp), Duration::from_secs(24 * 3600), SystemTime::now()) {
+            Ok(r) => TweakResult::ok(format!(
+                "Removed {} items older than 24 h; kept {} recent; {} in use or protected.",
+                r.deleted, r.kept_recent, r.failed + r.skipped_links
+            )),
+            Err(e) => TweakResult::failed(format!("Could not read the Temp folder: {}", e)),
         }
-    }
-
-    pub fn restore_delivery_optimization() -> Result<String, String> {
-        if Self::set_registry_dword(HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\DeliveryOptimization", "DODownloadMode", 1) {
-            Ok("Restored default Delivery Optimization mode.".into())
-        } else {
-            Err("Failed to restore DODownloadMode.".into())
-        }
-    }
-
-    // 08. Purge Stale Temporary Files (>24h)
-    pub fn optimize_temp_files() -> Result<String, String> {
-        if let Ok(temp_dir) = std::env::var("TEMP") {
-            let path = Path::new(&temp_dir);
-            if let Ok(entries) = std::fs::read_dir(path) {
-                let mut deleted_count = 0;
-                for entry in entries.flatten() {
-                    let p = entry.path();
-                    if p.is_dir() {
-                        let _ = std::fs::remove_dir_all(&p);
-                        deleted_count += 1;
-                    } else if p.is_file() {
-                        let _ = std::fs::remove_file(&p);
-                        deleted_count += 1;
-                    }
-                }
-                return Ok(format!("Purged stale temporary cache files ({} items cleared from %TEMP%).", deleted_count));
-            }
-        }
-        Ok("Cleaned temporary cache files successfully.".into())
     }
 
     // Self-unblock NTFS Zone.Identifier stream
