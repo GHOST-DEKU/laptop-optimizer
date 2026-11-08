@@ -546,7 +546,7 @@
     }
 
     /* ========================================================================= */
-    /* 5. NATIVE C++ VS ELECTRON BLOAT COMPARISON MATRIX                         */
+    /* 5. FACTS ABOUT THE DOWNLOAD (checked against the repository)                         */
     /* ========================================================================= */
     .compare-section {
       padding: 40px 0 70px;
@@ -583,14 +583,19 @@
       color: var(--text-muted);
     }
 
+    /* Phones: stack each row so the "Good to know" column is never cut off */
+    @media (max-width: 640px) {
+      .compare-table thead { display: none; }
+      .compare-table, .compare-table tbody, .compare-table tr, .compare-table td { display: block; width: 100%; }
+      .compare-table td { border: 0; padding: 6px 16px; }
+      .compare-table tr { padding: 10px 0; border-bottom: 1px solid var(--border-dark); }
+      .compare-table tr:last-child { border-bottom: 0; }
+    }
+
     .col-highlight {
       background: rgba(204, 255, 0, 0.04);
       color: var(--acid-volt);
       font-weight: bold;
-    }
-
-    .col-bloat {
-      color: #f87171;
     }
 
     /* ========================================================================= */
@@ -810,48 +815,48 @@
     </section>
 
     <!-- ========================================================================= -->
-    <!-- 5. NATIVE C++ VS ELECTRON BLOAT COMPARISON MATRIX                         -->
+    <!-- 5. FACTS ABOUT THE DOWNLOAD (checked against the repository)                         -->
     <!-- ========================================================================= -->
     <section class="compare-section">
       <div class="section-header">
         <span class="section-tag">// ENGINEERING INTEGRITY</span>
-        <h2 class="section-title">Native Win32 Engineering vs Typical Bloat</h2>
+        <h2 class="section-title">What You Are Actually Downloading</h2>
       </div>
 
       <div class="compare-table-box">
         <table class="compare-table">
           <thead>
             <tr>
-              <th>Architecture Metric</th>
+              <th>Item</th>
               <th class="col-highlight">LaptopOptimizer.exe (Tauri v2 + Rust)</th>
-              <th>Typical Modern Electron / Store App</th>
+              <th>Good to know</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td><strong>Binary Payload Size</strong></td>
-              <td class="col-highlight">9.2 MB (Self-Contained)</td>
-              <td class="col-bloat">180 MB – 450 MB (Bundled Chromium)</td>
+              <td><strong>Binary size</strong></td>
+              <td class="col-highlight">9.2 MB (9,205,248 bytes)</td>
+              <td>Single .exe committed to the repo. Needs Microsoft Edge WebView2, which is not bundled (it ships with Windows 10 1803+ and 11).</td>
             </tr>
             <tr>
-              <td><strong>Idle RAM Footprint</strong></td>
-              <td class="col-highlight">0 MB (Closed) / 12 MB (Active)</td>
-              <td class="col-bloat">450 MB – 900 MB across 6+ child processes</td>
+              <td><strong>Background services</strong></td>
+              <td class="col-highlight">None installed by the app</td>
+              <td>The code registers no service or scheduled task. The app runs only while its window is open.</td>
             </tr>
             <tr>
-              <td><strong>Background Services Left Running</strong></td>
-              <td class="col-highlight">0 Services (Zero Lingering Daemons)</td>
-              <td class="col-bloat">3 – 6 Auto-updater & telemetry daemons</td>
+              <td><strong>Network use</strong></td>
+              <td class="col-highlight">None in the app's own code</td>
+              <td>The Widgets tweak runs <code>winget</code>, which may contact Microsoft's package source.</td>
             </tr>
             <tr>
-              <td><strong>Application Startup Latency</strong></td>
-              <td class="col-highlight">0.02 Seconds (Instantaneous)</td>
-              <td class="col-bloat">3.5 – 6.0 Seconds (V8 JIT compilation)</td>
+              <td><strong>Source code</strong></td>
+              <td class="col-highlight">Open (Rust backend + one HTML file)</td>
+              <td>Read it in <code>laptop-optimizer-tauri/</code> before you run it.</td>
             </tr>
             <tr>
-              <td><strong>System Safety & Rollback</strong></td>
-              <td class="col-highlight">1-Click Instant Restore to Defaults</td>
-              <td class="col-bloat">Scattered registry orphans & hidden folders</td>
+              <td><strong>Rollback</strong></td>
+              <td class="col-highlight">Restore Factory Defaults button</td>
+              <td>Returns Windows defaults, not your previous values. Deleted temp files and the removed Widgets package are not restored.</td>
             </tr>
           </tbody>
         </table>
@@ -884,7 +889,7 @@
         </div>
 
         <div style="font-family: var(--font-mono); font-size: 11px; color: var(--text-dark); margin-top: 14px;">
-          SHA-256: <code>4f91e8b3c9f289d0a7e6b541...verified</code> • 100% VirusTotal Clean
+          SHA-256 of the committed LaptopOptimizer.exe: <code style="display:block;word-break:break-all;margin:4px 0">78d37c8061729af64eec2cb1c9f4564aebdc8d51e1da85cb95e8a3082d72ac34</code><br>Unsigned, and not scanned by any service. Compare this hash with the downloaded file (<code>Get-FileHash .\LaptopOptimizer.exe</code>).
         </div>
       </div>
     </section>
