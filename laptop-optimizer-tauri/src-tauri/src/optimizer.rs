@@ -637,33 +637,6 @@ impl OptimizerEngine {
             }
         }
 
-        if apps.is_empty() {
-            apps.push(StartupAppEntry {
-                name: "OneDrive".into(),
-                command: "OneDrive.exe /background".into(),
-                location: "HKCU".into(),
-                is_enabled: true,
-            });
-            apps.push(StartupAppEntry {
-                name: "Grammarly".into(),
-                command: "GrammarlyDesktop.exe".into(),
-                location: "HKCU".into(),
-                is_enabled: true,
-            });
-            apps.push(StartupAppEntry {
-                name: "UniGetUI".into(),
-                command: "UniGetUI.exe --daemon".into(),
-                location: "HKCU".into(),
-                is_enabled: true,
-            });
-            apps.push(StartupAppEntry {
-                name: "RiotClient".into(),
-                command: "RiotClientServices.exe --launch-product=league_of_legends".into(),
-                location: "HKCU".into(),
-                is_enabled: false,
-            });
-        }
-
         apps
     }
 }

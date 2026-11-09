@@ -1134,12 +1134,12 @@
         <div class="scope-box" id="scope-container">
           <canvas class="scope-canvas" id="oscilloscope" width="140" height="42"></canvas>
           <div class="scope-reticle"></div>
-          <div class="scope-tag" id="scope-status">1000Hz STABLE</div>
+          <div class="scope-tag" id="scope-status">NONE SELECTED</div>
         </div>
 
         <div class="telemetry-col">
           <div class="telemetry-label">THROUGHPUT GOVERNOR</div>
-          <div class="telemetry-val" id="gov-text">MAX SPEED // 100% UNLOCKED</div>
+          <div class="telemetry-val" id="gov-text">NOTHING SELECTED</div>
         </div>
         <div class="telemetry-col">
           <div class="telemetry-label">STORAGE GAIN</div>
@@ -1509,19 +1509,19 @@
       const scopeStatus = document.getElementById("scope-status");
       
       if (activeCount === 8) {
-        gov.innerText = "MAX SPEED // 100% UNLOCKED";
+        gov.innerText = "ALL 8 SELECTED";
         gov.style.color = "#ccff00";
-        scopeStatus.innerText = "1000Hz STABLE";
+        scopeStatus.innerText = "ALL SELECTED";
         scopeStatus.style.color = "#ccff00";
       } else if (activeCount === 0) {
-        gov.innerText = "DEFAULT // WINDOWS THROTTLED";
+        gov.innerText = "NOTHING SELECTED";
         gov.style.color = "#6b7280";
-        scopeStatus.innerText = "60Hz JITTER";
+        scopeStatus.innerText = "NONE SELECTED";
         scopeStatus.style.color = "#f87171";
       } else {
-        gov.innerText = `STAGE 1 // ${activeCount}/8 ACTIVE`;
+        gov.innerText = `${activeCount}/8 SELECTED`;
         gov.style.color = "#00f0ff";
-        scopeStatus.innerText = "TUNING OSC";
+        scopeStatus.innerText = `${activeCount}/8 SELECTED`;
         scopeStatus.style.color = "#00f0ff";
       }
 
@@ -1779,6 +1779,7 @@
         if (window.__TAURI__ && window.__TAURI__.core) {
           apps = await window.__TAURI__.core.invoke('get_startup_apps');
         } else {
+          // Browser demo only: sample entries, not read from any device.
           apps = [
             { name: "OneDrive", command: "OneDrive.exe /background", location: "HKCU", is_enabled: true },
             { name: "Grammarly", command: "GrammarlyDesktop.exe", location: "HKCU", is_enabled: true },
@@ -1792,6 +1793,11 @@
       }
 
       list.innerHTML = '';
+      if (apps.length === 0) {
+        list.innerHTML = '<div style="color:#6b7280; padding:16px; font-family:var(--font-mono); font-size:11px;">No startup apps found in the Run registry keys.</div>';
+        updateStartupStats();
+        return;
+      }
       apps.forEach((app, idx) => {
         const item = document.createElement('div');
         const isEnabled = app.is_enabled;
