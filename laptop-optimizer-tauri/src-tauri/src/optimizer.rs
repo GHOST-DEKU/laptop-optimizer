@@ -545,8 +545,9 @@ impl OptimizerEngine {
         }
 
         // 3. NVMe SSD Free & Total Capacity via GetDiskFreeSpaceExW
-        let mut ssd_free_gb = 116.1;
-        let mut ssd_total_gb = 512.0;
+        // 0.0 means "could not be read"; the window then shows "--" instead of a made-up number.
+        let mut ssd_free_gb = 0.0;
+        let mut ssd_total_gb = 0.0;
         let c_drive: [u16; 4] = [0x0043, 0x003A, 0x005C, 0x0000]; // "C:\\\0"
         let mut free_bytes: u64 = 0;
         let mut total_bytes: u64 = 0;

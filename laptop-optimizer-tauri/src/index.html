@@ -1142,8 +1142,8 @@
           <div class="telemetry-val" id="gov-text">NOTHING SELECTED</div>
         </div>
         <div class="telemetry-col">
-          <div class="telemetry-label">STORAGE GAIN</div>
-          <div class="telemetry-val" id="telem-storage-gain">+7.5 GB FREED</div>
+          <div class="telemetry-label">DISK FREE</div>
+          <div class="telemetry-val" id="telem-storage-gain">-- GB</div>
         </div>
       </div>
     </div>
@@ -1936,7 +1936,10 @@
             const ssdEl = document.getElementById("telem-ssd-val");
             if (cpuEl) cpuEl.innerText = `${telem.cpu_mhz} MHz`;
             if (ramEl) ramEl.innerText = `${telem.ram_used_gb.toFixed(1)} / ${telem.ram_total_gb.toFixed(1)} GB (${telem.ram_usage_pct}%)`;
-            if (ssdEl) ssdEl.innerText = `${telem.ssd_free_gb.toFixed(1)} GB // HEALTHY`;
+            const diskKnown = telem.ssd_total_gb > 0;
+            if (ssdEl) ssdEl.innerText = diskKnown ? `${telem.ssd_free_gb.toFixed(1)} GB // HEALTHY` : '-- GB';
+            const diskEl = document.getElementById("telem-storage-gain");
+            if (diskEl) diskEl.innerText = diskKnown ? `${telem.ssd_free_gb.toFixed(1)} / ${telem.ssd_total_gb.toFixed(1)} GB` : '-- GB';
           }
         } else {
           // Simulation fallback for browser preview
@@ -1947,6 +1950,8 @@
           if (cpuEl) cpuEl.innerText = `${2803 + jitter} MHz`;
           if (ramEl) ramEl.innerText = `8.2 / 16.0 GB (51%)`;
           if (ssdEl) ssdEl.innerText = `116.1 GB // HEALTHY`;
+          const diskEl = document.getElementById("telem-storage-gain");
+          if (diskEl) diskEl.innerText = `116.1 / 476.9 GB`; // demo sample
         }
       } catch (e) {
         console.warn("Live telemetry query error:", e);
