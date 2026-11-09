@@ -1937,7 +1937,7 @@
             if (cpuEl) cpuEl.innerText = `${telem.cpu_mhz} MHz`;
             if (ramEl) ramEl.innerText = `${telem.ram_used_gb.toFixed(1)} / ${telem.ram_total_gb.toFixed(1)} GB (${telem.ram_usage_pct}%)`;
             const diskKnown = telem.ssd_total_gb > 0;
-            if (ssdEl) ssdEl.innerText = diskKnown ? `${telem.ssd_free_gb.toFixed(1)} GB // HEALTHY` : '-- GB';
+            if (ssdEl) ssdEl.innerText = diskKnown ? `${telem.ssd_free_gb.toFixed(1)} GB` : '-- GB';
             const diskEl = document.getElementById("telem-storage-gain");
             if (diskEl) diskEl.innerText = diskKnown ? `${telem.ssd_free_gb.toFixed(1)} / ${telem.ssd_total_gb.toFixed(1)} GB` : '-- GB';
           }
@@ -1949,7 +1949,7 @@
           const jitter = Math.floor(Math.random() * 20) - 10;
           if (cpuEl) cpuEl.innerText = `${2803 + jitter} MHz`;
           if (ramEl) ramEl.innerText = `8.2 / 16.0 GB (51%)`;
-          if (ssdEl) ssdEl.innerText = `116.1 GB // HEALTHY`;
+          if (ssdEl) ssdEl.innerText = `116.1 GB`;
           const diskEl = document.getElementById("telem-storage-gain");
           if (diskEl) diskEl.innerText = `116.1 / 476.9 GB`; // demo sample
         }

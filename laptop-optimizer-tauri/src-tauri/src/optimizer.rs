@@ -49,7 +49,6 @@ pub struct LiveTelemetry {
     pub ram_usage_pct: u32,
     pub ssd_free_gb: f32,
     pub ssd_total_gb: f32,
-    pub ssd_health_status: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -66,6 +65,12 @@ impl OptimizerEngine {
     /// True when this process has administrator rights.
     pub fn is_elevated() -> bool {
         unsafe { IsUserAnAdmin() != 0 }
+    }
+
+    // "C:\" (or whichever drive Windows is on), as a null-terminated UTF-16 string.
+    fn system_drive_root() -> Vec<u16> {
+        let drive = std::env::var("SystemDrive").ok().filter(|d| d.len() == 2 && d.ends_with(':')).unwrap_or_else(|| "C:".into());
+        format!("{}\\\0", drive).encode_utf16().collect()
     }
 
     fn system_root() -> String {
@@ -443,7 +448,7 @@ impl OptimizerEngine {
         }
 
         let disk_gb = unsafe {
-            let c_drive: Vec<u16> = "C:\\\0".encode_utf16().collect();
+            let c_drive = Self::system_drive_root();
             let mut free_avail: u64 = 0;
             let mut total_bytes: u64 = 0;
             let mut total_free: u64 = 0;
@@ -494,9 +499,10 @@ impl OptimizerEngine {
         );
 
         // 2. Real-Time RAM Physical Working Set via GlobalMemoryStatusEx
-        let mut ram_used_gb = 8.2;
-        let mut ram_total_gb = 16.0;
-        let mut ram_usage_pct = 51;
+        // 0 means "could not be read"; never a made-up figure.
+        let mut ram_used_gb = 0.0;
+        let mut ram_total_gb = 0.0;
+        let mut ram_usage_pct = 0;
 
         #[repr(C)]
         struct MEMORYSTATUSEX {
@@ -548,7 +554,7 @@ impl OptimizerEngine {
         // 0.0 means "could not be read"; the window then shows "--" instead of a made-up number.
         let mut ssd_free_gb = 0.0;
         let mut ssd_total_gb = 0.0;
-        let c_drive: [u16; 4] = [0x0043, 0x003A, 0x005C, 0x0000]; // "C:\\\0"
+        let c_drive = Self::system_drive_root();
         let mut free_bytes: u64 = 0;
         let mut total_bytes: u64 = 0;
         let mut total_free_bytes: u64 = 0;
@@ -572,7 +578,6 @@ impl OptimizerEngine {
             ram_usage_pct,
             ssd_free_gb,
             ssd_total_gb,
-            ssd_health_status: "HEALTHY (TRIM ACTIVE)".into(),
         }
     }
 
