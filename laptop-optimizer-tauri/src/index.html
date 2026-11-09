@@ -1142,7 +1142,7 @@
           <div class="telemetry-val" id="gov-text">NOTHING SELECTED</div>
         </div>
         <div class="telemetry-col">
-          <div class="telemetry-label">DISK FREE</div>
+          <div class="telemetry-label">DISK FREE // GAINED</div>
           <div class="telemetry-val" id="telem-storage-gain">-- GB</div>
         </div>
       </div>
@@ -1926,6 +1926,7 @@
     }
 
     // Real-Time Hardware Telemetry Polling (Task 59.4)
+    let diskBaselineGb = null;
     async function updateLiveTelemetry() {
       try {
         if (window.__TAURI__ && window.__TAURI__.core) {
@@ -1939,7 +1940,11 @@
             const diskKnown = telem.ssd_total_gb > 0;
             if (ssdEl) ssdEl.innerText = diskKnown ? `${telem.ssd_free_gb.toFixed(1)} GB` : '-- GB';
             const diskEl = document.getElementById("telem-storage-gain");
-            if (diskEl) diskEl.innerText = diskKnown ? `${telem.ssd_free_gb.toFixed(1)} / ${telem.ssd_total_gb.toFixed(1)} GB` : '-- GB';
+            if (diskKnown && diskBaselineGb === null) diskBaselineGb = telem.ssd_free_gb; // free space when the app opened
+            const gained = diskKnown ? telem.ssd_free_gb - diskBaselineGb : 0;
+            // Measured, not promised: only shows space actually freed since the app opened.
+            const gainText = gained >= 0.1 ? ` (+${gained.toFixed(1)} GB)` : '';
+            if (diskEl) diskEl.innerText = diskKnown ? `${telem.ssd_free_gb.toFixed(1)} / ${telem.ssd_total_gb.toFixed(1)} GB${gainText}` : '-- GB';
           }
         } else {
           // Simulation fallback for browser preview
