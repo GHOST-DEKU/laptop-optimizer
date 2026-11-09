@@ -5,6 +5,7 @@ use serde::Serialize;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::{Duration, Instant, SystemTime};
 
 /// How a tweak ended. `Ok` is used only when the change was read back and matches.
@@ -105,6 +106,68 @@ pub fn run_with_timeout(mut cmd: Command, timeout: Duration) -> Outcome {
             }
         }
     }
+}
+
+
+/// One "a change is running" flag. Changing commands take it, so two never run at once.
+pub struct Lock(AtomicBool);
+
+pub struct LockGuard<'a>(&'a Lock);
+
+impl Lock {
+    pub const fn new() -> Self {
+        Lock(AtomicBool::new(false))
+    }
+    /// `None` when another change already holds it. Released when the guard drops, even after a panic.
+    pub fn try_acquire(&self) -> Option<LockGuard<'_>> {
+        self.0
+            .compare_exchange(false, true, Ordering::AcqRel, Ordering::Acquire)
+            .ok()
+            .map(|_| LockGuard(self))
+    }
+}
+
+impl Drop for LockGuard<'_> {
+    fn drop(&mut self) {
+        self.0 .0.store(false, Ordering::Release);
+    }
+}
+
+pub static CHANGE_LOCK: Lock = Lock::new();
+
+/// Makes a child program ignore a poisoned environment: it starts in System32,
+/// and SystemRoot, windir and PATH are set to the real Windows folder.
+/// shortcut: the rest of the environment is inherited (some tools need profile variables); tighten after a Windows test.
+pub fn harden(cmd: &mut Command, system_root: &str) {
+    let root = system_root.trim_end_matches(['\\', '/']);
+    let sys32 = format!("{}\\System32", root);
+    cmd.current_dir(&sys32)
+        .env("SystemRoot", root)
+        .env("windir", root)
+        .env("PATH", format!("{};{}", sys32, root))
+        .env_remove("PSModulePath");
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum StartupHive {
+    CurrentUser,
+    LocalMachine,
+}
+
+impl StartupHive {
+    /// Only the two exact names the page sends are accepted; anything else is refused.
+    pub fn parse(s: &str) -> Option<Self> {
+        match s {
+            "HKCU" => Some(Self::CurrentUser),
+            "HKLM" => Some(Self::LocalMachine),
+            _ => None,
+        }
+    }
+}
+
+/// A registry value name for a startup entry: 1-260 characters, no control characters.
+pub fn valid_startup_name(name: &str) -> bool {
+    !name.is_empty() && name.chars().count() <= 260 && !name.chars().any(|c| c.is_control())
 }
 
 /// Tweaks that cannot work without administrator rights (HKLM writes, hibernation, app removal).
@@ -280,6 +343,71 @@ mod tests {
     #[test]
     fn purge_missing_dir_is_an_error_not_a_success() {
         assert!(purge_old_entries(Path::new("/definitely/not/here"), Duration::ZERO, SystemTime::now()).is_err());
+    }
+
+
+    #[test]
+    fn startup_inputs_are_validated() {
+        assert_eq!(StartupHive::parse("HKCU"), Some(StartupHive::CurrentUser));
+        assert_eq!(StartupHive::parse("HKLM"), Some(StartupHive::LocalMachine));
+        for bad in ["", "hkcu", "HKCU ", "HKEY_USERS", "HKLM\\x"] {
+            assert_eq!(StartupHive::parse(bad), None, "{bad:?}");
+        }
+        assert!(valid_startup_name("OneDrive"));
+        assert!(!valid_startup_name(""));
+        assert!(!valid_startup_name("bad\u{0}name"));
+        assert!(!valid_startup_name(&"a".repeat(261)));
+    }
+
+    #[test]
+    fn lock_refuses_second_holder_and_releases() {
+        let lock = Lock::new();
+        let first = lock.try_acquire();
+        assert!(first.is_some());
+        assert!(lock.try_acquire().is_none(), "second change must be refused");
+        drop(first);
+        assert!(lock.try_acquire().is_some(), "released after the first finished");
+    }
+
+    #[test]
+    fn lock_releases_after_panic() {
+        static L: Lock = Lock::new();
+        let r = std::panic::catch_unwind(|| {
+            let _g = L.try_acquire().unwrap();
+            panic!("boom");
+        });
+        assert!(r.is_err());
+        assert!(L.try_acquire().is_some());
+    }
+
+    #[test]
+    fn lock_allows_only_one_of_many_threads() {
+        static L: Lock = Lock::new();
+        let wins = std::sync::atomic::AtomicUsize::new(0);
+        let start = std::sync::Barrier::new(8);
+        std::thread::scope(|s| {
+            for _ in 0..8 {
+                s.spawn(|| {
+                    start.wait();
+                    if let Some(_g) = L.try_acquire() {
+                        wins.fetch_add(1, Ordering::SeqCst);
+                        std::thread::sleep(Duration::from_millis(200));
+                    }
+                });
+            }
+        });
+        assert_eq!(wins.load(Ordering::SeqCst), 1);
+    }
+
+    #[test]
+    fn harden_overrides_poisoned_environment() {
+        let mut c = Command::new("x");
+        harden(&mut c, "C:\\Windows\\");
+        assert_eq!(c.get_current_dir().unwrap(), Path::new("C:\\Windows\\System32"));
+        let env: std::collections::HashMap<_, _> = c.get_envs().collect();
+        assert_eq!(env[std::ffi::OsStr::new("SystemRoot")].unwrap(), "C:\\Windows");
+        assert_eq!(env[std::ffi::OsStr::new("PATH")].unwrap(), "C:\\Windows\\System32;C:\\Windows");
+        assert!(env[std::ffi::OsStr::new("PSModulePath")].is_none(), "PSModulePath must be removed");
     }
 
     #[cfg(unix)]

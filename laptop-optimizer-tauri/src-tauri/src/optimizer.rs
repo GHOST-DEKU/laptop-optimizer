@@ -1,5 +1,5 @@
 use crate::safety::{
-    dir_is_allowed, powershell_exe, purge_old_entries, run_with_timeout, system32_exe, Outcome, TweakResult,
+    dir_is_allowed, harden, powershell_exe, valid_startup_name, StartupHive, purge_old_entries, run_with_timeout, system32_exe, Outcome, TweakResult,
 };
 use serde::{Deserialize, Serialize};
 use std::os::windows::process::CommandExt;
@@ -21,6 +21,11 @@ const NOT_FOUND: u32 = u32::MAX; // marker for "registry value missing"
 #[link(name = "shell32")]
 extern "system" {
     fn IsUserAnAdmin() -> i32;
+}
+
+#[link(name = "kernel32")]
+extern "system" {
+    fn GetSystemWindowsDirectoryW(buffer: *mut u16, size: u32) -> u32;
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -73,14 +78,22 @@ impl OptimizerEngine {
         format!("{}\\\0", drive).encode_utf16().collect()
     }
 
+    // Asked from Windows itself, so a changed SystemRoot variable cannot redirect the programs we start.
     fn system_root() -> String {
-        std::env::var("SystemRoot").or_else(|_| std::env::var("windir")).unwrap_or_else(|_| "C:\\Windows".into())
+        let mut buf = [0u16; 260];
+        let len = unsafe { GetSystemWindowsDirectoryW(buf.as_mut_ptr(), buf.len() as u32) } as usize;
+        if len > 0 && len < buf.len() {
+            String::from_utf16_lossy(&buf[..len])
+        } else {
+            "C:\\Windows".into()
+        }
     }
 
     // Runs a program by absolute path (never through cmd.exe or the PATH) and stops it after `secs`.
     fn run(exe: &str, args: &[&str], secs: u64) -> Outcome {
         let mut command = Command::new(exe);
         command.args(args).creation_flags(CREATE_NO_WINDOW);
+        harden(&mut command, &Self::system_root());
         run_with_timeout(command, Duration::from_secs(secs))
     }
 
@@ -376,14 +389,6 @@ impl OptimizerEngine {
         }
     }
 
-    // Self-unblock NTFS Zone.Identifier stream
-    pub fn unblock_zone_identifier() {
-        if let Ok(exe_path) = std::env::current_exe() {
-            let zone_path = format!("{}:Zone.Identifier", exe_path.to_string_lossy());
-            let _ = std::fs::remove_file(zone_path);
-        }
-    }
-
     // Dynamic hardware telemetry across all Windows laptops (Intel, AMD, ARM)
     pub fn get_hardware_info() -> HardwareInfo {
         // 1. CPU Name from registry
@@ -595,19 +600,38 @@ impl OptimizerEngine {
         true
     }
 
-    pub fn set_startup_app_enabled(root: HKEY, app_name: &str, enable: bool) -> bool {
-        let hk = RegKey::predef(root);
-        let subkey = "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\StartupApproved\\Run";
-        if let Ok((key, _)) = hk.create_subkey(subkey) {
-            let mut data = vec![0u8; 12];
-            data[0] = if enable { 0x02 } else { 0x03 };
-            let val = winreg::RegValue {
-                vtype: REG_BINARY,
-                bytes: data,
-            };
-            return key.set_raw_value(app_name, &val).is_ok();
+    // Turns a startup entry on or off. The entry must already exist in that hive's Run key,
+    // and the new state is read back before success is reported.
+    pub fn set_startup_app_enabled(hive: StartupHive, app_name: &str, enable: bool) -> TweakResult {
+        if !valid_startup_name(app_name) {
+            return TweakResult::failed("Not a valid startup entry name.");
         }
-        false
+        let (root, run_key) = match hive {
+            StartupHive::CurrentUser => (HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Run"),
+            StartupHive::LocalMachine => (HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run"),
+        };
+        if hive == StartupHive::LocalMachine && !Self::is_elevated() {
+            return TweakResult::skipped("Changing all-users startup entries needs administrator rights.");
+        }
+        let exists = RegKey::predef(root)
+            .open_subkey_with_flags(run_key, KEY_READ)
+            .map(|k| k.enum_values().flatten().any(|(n, _)| n == app_name))
+            .unwrap_or(false);
+        if !exists {
+            return TweakResult::failed("That startup entry no longer exists.");
+        }
+        let subkey = "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\StartupApproved\\Run";
+        let Ok((key, _)) = RegKey::predef(root).create_subkey(subkey) else {
+            return TweakResult::failed("Could not open the startup settings key.");
+        };
+        let mut bytes = vec![0u8; 12];
+        bytes[0] = if enable { 0x02 } else { 0x03 };
+        let wrote = key.set_raw_value(app_name, &winreg::RegValue { vtype: REG_BINARY, bytes }).is_ok();
+        if wrote && Self::is_startup_app_enabled(root, app_name) == enable {
+            TweakResult::ok(if enable { "Startup entry enabled." } else { "Startup entry disabled." })
+        } else {
+            TweakResult::failed("Windows did not accept the change to the startup entry.")
+        }
     }
 
     pub fn enumerate_startup_apps() -> Vec<StartupAppEntry> {

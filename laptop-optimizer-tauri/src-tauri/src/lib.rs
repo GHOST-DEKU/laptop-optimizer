@@ -2,7 +2,7 @@ mod optimizer;
 mod safety;
 
 use optimizer::{HardwareInfo, LiveTelemetry, OptimizerEngine, StartupAppEntry};
-use safety::{requires_admin, TweakResult};
+use safety::{requires_admin, StartupHive, TweakResult, CHANGE_LOCK};
 
 #[tauri::command]
 fn get_system_info() -> HardwareInfo {
@@ -54,17 +54,25 @@ fn run_tweak(id: u32, restoring: bool) -> TweakResult {
     }
 }
 
+const BUSY_MSG: &str = "Another change is still running. Wait for it to finish.";
+
 // async + spawn_blocking keeps slow system commands off the thread that draws the window.
 #[tauri::command]
 async fn apply_tweak(id: u32) -> Result<TweakResult, String> {
-    tauri::async_runtime::spawn_blocking(move || run_tweak(id, false))
+    tauri::async_runtime::spawn_blocking(move || match CHANGE_LOCK.try_acquire() {
+        Some(_guard) => run_tweak(id, false),
+        None => TweakResult::skipped(BUSY_MSG),
+    })
         .await
         .map_err(|e| e.to_string())
 }
 
 #[tauri::command]
 async fn restore_tweak(id: u32) -> Result<TweakResult, String> {
-    tauri::async_runtime::spawn_blocking(move || run_tweak(id, true))
+    tauri::async_runtime::spawn_blocking(move || match CHANGE_LOCK.try_acquire() {
+        Some(_guard) => run_tweak(id, true),
+        None => TweakResult::skipped(BUSY_MSG),
+    })
         .await
         .map_err(|e| e.to_string())
 }
@@ -73,7 +81,11 @@ async fn restore_tweak(id: u32) -> Result<TweakResult, String> {
 #[tauri::command]
 async fn restore_all() -> Result<Vec<TweakResult>, String> {
     tauri::async_runtime::spawn_blocking(|| {
-        TWEAK_IDS.iter().filter(|id| **id != 8).map(|id| run_tweak(*id, true)).collect()
+        let ids: Vec<u32> = TWEAK_IDS.iter().copied().filter(|id| *id != 8).collect();
+        match CHANGE_LOCK.try_acquire() {
+            Some(_guard) => ids.iter().map(|id| run_tweak(*id, true)).collect(),
+            None => ids.iter().map(|_| TweakResult::skipped(BUSY_MSG)).collect(),
+        }
     })
     .await
     .map_err(|e| e.to_string())
@@ -85,19 +97,20 @@ fn get_startup_apps() -> Vec<StartupAppEntry> {
 }
 
 #[tauri::command]
-fn toggle_startup_app(name: String, location: String, enable: bool) -> bool {
-    let root = if location == "HKLM" {
-        winreg::enums::HKEY_LOCAL_MACHINE
-    } else {
-        winreg::enums::HKEY_CURRENT_USER
+async fn toggle_startup_app(name: String, location: String, enable: bool) -> Result<TweakResult, String> {
+    let Some(hive) = StartupHive::parse(&location) else {
+        return Ok(TweakResult::failed("Unknown startup location."));
     };
-    OptimizerEngine::set_startup_app_enabled(root, &name, enable)
+    tauri::async_runtime::spawn_blocking(move || match CHANGE_LOCK.try_acquire() {
+        Some(_guard) => OptimizerEngine::set_startup_app_enabled(hive, &name, enable),
+        None => TweakResult::skipped(BUSY_MSG),
+    })
+    .await
+    .map_err(|e| e.to_string())
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    OptimizerEngine::unblock_zone_identifier();
-
     tauri::Builder::default()
         .plugin(tauri_plugin_log::Builder::default().build())
         .invoke_handler(tauri::generate_handler![

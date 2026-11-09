@@ -1,8 +1,9 @@
 @echo off
 :: ============================================================================
 :: Laptop Optimizer // Standalone Launcher
-:: Removes the "downloaded from the internet" mark from the .exe, then starts it
-:: as administrator (Windows will show a UAC prompt).
+:: Starts the app as administrator (Windows will show a UAC prompt).
+:: It does not remove the "downloaded from the internet" mark: Windows SmartScreen
+:: should be allowed to check the file.
 :: ============================================================================
 cd /d "%~dp0"
 
@@ -16,8 +17,6 @@ if not exist "%LO_EXE%" (
     pause
     exit /b 1
 )
-
-"%PS%" -NoProfile -Command "Unblock-File -LiteralPath $env:LO_EXE -ErrorAction SilentlyContinue"
 
 :: Start as administrator. If you decline the UAC prompt, the app still opens
 :: and shows a banner saying admin-only tweaks will be skipped.
