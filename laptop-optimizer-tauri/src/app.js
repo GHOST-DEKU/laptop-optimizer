@@ -76,9 +76,9 @@
         id: 1,
         sys: "SYS: CPU_GOVERNOR [INTEL_SPEEDSTEP]",
         title: "Zero-Ramp CPU Frequency Floor on AC", 
-        tag: "100% FLOOR", 
-        desc: "Locks minimum processor floor to 100% on AC to bypass frequency ramp-up latency.", 
-        gain: "GAIN: \u2212380ms DPC LATENCY",
+        tag: "HIGH PERFORMANCE", 
+        desc: "Switches to the High Performance power plan and turns Power Throttling off (throttling applies after a restart). Uses more power.", 
+        gain: "EFFECT: HIGH PERFORMANCE PLAN, THROTTLING OFF",
         lockProtocol: "GOV_LOCK_AC",
         on: false 
       },
@@ -86,9 +86,9 @@
         id: 2,
         sys: "SYS: DIRECTX_DWM [FRAME_LATENCY]",
         title: "Bypass Game DVR Background Video Buf...", 
-        tag: "ZERO VRAM DRAIN", 
+        tag: "CAPTURE OFF", 
         desc: "Disables continuous DirectX background video recording and capture hooks.", 
-        gain: "GAIN: ZERO VRAM OVERHEAD",
+        gain: "EFFECT: GAME DVR CAPTURE TURNED OFF",
         lockProtocol: "DWM_HOOK_KILL",
         on: false 
       },
@@ -97,8 +97,8 @@
         sys: "SYS: USER32_SHELL [MENU_SPEED]",
         title: "Instant Desktop Context Menus", 
         tag: "20ms DELAY", 
-        desc: "Reduces MenuShowDelay from 400ms to 20ms for instant desktop responsiveness.", 
-        gain: "GAIN: \u2212380ms DELAY CUT",
+        desc: "Sets MenuShowDelay to 20 ms (the Windows default is 400 ms), so submenus open sooner.", 
+        gain: "EFFECT: SUBMENUS OPEN AFTER 20 ms, NOT 400 ms",
         lockProtocol: "WIN32_DISPATCH",
         on: false 
       },
@@ -106,9 +106,9 @@
         id: 4,
         sys: "SYS: WEBVIEW2_DAEMON [RAM_PURGE]",
         title: "Purge Windows 11 Widget Daemon Pack", 
-        tag: "\u2212300MB RAM", 
+        tag: "REMOVES PACKAGE", 
         desc: "Removes the Widgets (WebExperience) package for your account. Windows 11 may block apps from hiding the taskbar button; if so, hide it in Settings > Personalization > Taskbar.",
-        gain: "GAIN: \u2212300MB LEAK RECLAIMED",
+        gain: "EFFECT: WIDGETS PACKAGE REMOVED",
         lockProtocol: "VFS_ISOLATION",
         on: false 
       },
@@ -118,7 +118,7 @@
         title: "Clean Kernel Boots & Delete hiberfil.s...", 
         tag: "FREES DISK", 
         desc: "Turns off hibernation and Fast Startup and deletes hiberfil.sys. Hibernate stops working until restored.", 
-        gain: "GAIN: frees hiberfil.sys (size depends on your RAM)",
+        gain: "EFFECT: FREES hiberfil.sys (SIZE DEPENDS ON YOUR RAM)",
         lockProtocol: "KERNEL_FASTBOOT",
         on: false 
       },
@@ -127,8 +127,8 @@
         sys: "SYS: SEARCH_HOST [CLOUD_DECOUPLE]",
         title: "Decouple Bing Cloud Integration from Sta...", 
         tag: "LOCAL ONLY", 
-        desc: "Eliminates remote cloud latency on Start search; makes app launch search instant.", 
-        gain: "GAIN: 0ms CLOUD ROUNDTRIP",
+        desc: "Turns off the Bing web search setting for Start. Windows may ignore it on some versions.", 
+        gain: "EFFECT: START SEARCH SETTING SET TO LOCAL ONLY",
         lockProtocol: "OFFLINE_SEARCH",
         on: false 
       },
@@ -148,7 +148,7 @@
         title: "Purge Stale Temporary Files (>24h)", 
         tag: "CLEAR TEMP", 
         desc: "Wipes stale %TEMP% artifacts older than 24h; frees disk space.", 
-        gain: "GAIN: +1.4GB CLEARED",
+        gain: "EFFECT: DELETES OLD TEMP FILES (SPACE VARIES)",
         lockProtocol: "IO_TRIM_CACHE",
         on: false 
       }

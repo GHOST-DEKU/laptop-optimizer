@@ -59,7 +59,13 @@ async def main():
         hrefs = await pg.evaluate("[...document.querySelectorAll('a')].map(a => a.href)")
         dl = [h for h in hrefs if h.endswith("LaptopOptimizer.exe")]
         check("every .exe download button points to the latest GitHub release", len(dl) == 3 and all(h.endswith("/releases/latest/download/LaptopOptimizer.exe") for h in dl))
-        check("no typed SHA-256 and no 'older build' text is left; the page points to SHA256SUMS.txt", "SHA256SUMS.txt" in html and "older" not in txt.lower() and not re.search(r"[0-9a-f]{64}", html))
+        check("no typed SHA-256 and no 'older build' text is left; the page points to SHA256SUMS.txt", "SHA256SUMS.txt" in html and "older build" not in txt.lower() and "older, unsigned" not in txt.lower() and not re.search(r"[0-9a-f]{64}", html))
+        low = txt.lower()
+        check("no leftover label or ticking clock in the top bar", "public demo page" not in low and await pg.evaluate("!document.getElementById('utc-clock')"))
+        check("sound starts off on the website", await pg.evaluate("document.getElementById('sound-btn').innerText.includes('OFF')") and await pg.evaluate("audioEnabled === false"))
+        check("no claim of Windows 10 in the headline, no 'factory defaults', no invented example sizes",
+              "windows 10 & 11" not in low and "factory" not in low and "6.22" not in txt and "7.50" not in txt and "benchmarking" not in low)
+        check("flight plan says temp files older than 24 hours and Restore Saved Values", "older than 24 hours" in html and "RESTORE SAVED VALUES" in html)
         check("resizing needs no buttons: the demo stage has none", await pg.evaluate("document.querySelectorAll('#app-preview button').length") == 0)
         check("the demo window opens at the real app's size, 940 x 680", await inner(pg) == [940, 680])
 
