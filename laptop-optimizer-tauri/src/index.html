@@ -96,7 +96,7 @@
         gap: 8px;
       }
       .cpu-title { font-size: 13px; }
-      .telemetry-module { padding: 6px 10px; gap: 10px; }
+      .plan-card { padding: 6px 10px; }
       .app-footer { padding: 8px 12px; gap: 6px; }
       .btn-secondary { padding: 7px 10px; font-size: 10px; }
     }
@@ -177,88 +177,49 @@
       font-weight: 400;
     }
 
-    /* Telemetry HUD & CRT Oscilloscope */
-    .telemetry-module {
+    /* Deploy plan: what a deploy would do, worked out from the cards that are switched on.
+       A three-row card beside the title when there is room; ONE compact line when it has to drop below the title. */
+    .plan-card {
+      flex: 1 1 340px;
+      min-width: 0;
+      max-width: 520px;
       display: flex;
-      align-items: center;
-      gap: 16px;
+      flex-direction: column;
+      gap: 5px;
       background: #111622;
       border: 1px solid #20293c;
-      padding: 8px 16px;
       border-radius: 10px;
-      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    .telemetry-module:hover {
-      border-color: rgba(204, 255, 0, 0.8);
-      box-shadow: 0 0 24px rgba(204, 255, 0, 0.2), inset 0 0 10px rgba(204, 255, 0, 0.05);
-    }
-
-    /* 60 FPS CRT Vector Oscilloscope Canvas */
-    .scope-box {
-      width: 140px;
-      height: 42px;
-      background: #04060a;
-      border: 1px solid #1a2232;
-      border-radius: 6px;
-      position: relative;
-      overflow: hidden;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .scope-canvas {
-      width: 140px;
-      height: 42px;
-      display: block;
-    }
-    .scope-reticle {
-      position: absolute;
-      inset: 0;
-      background-image: linear-gradient(rgba(204, 255, 0, 0.08) 1px, transparent 1px),
-                        linear-gradient(90deg, rgba(204, 255, 0, 0.08) 1px, transparent 1px);
-      background-size: 14px 10px;
-      pointer-events: none;
-    }
-    .scope-tag {
-      position: absolute;
-      bottom: 2px;
-      right: 4px;
-      font-size: 8px;
-      color: var(--acid-volt);
-      font-weight: 900;
-      opacity: 0.75;
-      font-family: var(--font-mono);
-    }
-
-    .telemetry-col {
-      border-left: 1px solid #20293c;
-      padding-left: 12px;
-    }
-    .telemetry-label {
-      font-size: 9px;
-      color: #6b7280;
-      text-transform: uppercase;
-      font-weight: 900;
-      letter-spacing: 0.5px;
-    }
-    .telemetry-val {
+      padding: 7px 12px;
       font-size: 11.5px;
-      font-weight: 900;
-      color: var(--acid-volt);
-      letter-spacing: 0.5px;
+      color: #9ca3af;
     }
-    .telemetry-val-white {
-      color: #ffffff;
-    }
+    .plan-card b { color: #ffffff; }
+    .plan-r { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 3px 12px; }
+    .plan-k { color: var(--acid-volt); font-weight: 900; letter-spacing: 0.5px; font-size: 10px; }
+    .plan-chip { display: inline-flex; align-items: center; gap: 5px; border: 1px solid #2a3550; border-radius: 999px; padding: 1px 9px; font-size: 10.5px; }
+    .plan-chip.warn { border-color: #6b4a14; color: #ffb347; }
+    .plan-chip.ok { border-color: #14532d; color: #6ee7b7; }
+    .plan-chip .short { display: none; }
+    .plan-meter { flex: 1 1 90px; min-width: 70px; height: 7px; border-radius: 4px; background: #0c111b; border: 1px solid #182033; overflow: hidden; }
+    .plan-meter s { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #ccff00, #ff9900); text-decoration: none; }
+    .plan-card.plan-line { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 5px 12px; padding: 5px 12px; max-width: none; }
+    .plan-card.plan-line .plan-r { display: contents; }
+    .plan-card.plan-line .plan-chip .long { display: none; }
+    .plan-card.plan-line .plan-chip .short { display: inline; }
+    .plan-card.plan-line #plan-drive { margin-left: auto; }
+    .plan-card.plan-line .plan-more { display: none; }
+    .plan-hint-short { display: none; }
+    .plan-card.plan-line .plan-hint-long { display: none; }
+    .plan-card.plan-line .plan-hint-short { display: inline; }
 
-    /* Silicon Die Schematic CAD HUD Banner */
+    /* CPU load map: capacity battery. The title row carries the overall load and a plain-language verdict;
+       below it one cell per logical processor (filled by its measured load) and a RAM meter. */
     .silicon-die-hud {
       margin-bottom: 14px;
       background: #080b11;
       border: 1px solid #1e2638;
       border-radius: 8px;
       padding: 8px 14px 10px;
-      display: block; /* title on one line, the boxes below it share the full width at every window size */
       flex-shrink: 0;
       width: 100%;
       max-width: 1600px;
@@ -271,46 +232,37 @@
       white-space: nowrap;
       overflow: hidden;
     }
-    .die-sub {
-      overflow: hidden;
-      text-overflow: ellipsis;
-      min-width: 0;
-    }
-    /* One grid for the processors and the RAM box: equal-width cells, wrapping only when there are many. */
-    .die-visual {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(56px, 1fr));
-      gap: 6px;
-    }
-    .die-cores {
-      display: contents;
-    }
-    .die-note {
-      grid-column: 1 / -1;
-      font-size: 10px;
-      color: #6b7280;
-    }
-    /* Each box is filled from the bottom by its measured load (--load is 0-100). */
-    .die-core-box {
-      height: 36px;
-      background: linear-gradient(to top, rgba(204, 255, 0, 0.45) calc(var(--load, 0) * 1%), #101522 calc(var(--load, 0) * 1%));
+    .die-head > span { flex: none; }
+    .die-head > .die-sub { flex: 0 1 auto; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+    .cap-sum { margin-left: auto; display: flex; align-items: baseline; gap: 10px; color: #9ca3af; font-size: 11px; }
+    .cap-total { font-size: 22px; font-weight: 900; color: #ffffff; line-height: 1; }
+    .cap-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+    .cap-cells { display: grid; grid-template-columns: repeat(auto-fit, minmax(54px, 1fr)); gap: 5px; }
+    .cap-note { grid-column: 1 / -1; font-size: 10px; color: #6b7280; }
+    /* Each cell is filled from the bottom by its measured load: --f is 0-100, --c its colour. */
+    .cap-cell {
+      position: relative;
+      height: 30px;
       border: 1px solid #253147;
       border-radius: 4px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      font-size: 10px;
-      font-weight: 900;
-      line-height: 1.2;
-      color: #b6bdc9;
+      background: linear-gradient(0deg, var(--c, #ccff00) calc(var(--f, 0) * 1%), #101522 calc(var(--f, 0) * 1%));
       transition: background 0.4s ease;
     }
-    .die-core-box.hot {
-      border-color: var(--acid-volt);
-      color: var(--acid-volt);
-      box-shadow: 0 0 10px rgba(204, 255, 0, 0.3);
+    .cap-cell em {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-style: normal;
+      font-size: 9.5px;
+      font-weight: 900;
+      color: #ffffff;
+      text-shadow: 0 0 3px #000;
     }
+    .cap-cell.hot { border-color: var(--acid-volt); box-shadow: 0 0 10px rgba(204, 255, 0, 0.3); }
+    .cap-ram { display: flex; align-items: center; gap: 3px; margin-top: 6px; font-size: 10px; color: #6b7280; }
+    .cap-ram s { flex: 1; height: 7px; border-radius: 2px; background: #101522; text-decoration: none; }
 
     /* Main Content Stage */
     .tweak-viewport {
@@ -1139,7 +1091,7 @@
       .app-header { padding: 8px 16px; gap: 8px; }
       .silicon-die-hud { margin-bottom: 8px; padding: 6px 12px 8px; }
       .die-head { margin-bottom: 5px; }
-      .die-core-box { height: 30px; }
+      .cap-cell { height: 26px; }
       .die-sub { display: none; }
       .tweak-viewport { padding-top: 10px; padding-bottom: 10px; }
       .app-footer { padding-top: 8px; padding-bottom: 8px; }
@@ -1177,21 +1129,13 @@
         </div>
       </div>
 
-      <!-- Top Right Telemetry: Live Oscilloscope HUD & Real-Time Hardware Telemetry -->
-      <div class="telemetry-module">
-        <div class="scope-box" id="scope-container">
-          <canvas class="scope-canvas" id="oscilloscope" width="140" height="42"></canvas>
-          <div class="scope-reticle"></div>
-          <div class="scope-tag" id="scope-status">NONE SELECTED</div>
-        </div>
-
-        <div class="telemetry-col">
-          <div class="telemetry-label">THROUGHPUT GOVERNOR</div>
-          <div class="telemetry-val" id="gov-text">NOTHING SELECTED</div>
-        </div>
-        <div class="telemetry-col">
-          <div class="telemetry-label" title="Free space / total size of the system drive. The number in brackets is how much the free space has risen since the app opened, from any cause (not only this app).">DISK FREE // SINCE APP OPENED</div>
-          <div class="telemetry-val" id="telem-storage-gain">-- GB</div>
+      <!-- Deploy plan: what a deploy would do, from the cards that are switched on (filled in by app.js) -->
+      <div class="plan-card" id="plan-card" aria-live="polite">
+        <div class="plan-r"><span class="plan-k">DEPLOY PLAN</span><span id="plan-count">nothing selected</span></div>
+        <div class="plan-r" id="plan-chips"><span>Switch on the tweaks you want, then deploy.</span></div>
+        <div class="plan-r">
+          <span id="plan-drive" title="Free space on the system drive. The part after the dot is how much the free space has risen since the app opened, from any cause (not only this app).">Drive -- free</span>
+          <span class="plan-meter"><s id="plan-meter"></s></span>
         </div>
       </div>
     </div>
@@ -1199,16 +1143,15 @@
     <!-- Main Viewport with Adaptive 2-Column Grid -->
     <div class="tweak-viewport">
       
-      <!-- Architectural Silicon Die Map (Option 2) -->
+      <!-- CPU load map, "capacity battery": overall load and verdict, one cell per logical processor, a RAM meter -->
       <div class="silicon-die-hud" id="silicon-banner">
         <div class="die-head">
           <span style="font-size:10px;font-weight:900;color:var(--acid-volt);">// LIVE CPU LOAD MAP:</span>
-          <span class="die-sub" style="font-size:9px;color:#6b7280;">Measured load of each logical processor and of RAM, refreshed every 1.5 s</span>
+          <span class="die-sub" style="font-size:9px;color:#6b7280;">Measured load of each logical processor, refreshed every 1.5 s</span>
+          <span class="cap-sum"><span class="cap-total" id="cap-total">--</span><span id="cap-verdict">reading CPU load...</span></span>
         </div>
-        <div class="die-visual">
-          <div class="die-cores" id="die-cores"><span class="die-note">reading CPU load...</span></div>
-          <div class="die-core-box" id="core-ram">RAM<br>--</div>
-        </div>
+        <div class="cap-cells" id="cap-cells"><span class="cap-note">reading CPU load...</span></div>
+        <div class="cap-ram" id="cap-ram">RAM --</div>
       </div>
 
       <!-- 8 Tactical Lock-Bay Optimization Cards -->

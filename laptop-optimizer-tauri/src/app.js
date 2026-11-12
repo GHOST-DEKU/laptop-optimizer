@@ -231,7 +231,7 @@
         container.appendChild(card);
       });
 
-      updateTelemetry();
+      updatePlan();
     }
 
     function toggleItem(id) {
@@ -250,99 +250,89 @@
       renderGrid();
     }
 
-    function updateTelemetry() {
-      const activeCount = tweaks.filter(t => t.on).length;
-      const gov = document.getElementById("gov-text");
-      const scopeStatus = document.getElementById("scope-status");
-      
-      if (activeCount === 8) {
-        gov.innerText = "ALL 8 SELECTED";
-        gov.style.color = "#ccff00";
-        scopeStatus.innerText = "ALL SELECTED";
-        scopeStatus.style.color = "#ccff00";
-      } else if (activeCount === 0) {
-        gov.innerText = "NOTHING SELECTED";
-        gov.style.color = "#6b7280";
-        scopeStatus.innerText = "NONE SELECTED";
-        scopeStatus.style.color = "#f87171";
-      } else {
-        gov.innerText = `${activeCount}/8 SELECTED`;
-        gov.style.color = "#00f0ff";
-        scopeStatus.innerText = `${activeCount}/8 SELECTED`;
-        scopeStatus.style.color = "#00f0ff";
-      }
+    // What a deploy would do, worked out from the cards that are switched on. The administrator list mirrors
+    // requires_admin() in src-tauri/src/safety.rs (for applying a tweak); the confirmation list is CONFIRMATIONS.
+    const NEEDS_ADMIN = [1, 4, 5, 7];
+    let appIsAdmin = null; // null = not known yet, or the browser demo
 
+    function updatePlan() {
+      const card = document.getElementById('plan-card');
+      if (!card) return;
+      const on = tweaks.filter(t => t.on);
+      const admin = on.filter(t => NEEDS_ADMIN.includes(t.id)).length;
+      const ask = on.filter(t => Object.prototype.hasOwnProperty.call(CONFIRMATIONS, t.id)).length;
+      document.getElementById('plan-count').innerHTML = on.length === 0 ? 'nothing selected' : `<b>${on.length}</b> of ${tweaks.length} selected`;
+      const chips = [];
+      if (on.length === 0) {
+        chips.push('<span><span class="plan-hint-long">Switch on the tweaks you want, then deploy.</span><span class="plan-hint-short">switch on tweaks to deploy</span></span>');
+      } else {
+        if (admin === 0) {
+          chips.push('<span class="plan-chip ok"><span class="long">no administrator needed</span><span class="short">no admin needed</span></span>');
+        } else if (appIsAdmin === false) {
+          chips.push(`<span class="plan-chip warn" title="Restart the app with Run as administrator, or these will be skipped."><b>${admin}</b>&nbsp;<span class="long">need administrator: this app is not running as one</span><span class="short">admin: not running as one</span></span>`);
+        } else {
+          chips.push(`<span class="plan-chip ${appIsAdmin ? 'ok' : ''}"><b>${admin}</b>&nbsp;<span class="long">need administrator${appIsAdmin ? ' ✓' : ''}</span><span class="short">admin${appIsAdmin ? ' ✓' : ''}</span></span>`);
+        }
+        if (ask > 0) chips.push(`<span class="plan-chip warn"><b>${ask}</b>&nbsp;<span class="long">will ask to confirm</span><span class="short">confirm</span></span>`);
+      }
+      document.getElementById('plan-chips').innerHTML = chips.join('');
+      layoutPlan();
     }
 
-    // Draws the load map from measured values only: one box per logical processor, and the RAM box.
-    // Nothing here depends on which tweaks are switched on.
+    // Beside the title when there is room; one compact line when the card has to drop below the title.
+    function layoutPlan() {
+      const card = document.getElementById('plan-card'), title = document.getElementById('cpu-name');
+      if (!card || !title) return;
+      card.classList.toggle('plan-line', card.getBoundingClientRect().top > title.getBoundingClientRect().bottom - 4);
+    }
+
+    // CPU load map, "capacity battery". Drawn from measured values only: the overall load with a plain-language
+    // verdict, one cell per logical processor, and a RAM meter. Nothing here depends on which tweaks are switched on.
+    // (The wave that used to sit in the header was decoration tied to the number of selected cards, so it is gone.)
+    const loadColor = (v) => `hsl(${Math.round(78 - 78 * Math.min(Math.max(v, 0), 100) / 100)},100%,${v > 85 ? 56 : 52}%)`;
+    const loadVerdict = (avg) => (avg < 25 ? ['Running calm', '#10b981'] : avg < 60 ? ['Working', '#ccff00'] : avg < 85 ? ['Busy', '#ff9900'] : ['Straining', '#f87171']);
+
     function renderLoadMap(cpuLoad, ramTotalGb, ramPct) {
-      const cores = document.getElementById('die-cores');
+      const cells = document.getElementById('cap-cells'), total = document.getElementById('cap-total'), verdict = document.getElementById('cap-verdict');
       const load = Array.isArray(cpuLoad) ? cpuLoad : [];
       if (load.length === 0) {
-        cores.replaceChildren(Object.assign(document.createElement('span'), { className: 'die-note', textContent: 'CPU load unavailable' }));
+        cells.replaceChildren(Object.assign(document.createElement('span'), { className: 'cap-note', textContent: 'CPU load unavailable' }));
+        total.textContent = '--';
+        verdict.textContent = 'CPU load unavailable';
       } else {
-        if (cores.querySelectorAll('.die-core-box').length !== load.length) {
-          cores.replaceChildren(...load.map((_, i) => {
-            const box = document.createElement('div');
-            box.className = 'die-core-box';
-            box.id = 'core-' + i;
-            return box;
+        if (cells.querySelectorAll('.cap-cell').length !== load.length) {
+          cells.replaceChildren(...load.map((_, i) => {
+            const c = document.createElement('div');
+            c.className = 'cap-cell';
+            c.id = 'cap-cell-' + i;
+            c.appendChild(document.createElement('em'));
+            return c;
           }));
         }
         load.forEach((v, i) => {
-          const box = document.getElementById('core-' + i);
-          box.style.setProperty('--load', String(v));
-          box.classList.toggle('hot', v >= 70);
-          box.textContent = `T${i} ${v}%`;
-          box.title = `Logical processor ${i}: ${v}% busy`;
+          const c = document.getElementById('cap-cell-' + i);
+          c.style.setProperty('--f', String(v));
+          c.style.setProperty('--c', loadColor(v));
+          c.dataset.load = String(v);
+          c.classList.toggle('hot', v >= 70);
+          c.firstChild.textContent = `T${i} ${v}`;
+          c.title = `Logical processor ${i}: ${v}% busy`;
         });
+        const avg = load.reduce((a, b) => a + b, 0) / load.length, mx = Math.max(...load), [word, color] = loadVerdict(avg);
+        total.textContent = Math.round(avg) + '%';
+        const dot = Object.assign(document.createElement('span'), { className: 'cap-dot' });
+        dot.style.background = color;
+        verdict.replaceChildren(dot, document.createTextNode(`${word} · busiest T${load.indexOf(mx)} ${mx}%`));
       }
-      const ram = document.getElementById('core-ram');
+      const ram = document.getElementById('cap-ram');
       if (ramTotalGb > 0) {
-        ram.style.setProperty('--load', String(ramPct));
-        ram.classList.toggle('hot', ramPct >= 85);
-        ram.innerHTML = `RAM<br>${Math.round(ramTotalGb)}GB ${ramPct}%`;
+        ram.innerHTML = `RAM ${ramPct}% of ${Math.round(ramTotalGb)} GB` + Array.from({ length: 16 }, (_, k) => `<s style="${k < ramPct / 100 * 16 ? 'background:' + loadColor(ramPct * 0.8) : ''}"></s>`).join('');
         ram.title = `RAM in use: ${ramPct}%`;
       } else {
-        ram.style.setProperty('--load', '0');
-        ram.classList.remove('hot');
-        ram.innerHTML = 'RAM<br>--';
+        ram.textContent = 'RAM --';
+        ram.title = '';
       }
     }
-
-    // --- 60 FPS CRT VECTOR OSCILLOSCOPE CANVAS ---
-    const canvas = document.getElementById("oscilloscope");
-    const ctx = canvas.getContext("2d");
-    let phase = 0;
-
-    function drawOscilloscope() {
-      ctx.fillStyle = "rgba(4, 6, 10, 0.25)";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      const activeCount = tweaks.filter(t => t.on).length;
-      const stability = activeCount / 8;
-
-      ctx.beginPath();
-      ctx.lineWidth = 1.8;
-      ctx.strokeStyle = activeCount === 0 ? "#f87171" : "#ccff00";
-      ctx.shadowBlur = 8;
-      ctx.shadowColor = activeCount === 0 ? "rgba(248, 113, 113, 0.8)" : "rgba(204, 255, 0, 0.8)";
-
-      const midY = canvas.height / 2;
-      for (let x = 0; x < canvas.width; x++) {
-        const harmonic = Math.sin((x * 0.08) + phase) * (12 * stability);
-        const jitter = activeCount === 8 ? 0 : (Math.sin((x * 0.42) + phase * 2) * (1 - stability) * 9);
-        const y = midY + harmonic + jitter;
-        if (x === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-      }
-      ctx.stroke();
-
-      phase += 0.08 + (stability * 0.06);
-      requestAnimationFrame(drawOscilloscope);
-    }
-    requestAnimationFrame(drawOscilloscope);
 
     // --- CLEAN SCI-FI NUKE SAFETY COVER MECHANICS (FLIP HOOD) ---
     let coverOpen = false;
@@ -722,9 +712,11 @@
     async function initSystemInfo() {
       try {
         if (hasApi) {
-          if (!(await backend('get_elevation'))) {
+          appIsAdmin = !!(await backend('get_elevation'));
+          if (!appIsAdmin) {
             document.getElementById('admin-banner').style.display = 'block';
           }
+          updatePlan();
           const info = await backend('get_system_info');
           if (info) {
             // #cpu-name also contains the cores and specs spans, so only its first text node is replaced.
@@ -733,6 +725,7 @@
             if (info.cores) document.getElementById('cpu-cores').innerText = info.cores;
             if (info.specs) document.getElementById('system-specs').innerText = info.specs;
             if (info.model) document.getElementById('system-model').innerText = info.model;
+            layoutPlan(); // the title line just got its real length
           }
         }
       } catch (e) {
@@ -742,38 +735,35 @@
 
     // Real-Time Hardware Telemetry Polling (Task 59.4)
     let diskBaselineGb = null;
+    // The drive line of the deploy plan: free space, and the rise since the app opened (from any cause).
+    function showDrive(freeGb, totalGb) {
+      const el = document.getElementById('plan-drive'), fill = document.getElementById('plan-meter');
+      if (!el || !fill) return;
+      if (!(totalGb > 0)) {
+        el.textContent = 'Drive -- free';
+        fill.style.width = '0';
+        return;
+      }
+      if (diskBaselineGb === null) diskBaselineGb = freeGb; // free space when the app opened
+      const gained = freeGb - diskBaselineGb;
+      // The part inside plan-more is dropped when the plan is a single compact line.
+      el.innerHTML = `Drive <b>${freeGb.toFixed(1)} GB</b> free<span class="plan-more"> of ${totalGb.toFixed(1)}` + (gained >= 0.1 ? ` · <b>+${gained.toFixed(1)} GB</b> since opened` : '') + '</span>';
+      fill.style.width = Math.min(100, Math.max(0, (1 - freeGb / totalGb) * 100)).toFixed(0) + '%';
+    }
     async function updateLiveTelemetry() {
       try {
         if (hasApi) {
           const telem = await backend('get_live_telemetry');
           if (telem) {
-            const cpuEl = document.getElementById("telem-cpu-mhz");
-            const ramEl = document.getElementById("telem-ram-val");
-            const ssdEl = document.getElementById("telem-ssd-val");
             renderLoadMap(telem.cpu_load, telem.ram_total_gb, telem.ram_usage_pct);
-            if (cpuEl) cpuEl.innerText = telem.cpu_mhz > 0 ? `${telem.cpu_mhz} MHz` : '-- MHz';
-            if (ramEl) ramEl.innerText = `${telem.ram_used_gb.toFixed(1)} / ${telem.ram_total_gb.toFixed(1)} GB (${telem.ram_usage_pct}%)`;
-            const diskKnown = telem.ssd_total_gb > 0;
-            if (ssdEl) ssdEl.innerText = diskKnown ? `${telem.ssd_free_gb.toFixed(1)} GB` : '-- GB';
-            const diskEl = document.getElementById("telem-storage-gain");
-            if (diskKnown && diskBaselineGb === null) diskBaselineGb = telem.ssd_free_gb; // free space when the app opened
-            const gained = diskKnown ? telem.ssd_free_gb - diskBaselineGb : 0;
-            // Measured, not promised: only shows space actually freed since the app opened.
-            const gainText = gained >= 0.1 ? ` (+${gained.toFixed(1)} GB)` : '';
-            if (diskEl) diskEl.innerText = diskKnown ? `${telem.ssd_free_gb.toFixed(1)} / ${telem.ssd_total_gb.toFixed(1)} GB${gainText}` : '-- GB';
+            showDrive(telem.ssd_free_gb, telem.ssd_total_gb);
+            layoutPlan();
           }
         } else if (MODE === 'demo') {
-          // Simulation fallback for browser preview
-          const cpuEl = document.getElementById("telem-cpu-mhz");
-          const ramEl = document.getElementById("telem-ram-val");
-          const ssdEl = document.getElementById("telem-ssd-val");
-          const jitter = Math.floor(Math.random() * 20) - 10;
-          if (cpuEl) cpuEl.innerText = `${2803 + jitter} MHz`;
-          if (ramEl) ramEl.innerText = `8.2 / 16.0 GB (51%)`;
-          if (ssdEl) ssdEl.innerText = `116.1 GB`;
-          const diskEl = document.getElementById("telem-storage-gain");
-          if (diskEl) diskEl.innerText = `116.1 / 476.9 GB`; // demo sample
-          renderLoadMap([12, 48, 30, 76, 22, 9, 55, 31], 16, 51); // demo sample, not measured (the demo bar says so)
+          // Simulation fallback for the browser preview: samples, not measured (the demo bar says so)
+          renderLoadMap([12, 48, 30, 76, 22, 9, 55, 31], 16, 51);
+          showDrive(116.1, 476.9);
+          layoutPlan();
         }
       } catch (e) {
         console.warn("Live telemetry query error:", e);
@@ -794,4 +784,8 @@
       initSystemInfo();
       updateLiveTelemetry();
       setInterval(updateLiveTelemetry, 1500);
+      // The deploy plan changes shape when it has to drop below the title, so re-check whenever the header changes size.
+      const header = document.querySelector('.app-header');
+      if (header && window.ResizeObserver) new ResizeObserver(layoutPlan).observe(header);
+      window.addEventListener('resize', layoutPlan);
     });
