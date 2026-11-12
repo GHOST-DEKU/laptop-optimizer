@@ -67,7 +67,7 @@ The labels in the app such as "−380ms" (400 − 20), "−300MB" and "+1.4GB CL
 ## Installation
 
 > [!IMPORTANT]
-> The files on the [Releases page](https://github.com/GHOST-DEKU/laptop-optimizer/releases/latest) are built automatically by GitHub Actions from the source in this repository when a tag starting with `v` is pushed. They are **not code-signed**, so Windows SmartScreen may warn. `v2.5.0` was started and checked on one Windows 11 PC (SHA-256 matches, the app opens). It has not been tested on Windows 10 or on a clean PC. `PRODUCTION_READINESS_PLAN.md` lists what is tested and what is not.
+> The files on the [Releases page](https://github.com/GHOST-DEKU/laptop-optimizer/releases/latest) are built automatically by GitHub Actions from the source in this repository when the version changes on `main` (see [Making a release](#making-a-release-automatic)). They are **not code-signed**, so Windows SmartScreen may warn. `v2.5.0` was started and checked on one Windows 11 PC (SHA-256 matches, the app opens). It has not been tested on Windows 10 or on a clean PC. `PRODUCTION_READINESS_PLAN.md` lists what is tested and what is not.
 
 **Option 1: portable executable.** Download [`LaptopOptimizer.exe`](https://github.com/GHOST-DEKU/laptop-optimizer/releases/latest/download/LaptopOptimizer.exe) from the latest release. It is one file (about 9 MB), nothing to install. Every release has a `SHA256SUMS.txt`; compare it with your download using `Get-FileHash .\LaptopOptimizer.exe`. If you prefer not to trust a prebuilt file, build it yourself (see [Development](#development)).
 
@@ -121,6 +121,15 @@ pnpm tauri build    # production build: MSI and NSIS installers
 
 `pnpm install` and `pnpm tauri build` were run on Windows 11 on 2026-11-12 and produced an MSI and an NSIS installer. A local build contains the build machine's Cargo folder path; only the tagged CI build remaps it. `cargo test --lib` (in `src-tauri`) runs the Rust tests; `python tests/source_guards.py` and `python tests/ui_regression.py` (needs `playwright`) run the other checks.
 
+### Making a release (automatic)
+
+1. Change `version` to the new number in **both** `laptop-optimizer-tauri/src-tauri/tauri.conf.json` and `laptop-optimizer-tauri/src-tauri/Cargo.toml` (and `Cargo.lock`, which `cargo build` updates).
+2. Push to `main`.
+
+`.github/workflows/release.yml` then runs by itself: it makes the tag `v<version>`, runs the Rust tests, builds the portable `LaptopOptimizer.exe`, the MSI and the setup EXE, writes `SHA256SUMS.txt`, and publishes the release. If any step fails, nothing public appears. If a release for that version already exists, the run stops without building. Pushing a tag by hand (`v2.5.1`) works too, but the tag must match the version in both files.
+
+The website does not need an edit: its download buttons point to `releases/latest/download/LaptopOptimizer.exe`, so they always serve the newest release. The pages show no version number, so none can go out of date. The files are not code-signed.
+
 ### Try the interface without Tauri
 
 Open `laptop-optimizer-tauri/src/index.html` in any browser. Outside Tauri the page uses built-in sample data and makes no system changes. The website preview embeds this same file, so a change to it shows up on the site as well.
@@ -145,7 +154,7 @@ Open `laptop-optimizer-tauri/src/index.html` in any browser. Outside Tauri the p
 ├── index.html                    Project website (GitHub Pages), embeds the app UI
 ├── Run-Optimizer.bat             Run-as-administrator helper
 ├── docs/screenshots/             Images used in this README
-└── .github/workflows/             ci.yml (tests), pages.yml (website), release.yml (build and publish on `v*` tags)
+└── .github/workflows/             ci.yml (tests), pages.yml (website), release.yml (builds and publishes a release when the version changes on `main`, or on a `v*` tag)
 ```
 
 The interface talks to Rust through nine commands: `get_system_info`, `get_live_telemetry`, `get_elevation`, `is_applied`, `apply_tweak`, `restore_tweak`, `restore_all`, `get_startup_apps` and `toggle_startup_app`. Only these are allowed (see `build.rs` and `capabilities/default.json`). The page currently uses `restore_all` and not `restore_tweak`.
