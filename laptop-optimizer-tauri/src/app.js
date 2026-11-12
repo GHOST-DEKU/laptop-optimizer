@@ -116,9 +116,9 @@
         id: 5,
         sys: "SYS: NT_KERNEL [HIBERNATE_DEL]",
         title: "Clean Kernel Boots & Delete hiberfil.s...", 
-        tag: "+6.22GB DISK", 
-        desc: "Disables hybrid hibernation; deletes hiberfil.sys for 100% fresh kernel state.", 
-        gain: "GAIN: +6.22GB NVMe FREED",
+        tag: "FREES DISK", 
+        desc: "Turns off hibernation and Fast Startup and deletes hiberfil.sys. Hibernate stops working until restored.", 
+        gain: "GAIN: frees hiberfil.sys (size depends on your RAM)",
         lockProtocol: "KERNEL_FASTBOOT",
         on: true 
       },
@@ -147,7 +147,7 @@
         sys: "SYS: NVME_VFS [TEMP_PURGE]",
         title: "Purge Stale Temporary Files (>24h)", 
         tag: "CLEAR TEMP", 
-        desc: "Wipes stale %TEMP% artifacts older than 24h; reclaims NVMe write headroom.", 
+        desc: "Wipes stale %TEMP% artifacts older than 24h; frees disk space.", 
         gain: "GAIN: +1.4GB CLEARED",
         lockProtocol: "IO_TRIM_CACHE",
         on: true 
@@ -168,6 +168,8 @@
         bar.className = 'mode-bar mode-broken';
         bar.textContent = 'BACKEND NOT CONNECTED: nothing can be applied or restored. Close and reinstall the app.';
       } else {
+        document.getElementById('system-model').textContent = '// DEMO DEVICE';
+        document.getElementById('cpu-name').firstChild.textContent = 'DEMO PREVIEW ';
         bar.className = 'mode-bar mode-demo';
         bar.textContent = 'DEMO MODE: this is a preview in a browser. Nothing on your device is changed.';
       }
@@ -700,7 +702,9 @@
             const cpuEl = document.getElementById("telem-cpu-mhz");
             const ramEl = document.getElementById("telem-ram-val");
             const ssdEl = document.getElementById("telem-ssd-val");
-            if (cpuEl) cpuEl.innerText = `${telem.cpu_mhz} MHz`;
+            const ramBox = document.getElementById('core-ram');
+            if (ramBox) ramBox.innerHTML = telem.ram_total_gb > 0 ? `RAM<br>${Math.round(telem.ram_total_gb)}GB` : 'RAM<br>--';
+            if (cpuEl) cpuEl.innerText = telem.cpu_mhz > 0 ? `${telem.cpu_mhz} MHz` : '-- MHz';
             if (ramEl) ramEl.innerText = `${telem.ram_used_gb.toFixed(1)} / ${telem.ram_total_gb.toFixed(1)} GB (${telem.ram_usage_pct}%)`;
             const diskKnown = telem.ssd_total_gb > 0;
             if (ssdEl) ssdEl.innerText = diskKnown ? `${telem.ssd_free_gb.toFixed(1)} GB` : '-- GB';

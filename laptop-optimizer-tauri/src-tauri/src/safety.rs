@@ -170,6 +170,24 @@ pub fn valid_startup_name(name: &str) -> bool {
     !name.is_empty() && name.chars().count() <= 260 && !name.chars().any(|c| c.is_control())
 }
 
+/// "• 16 GB RAM • 477 GB disk"; a size of 0 means it could not be read, so it says so.
+pub fn format_specs(ram_gb: u64, disk_gb: u64) -> String {
+    let ram = if ram_gb > 0 { format!("{} GB RAM", ram_gb) } else { "RAM unknown".to_string() };
+    let disk = if disk_gb > 0 { format!("{} GB disk", disk_gb) } else { "disk unknown".to_string() };
+    format!("\u{2022} {} \u{2022} {}", ram, disk)
+}
+
+/// Text read from the BIOS, or `unknown` when it is empty or one of the filler strings makers leave in.
+pub fn text_or_unknown(raw: &str, unknown: &str) -> String {
+    let t = raw.trim();
+    const FILLER: [&str; 6] = ["system product name", "system manufacturer", "default string", "to be filled by o.e.m.", "not applicable", "none"];
+    if t.is_empty() || FILLER.contains(&t.to_lowercase().as_str()) {
+        unknown.to_string()
+    } else {
+        t.to_string()
+    }
+}
+
 /// Tweaks that cannot work without administrator rights (HKLM writes, hibernation, app removal).
 /// Restoring the Widgets button only touches the user's own registry, so it needs no admin.
 pub fn requires_admin(id: u32, restoring: bool) -> bool {
@@ -357,6 +375,16 @@ mod tests {
         assert!(!valid_startup_name(""));
         assert!(!valid_startup_name("bad\u{0}name"));
         assert!(!valid_startup_name(&"a".repeat(261)));
+    }
+
+    #[test]
+    fn hardware_text_never_invents_values() {
+        assert_eq!(format_specs(16, 477), "\u{2022} 16 GB RAM \u{2022} 477 GB disk");
+        assert_eq!(format_specs(0, 0), "\u{2022} RAM unknown \u{2022} disk unknown");
+        assert_eq!(text_or_unknown("  ", "Unknown model"), "Unknown model");
+        assert_eq!(text_or_unknown("Default string", "Unknown model"), "Unknown model");
+        assert_eq!(text_or_unknown("To Be Filled By O.E.M.", "Unknown model"), "Unknown model");
+        assert_eq!(text_or_unknown(" 82HS ", "Unknown model"), "82HS");
     }
 
     #[test]

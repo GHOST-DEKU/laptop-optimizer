@@ -35,6 +35,9 @@ async def main():
     # static checks
     html = (ROOT / "src" / "index.html").read_text()
     check("no inline onclick in index.html", "onclick=" not in html)
+    js = (ROOT / "src" / "app.js").read_text()
+    for bad in ["LENOVO", "82HS", "1165G7", "Tiger Lake", "4C/8T", "6.22", "512GB", "NVMe 512"]:
+        check("no author-machine text: " + bad, bad not in html and bad not in js)
     conf = json.loads((ROOT / "src-tauri" / "tauri.conf.json").read_text())
     csp = conf["app"]["security"]["csp"]
     check("CSP is set and has no unsafe-eval or script unsafe-inline",

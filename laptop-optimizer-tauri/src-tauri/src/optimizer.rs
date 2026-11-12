@@ -1,5 +1,5 @@
 use crate::safety::{
-    dir_is_allowed, harden, powershell_exe, valid_startup_name, StartupHive, purge_old_entries, run_with_timeout, system32_exe, Outcome, TweakResult,
+    dir_is_allowed, format_specs, harden, text_or_unknown, powershell_exe, valid_startup_name, StartupHive, purge_old_entries, run_with_timeout, system32_exe, Outcome, TweakResult,
 };
 use serde::{Deserialize, Serialize};
 use std::os::windows::process::CommandExt;
@@ -397,8 +397,8 @@ impl OptimizerEngine {
             "HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0",
             "ProcessorNameString",
         );
-        if cpu.is_empty() {
-            cpu = "x86_64 Processor".into();
+        if cpu.trim().is_empty() {
+            cpu = "Unknown processor".into();
         }
         let cpu_clean = cpu
             .replace("(R)", "")
@@ -411,9 +411,11 @@ impl OptimizerEngine {
 
         // 2. Cores / Threads
         let threads = std::thread::available_parallelism()
-            .map(|n| n.get())
-            .unwrap_or(8);
-        let cores_str = format!("[{} Threads]", threads);
+            .map(|n| n.get());
+        let cores_str = match threads {
+            Ok(n) => format!("[{} Threads]", n),
+            Err(_) => "[threads unknown]".to_string(),
+        };
 
         // 3. RAM via Win32 GlobalMemoryStatusEx
         #[repr(C)]
@@ -438,7 +440,7 @@ impl OptimizerEngine {
             if GlobalMemoryStatusEx(&mut status) != 0 {
                 (status.ull_total_phys as f64 / (1024.0 * 1024.0 * 1024.0)).round() as u64
             } else {
-                16
+                0 // could not be read
             }
         };
 
@@ -458,36 +460,28 @@ impl OptimizerEngine {
             let mut total_bytes: u64 = 0;
             let mut total_free: u64 = 0;
             if GetDiskFreeSpaceExW(c_drive.as_ptr(), &mut free_avail, &mut total_bytes, &mut total_free) != 0 {
-                let raw_gb = (total_bytes as f64 / (1024.0 * 1024.0 * 1024.0)).round() as u64;
-                if raw_gb > 800 { 1024 } else if raw_gb > 400 { 512 } else if raw_gb > 200 { 256 } else { raw_gb }
+                (total_bytes as f64 / (1024.0 * 1024.0 * 1024.0)).round() as u64
             } else {
-                512
+                0 // could not be read
             }
         };
 
         // 5. System Product / Model
-        let mut model = Self::get_registry_string(
-            HKEY_LOCAL_MACHINE,
-            "HARDWARE\\DESCRIPTION\\System\\BIOS",
-            "SystemProductName",
-        );
-        if model.is_empty() || model == "System Product Name" || model == "Default string" {
-            let mfg = Self::get_registry_string(
-                HKEY_LOCAL_MACHINE,
-                "HARDWARE\\DESCRIPTION\\System\\BIOS",
-                "SystemManufacturer",
-            );
-            model = if !mfg.is_empty() && mfg != "System manufacturer" {
-                mfg
-            } else {
-                "LAPTOP".into()
-            };
-        }
+        let product = Self::get_registry_string(HKEY_LOCAL_MACHINE, "HARDWARE\\DESCRIPTION\\System\\BIOS", "SystemProductName");
+        let maker = Self::get_registry_string(HKEY_LOCAL_MACHINE, "HARDWARE\\DESCRIPTION\\System\\BIOS", "SystemManufacturer");
+        let product = text_or_unknown(&product, "");
+        let maker = text_or_unknown(&maker, "");
+        let model = match (maker.is_empty(), product.is_empty()) {
+            (false, false) => format!("{} {}", maker, product),
+            (true, false) => product,
+            (false, true) => maker,
+            (true, true) => "Unknown model".to_string(),
+        };
 
-        let specs_str = format!("• {}GB RAM • NVMe {}GB", ram_gb, disk_gb);
+        let specs_str = format_specs(ram_gb, disk_gb);
 
         HardwareInfo {
-            model: format!("// {}", model.trim().to_uppercase()),
+            model: format!("// {}", model.to_uppercase()),
             cpu_name: cpu_clean,
             cores: cores_str,
             specs: specs_str,
@@ -500,7 +494,7 @@ impl OptimizerEngine {
             HKEY_LOCAL_MACHINE,
             "HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0",
             "~MHz",
-            2800,
+            0, // 0 = could not be read
         );
 
         // 2. Real-Time RAM Physical Working Set via GlobalMemoryStatusEx

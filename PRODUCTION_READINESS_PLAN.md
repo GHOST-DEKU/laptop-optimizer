@@ -8,9 +8,9 @@ Statuses: Not Started · In Progress · Completed · Blocked · Needs Review · 
 "Needs Review" = code written and the Linux-side checks passed, but the Windows behavior is not proven. Nothing is "Completed" without Windows evidence where Windows is involved.
 
 ## Evidence so far (all Linux)
-- E1: `safety.rs` unit tests: 13 pass (scratch crate, `cargo test`).
+- E1: `safety.rs` unit tests: 14 pass (scratch crate, `cargo test`).
 - E2: `optimizer.rs` type-checks against a stand-in registry library (not a real build).
-- E3: `tests/ui_regression.py`: 14 checks pass (page, injection, modes, toggle, config consistency).
+- E3: `tests/ui_regression.py`: 22 checks pass (page, injection, modes, toggle, config consistency).
 - E4: page served with the exact CSP in Chromium: no violations, handlers work (WebView2 not tested).
 - W1: real Windows run, packaged EXE, UAC, two-account test: **BLOCKED**.
 
@@ -40,7 +40,7 @@ Statuses: Not Started · In Progress · Completed · Blocked · Needs Review · 
 | U25 | High | Program resolution: Windows folder from API, System32 cwd, PATH/SystemRoot overridden | none | safety.rs, optimizer.rs | harden test; type-check | Needs Review (clean environment still open) |
 | U27 | High | Durable operation journal | U04, U10 | journal.rs | kill-mid-run tests | Not Started |
 | U28 | Medium | Detect outside changes at restore | U27 | optimizer.rs | mock | Not Started |
-| U29 | Medium | Remove invented hardware values and fixed page text | none | optimizer.rs, index.html | forced query failures | Not Started |
+| U29 | Medium | Remove invented hardware values and fixed page text | none | optimizer.rs, safety.rs, index.html, app.js | `hardware_text_never_invents_values` test; 8 page checks for author-machine text; failed reads now show "unknown" or "--" | Needs Review (real Windows reads untested) |
 | U30 | Medium | Stop silently removing the download mark | D5 | optimizer.rs, lib.rs, .bat | Windows: mark survives | Needs Review (code and .bat changed; D5 assumed "remove") |
 | U31 | Medium | Operation-specific confirmation enforced by backend | U04 | lib.rs, app.js | direct call refused | Not Started |
 | U32 | Medium | Verify every change after it runs | U20 | optimizer.rs | mock | Not Started |
