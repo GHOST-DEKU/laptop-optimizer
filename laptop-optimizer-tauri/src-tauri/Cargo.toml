@@ -1,6 +1,6 @@
 [package]
 name = "laptop-optimizer-tauri"
-version = "1.0.0"
+version = "2.5.0"
 description = "Cybercore Techwear Windows Laptop Optimizer"
 authors = ["GHOST-DEKU"]
 license = "MIT"
@@ -8,7 +8,8 @@ edition = "2021"
 
 [lib]
 name = "app_lib"
-crate-type = ["staticlib", "cdylib", "rlib"]
+# Desktop only. The staticlib and cdylib outputs are for mobile builds, which this app does not have.
+crate-type = ["rlib"]
 
 [build-dependencies]
 tauri-build = { version = "2.7.4", features = [] }
@@ -20,3 +21,8 @@ log = "0.4"
 tauri = { version = "2.12.5", features = [] }
 tauri-plugin-log = "2"
 winreg = "0.52"
+
+[profile.release]
+strip = true
+lto = true
+codegen-units = 1

@@ -1,6 +1,9 @@
+mod journal;
 mod optimizer;
+mod safety;
 
 use optimizer::{HardwareInfo, LiveTelemetry, OptimizerEngine, StartupAppEntry};
+use safety::{confirmation_ok, requires_admin, StartupHive, TweakResult, CHANGE_LOCK};
 
 #[tauri::command]
 fn get_system_info() -> HardwareInfo {
@@ -12,47 +15,94 @@ fn get_live_telemetry() -> LiveTelemetry {
     OptimizerEngine::get_live_telemetry()
 }
 
+const TWEAK_IDS: [u32; 8] = [1, 2, 3, 4, 5, 6, 7, 8];
+
 #[tauri::command]
-fn apply_tweak(id: u32) -> Result<String, String> {
-    match id {
-        1 => OptimizerEngine::optimize_power_plan(),
-        2 => OptimizerEngine::optimize_game_dvr(),
-        3 => OptimizerEngine::optimize_menu_delay(),
-        4 => OptimizerEngine::optimize_widgets(),
-        5 => OptimizerEngine::optimize_fast_startup(),
-        6 => OptimizerEngine::optimize_bing_search(),
-        7 => OptimizerEngine::optimize_delivery_optimization(),
-        8 => OptimizerEngine::optimize_temp_files(),
-        _ => Err("Invalid tweak ID".into()),
+fn get_elevation() -> bool {
+    OptimizerEngine::is_elevated()
+}
+
+// Checked here in the backend, so the window cannot talk its way past it.
+fn run_tweak(id: u32, restoring: bool) -> TweakResult {
+    if !TWEAK_IDS.contains(&id) {
+        return TweakResult::failed("Invalid tweak ID");
+    }
+    if requires_admin(id, restoring) && !OptimizerEngine::is_elevated() {
+        return TweakResult::skipped("Needs administrator rights. Restart the app with 'Run as administrator'.");
+    }
+    // Already in the wanted state: write nothing, save nothing, and say so.
+    if !restoring && OptimizerEngine::already_applied(id) {
+        return TweakResult::no_change("Already applied; nothing was changed.");
+    }
+    if restoring {
+        match id {
+            1..=7 => OptimizerEngine::restore_saved(id),
+            _ => TweakResult::skipped("Nothing to restore: deleted temporary files cannot be brought back."),
+        }
+    } else {
+        // Save the previous values first. If that fails, nothing is changed.
+        if let Err(why) = OptimizerEngine::remember_before(id) {
+            return TweakResult::skipped(format!("Nothing was changed: {}.", why));
+        }
+        match id {
+            1 => OptimizerEngine::optimize_power_plan(),
+            2 => OptimizerEngine::optimize_game_dvr(),
+            3 => OptimizerEngine::optimize_menu_delay(),
+            4 => OptimizerEngine::optimize_widgets(),
+            5 => OptimizerEngine::optimize_fast_startup(),
+            6 => OptimizerEngine::optimize_bing_search(),
+            7 => OptimizerEngine::optimize_delivery_optimization(),
+            _ => OptimizerEngine::optimize_temp_files(),
+        }
     }
 }
 
+// Read-only: lets the page skip the confirmation question for a tweak that is already applied.
 #[tauri::command]
-fn restore_tweak(id: u32) -> Result<String, String> {
-    match id {
-        1 => OptimizerEngine::restore_power_plan(),
-        2 => OptimizerEngine::restore_game_dvr(),
-        3 => OptimizerEngine::restore_menu_delay(),
-        4 => OptimizerEngine::restore_widgets(),
-        5 => OptimizerEngine::restore_fast_startup(),
-        6 => OptimizerEngine::restore_bing_search(),
-        7 => OptimizerEngine::restore_delivery_optimization(),
-        8 => Ok("Temporary files already purged.".into()),
-        _ => Err("Invalid tweak ID".into()),
-    }
+async fn is_applied(id: u32) -> Result<bool, String> {
+    tauri::async_runtime::spawn_blocking(move || TWEAK_IDS.contains(&id) && OptimizerEngine::already_applied(id))
+        .await
+        .map_err(|e| e.to_string())
+}
+
+const BUSY_MSG: &str ="Another change is still running. Wait for it to finish.";
+
+// async + spawn_blocking keeps slow system commands off the thread that draws the window.
+#[tauri::command]
+async fn apply_tweak(id: u32, confirmation: Option<String>) -> Result<TweakResult, String> {
+    tauri::async_runtime::spawn_blocking(move || match CHANGE_LOCK.try_acquire() {
+        Some(_guard) if !confirmation_ok(id, confirmation.as_deref()) => {
+            TweakResult::skipped("This change needs your confirmation for this exact operation. Nothing was changed.")
+        }
+        Some(_guard) => run_tweak(id, false),
+        None => TweakResult::skipped(BUSY_MSG),
+    })
+        .await
+        .map_err(|e| e.to_string())
 }
 
 #[tauri::command]
-fn restore_all() -> Result<Vec<String>, String> {
-    let mut logs = Vec::new();
-    let _ = OptimizerEngine::restore_power_plan().map(|s| logs.push(s));
-    let _ = OptimizerEngine::restore_game_dvr().map(|s| logs.push(s));
-    let _ = OptimizerEngine::restore_menu_delay().map(|s| logs.push(s));
-    let _ = OptimizerEngine::restore_widgets().map(|s| logs.push(s));
-    let _ = OptimizerEngine::restore_fast_startup().map(|s| logs.push(s));
-    let _ = OptimizerEngine::restore_bing_search().map(|s| logs.push(s));
-    let _ = OptimizerEngine::restore_delivery_optimization().map(|s| logs.push(s));
-    Ok(logs)
+async fn restore_tweak(id: u32) -> Result<TweakResult, String> {
+    tauri::async_runtime::spawn_blocking(move || match CHANGE_LOCK.try_acquire() {
+        Some(_guard) => run_tweak(id, true),
+        None => TweakResult::skipped(BUSY_MSG),
+    })
+        .await
+        .map_err(|e| e.to_string())
+}
+
+// One result per tweak, in id order; failures are reported, not swallowed.
+#[tauri::command]
+async fn restore_all() -> Result<Vec<TweakResult>, String> {
+    tauri::async_runtime::spawn_blocking(|| {
+        let ids: Vec<u32> = TWEAK_IDS.iter().copied().filter(|id| *id != 8).collect();
+        match CHANGE_LOCK.try_acquire() {
+            Some(_guard) => ids.iter().map(|id| run_tweak(*id, true)).collect(),
+            None => ids.iter().map(|_| TweakResult::skipped(BUSY_MSG)).collect(),
+        }
+    })
+    .await
+    .map_err(|e| e.to_string())
 }
 
 #[tauri::command]
@@ -61,24 +111,27 @@ fn get_startup_apps() -> Vec<StartupAppEntry> {
 }
 
 #[tauri::command]
-fn toggle_startup_app(name: String, location: String, enable: bool) -> bool {
-    let root = if location == "HKLM" {
-        winreg::enums::HKEY_LOCAL_MACHINE
-    } else {
-        winreg::enums::HKEY_CURRENT_USER
+async fn toggle_startup_app(name: String, location: String, enable: bool) -> Result<TweakResult, String> {
+    let Some(hive) = StartupHive::parse(&location) else {
+        return Ok(TweakResult::failed("Unknown startup location."));
     };
-    OptimizerEngine::set_startup_app_enabled(root, &name, enable)
+    tauri::async_runtime::spawn_blocking(move || match CHANGE_LOCK.try_acquire() {
+        Some(_guard) => OptimizerEngine::set_startup_app_enabled(hive, &name, enable),
+        None => TweakResult::skipped(BUSY_MSG),
+    })
+    .await
+    .map_err(|e| e.to_string())
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    OptimizerEngine::unblock_zone_identifier();
-
     tauri::Builder::default()
         .plugin(tauri_plugin_log::Builder::default().build())
         .invoke_handler(tauri::generate_handler![
             get_system_info,
             get_live_telemetry,
+            get_elevation,
+            is_applied,
             apply_tweak,
             restore_tweak,
             restore_all,
