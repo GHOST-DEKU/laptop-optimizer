@@ -66,6 +66,10 @@ async def main():
         check("no claim of Windows 10 in the headline, no 'factory defaults', no invented example sizes",
               "windows 10 & 11" not in low and "factory" not in low and "6.22" not in txt and "7.50" not in txt and "benchmarking" not in low)
         check("flight plan says temp files older than 24 hours and Restore Saved Values", "older than 24 hours" in html and "RESTORE SAVED VALUES" in html)
+        check("the brand logo image loads (not the old bolt emoji)", await pg.evaluate("(() => { const i = document.getElementById('brand-logo'); return !!i && i.complete && i.naturalWidth > 0 })()") and "⚡" not in (await pg.evaluate("document.querySelector('.brand-icon-box').innerText")))
+        icons = await pg.evaluate("[...document.querySelectorAll('link[rel=icon]')].map(l => l.getAttribute('href'))")
+        check("the tab icon (favicon) links point to files that exist", len(icons) >= 1 and all((REPO / h).exists() for h in icons))
+        check("the Pages workflow copies the assets folder", "cp -r assets _site/assets" in (REPO / ".github" / "workflows" / "pages.yml").read_text())
         check("resizing needs no buttons: the demo stage has none", await pg.evaluate("document.querySelectorAll('#app-preview button').length") == 0)
         check("the demo window opens at the real app's size, 940 x 680", await inner(pg) == [940, 680])
 

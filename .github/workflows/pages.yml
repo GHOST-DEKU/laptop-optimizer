@@ -3,7 +3,7 @@ name: Deploy website
 on:
   push:
     branches: [main]
-    paths: [index.html, 'laptop-optimizer-tauri/src/**', .github/workflows/pages.yml]
+    paths: [index.html, 'assets/**', 'laptop-optimizer-tauri/src/**', .github/workflows/pages.yml]
   workflow_dispatch:
 
 permissions:
@@ -34,6 +34,7 @@ jobs:
         run: |
           mkdir -p _site/laptop-optimizer-tauri
           cp index.html _site/
+          cp -r assets _site/assets
           cp -r laptop-optimizer-tauri/src _site/laptop-optimizer-tauri/src
           touch _site/.nojekyll
           find _site -type f
