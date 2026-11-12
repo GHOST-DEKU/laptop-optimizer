@@ -67,13 +67,13 @@ The labels in the app such as "−380ms" (400 − 20), "−300MB" and "+1.4GB CL
 ## Installation
 
 > [!IMPORTANT]
-> The `LaptopOptimizer.exe` committed in this repository is an **older, unsigned build** that does not have the changes described above (saved-value Restore, nothing switched on at start, the "already applied" check, the working Delivery Optimization policy, the Capacity battery CPU load map, the Deploy plan). To get them, build from source (see [Development](#development)). A signed, CI-built release has not been made yet (tasks U16, U19, U33 in `PRODUCTION_READINESS_PLAN.md`).
+> The files on the [Releases page](https://github.com/GHOST-DEKU/laptop-optimizer/releases/latest) are built automatically by GitHub Actions from the source in this repository when a tag starting with `v` is pushed. They are **not code-signed**, so Windows SmartScreen may warn. `v2.5.0` was started and checked on one Windows 11 PC (SHA-256 matches, the app opens). It has not been tested on Windows 10 or on a clean PC. `PRODUCTION_READINESS_PLAN.md` lists what is tested and what is not.
 
-**Option 1: portable executable (older build, see the note above).** Download [`LaptopOptimizer.exe`](https://github.com/GHOST-DEKU/laptop-optimizer/raw/main/LaptopOptimizer.exe) from the repository root. It is a Tauri build (about 9 MB) committed to the repository. The website shows its SHA-256 (`scripts/check-site-hash.sh` checks it matches); the file is not code-signed, so Windows SmartScreen may warn about it. If you prefer not to trust a committed binary, build it yourself (see [Development](#development)).
+**Option 1: portable executable.** Download [`LaptopOptimizer.exe`](https://github.com/GHOST-DEKU/laptop-optimizer/releases/latest/download/LaptopOptimizer.exe) from the latest release. It is one file (about 9 MB), nothing to install. Every release has a `SHA256SUMS.txt`; compare it with your download using `Get-FileHash .\LaptopOptimizer.exe`. If you prefer not to trust a prebuilt file, build it yourself (see [Development](#development)).
 
-You can also run `Run-Optimizer.bat`, which starts the executable with administrator rights. It does not remove the "downloaded from the internet" mark. It must sit in the same folder as `LaptopOptimizer.exe`.
+You can also run `Run-Optimizer.bat` (from this repository), which starts the executable with administrator rights. It does not remove the "downloaded from the internet" mark. It must sit in the same folder as `LaptopOptimizer.exe`.
 
-**Option 2: installers.** The workflow in `.github/workflows/release.yml` builds an MSI and an NSIS installer and attaches them to a GitHub release when a tag starting with `v` is pushed. No such tag exists yet, so there are no installer downloads at the moment.
+**Option 2: installers.** The same release has an MSI and an NSIS setup file (`.msi`, `-setup.exe`), also listed in `SHA256SUMS.txt`. The installers have not been run on a clean PC yet.
 
 The app needs Microsoft Edge WebView2. It is included in Windows 10 (version 1803 and later) and Windows 11.
 
@@ -143,11 +143,9 @@ Open `laptop-optimizer-tauri/src/index.html` in any browser. Outside Tauri the p
 │       ├── tauri.conf.json       Window size, bundle targets, icons
 │       └── capabilities/         Tauri permission set
 ├── index.html                    Project website (GitHub Pages), embeds the app UI
-├── LaptopOptimizer.exe           Committed portable build (Tauri)
 ├── Run-Optimizer.bat             Run-as-administrator helper
 ├── docs/screenshots/             Images used in this README
-├── scripts/check-site-hash.sh    Checks the SHA-256 on the website matches the .exe
-└── .github/workflows/             release.yml (build on `v*` tags), check-site-hash.yml
+└── .github/workflows/             ci.yml (tests), pages.yml (website), release.yml (build and publish on `v*` tags)
 ```
 
 The interface talks to Rust through nine commands: `get_system_info`, `get_live_telemetry`, `get_elevation`, `is_applied`, `apply_tweak`, `restore_tweak`, `restore_all`, `get_startup_apps` and `toggle_startup_app`. Only these are allowed (see `build.rs` and `capabilities/default.json`). The page currently uses `restore_all` and not `restore_tweak`.

@@ -1,6 +1,6 @@
 """Browser tests for the project website (index.html at the repository root). Run: python3 tests/site_regression.py
 Needs: pip install playwright && playwright install chromium"""
-import asyncio, hashlib, pathlib, sys
+import asyncio, pathlib, re, sys
 from playwright.async_api import async_playwright
 
 REPO = pathlib.Path(__file__).resolve().parent.parent.parent
@@ -42,7 +42,6 @@ async def reset(pg):
 
 
 async def main():
-    sha = hashlib.sha256((REPO / "LaptopOptimizer.exe").read_bytes()).hexdigest()
     async with async_playwright() as p:
         b = await p.chromium.launch()
         pg = await b.new_page(viewport={"width": 1500, "height": 1000})
@@ -55,8 +54,12 @@ async def main():
 
         txt = await pg.evaluate("document.body.innerText")
         check("the author's computer name is not shown", "LENOVO-82HS" not in txt)
-        check("the older-build notice is shown", "older, unsigned build" in txt)
-        check("the page shows the SHA-256 of the committed .exe", sha in (await pg.content()))
+        check("the notice says the file is built by GitHub Actions and is not code-signed", "built automatically by GitHub Actions" in txt and "not code-signed" in txt)
+        html = await pg.content()
+        hrefs = await pg.evaluate("[...document.querySelectorAll('a')].map(a => a.href)")
+        dl = [h for h in hrefs if h.endswith("LaptopOptimizer.exe")]
+        check("every .exe download button points to the latest GitHub release", len(dl) == 3 and all(h.endswith("/releases/latest/download/LaptopOptimizer.exe") for h in dl))
+        check("no typed SHA-256 and no 'older build' text is left; the page points to SHA256SUMS.txt", "SHA256SUMS.txt" in html and "older" not in txt.lower() and not re.search(r"[0-9a-f]{64}", html))
         check("resizing needs no buttons: the demo stage has none", await pg.evaluate("document.querySelectorAll('#app-preview button').length") == 0)
         check("the demo window opens at the real app's size, 940 x 680", await inner(pg) == [940, 680])
 

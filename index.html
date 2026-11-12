@@ -748,8 +748,8 @@
         <button onclick="toggleAudio()" class="btn-sound" id="sound-btn">
           🔊 Sound: ON
         </button>
-        <a href="https://github.com/GHOST-DEKU/laptop-optimizer/raw/main/LaptopOptimizer.exe" class="btn-nav-download">
-          ⚡ GET .EXE (9.2 MB)
+        <a href="https://github.com/GHOST-DEKU/laptop-optimizer/releases/latest/download/LaptopOptimizer.exe" class="btn-nav-download">
+          ⚡ GET .EXE (8.7 MB)
         </a>
       </div>
     </div>
@@ -770,18 +770,17 @@
       </h1>
 
       <p class="hero-subtext">
-        Below is the interface of the <strong>current source code</strong> (newer than the downloadable <code>.exe</code>), running in demo mode in your browser. Try the switches and the deploy sequence, and resize the window by dragging its edges, just like the real app. It cannot change anything on your computer.
+        Below is the interface of the <strong>current source code</strong>, running in demo mode in your browser. Try the switches and the deploy sequence, and resize the window by dragging its edges, just like the real app. It cannot change anything on your computer.
       </p>
 
       <div style="max-width:760px;margin:0 auto 22px;padding:12px 16px;border:1px solid #ffb020;background:#2a1f00;color:#ffcf70;font-family:var(--font-mono);font-size:12px;line-height:1.6;text-align:left;border-radius:6px;">
-        <strong>NOTE: the downloadable <code>LaptopOptimizer.exe</code> is an older, unsigned build.</strong>
-        The preview below and the code on GitHub are newer: Restore puts back your own saved values, no tweak starts switched on,
-        tweaks that are already applied are skipped, and the Delivery Optimization tweak was fixed so Windows actually obeys it.
-        A new build has not been released yet. To get these changes today, build from source (see the README).
+        <strong>NOTE: <code>LaptopOptimizer.exe</code> is built automatically by GitHub Actions from the source code in this repository, and it is not code-signed.</strong>
+        Windows SmartScreen may warn. The release page names the commit it was built from and lists a SHA-256 for every file. The build was started and checked on one Windows 11 PC.
+        It has not been tested on Windows 10 or on a clean PC. Restore puts back your own saved values, and no tweak starts switched on.
       </div>
 
       <div class="hero-cta-cluster">
-        <a href="https://github.com/GHOST-DEKU/laptop-optimizer/raw/main/LaptopOptimizer.exe" class="hero-btn-primary">
+        <a href="https://github.com/GHOST-DEKU/laptop-optimizer/releases/latest/download/LaptopOptimizer.exe" class="hero-btn-primary">
           <span>⚡</span> GET STANDALONE BINARY (.EXE)
         </a>
         <a href="https://github.com/GHOST-DEKU/laptop-optimizer" target="_blank" class="hero-btn-ghost">
@@ -791,7 +790,7 @@
 
       <div class="spec-chips">
         <div class="spec-chip">Architecture: <span>Tauri v2 + Rust (WebView2)</span></div>
-        <div class="spec-chip">Footprint: <span>9.2 MB (needs WebView2)</span></div>
+        <div class="spec-chip">Footprint: <span>8.7 MB (needs WebView2)</span></div>
         <div class="spec-chip">Compatibility: <span>Windows 11 / 10 (Intel & AMD)</span></div>
         <div class="spec-chip">Safety: <span>1-Click Restore (see Rollback below)</span></div>
       </div>
@@ -826,7 +825,7 @@
         <i class="app-rz rz-se" data-dir="se" aria-hidden="true"></i><i class="app-rz rz-sw" data-dir="sw" aria-hidden="true"></i>
       </div>
       </div>
-      <p class="app-preview-note">// LIVE PREVIEW &mdash; the desktop UI of the current source, in demo mode (newer than the downloadable .exe). Nothing on this page changes your system. The numbers in the CPU load map are samples. Tip: drag any edge or corner of the window to resize it, drag the title bar to move it, and double-click the title bar to maximize it.</p>
+      <p class="app-preview-note">// LIVE PREVIEW &mdash; the desktop UI of the current source, in demo mode. Nothing on this page changes your system. The numbers in the CPU load map are samples. Tip: drag any edge or corner of the window to resize it, drag the title bar to move it, and double-click the title bar to maximize it.</p>
     </section>
 
     <!-- ========================================================================= -->
@@ -894,15 +893,15 @@
           <thead>
             <tr>
               <th>Item</th>
-              <th class="col-highlight">Downloadable LaptopOptimizer.exe (older build)</th>
+              <th class="col-highlight">Downloadable LaptopOptimizer.exe</th>
               <th>Good to know</th>
             </tr>
           </thead>
           <tbody>
             <tr>
               <td><strong>Binary size</strong></td>
-              <td class="col-highlight">9.2 MB (9,205,248 bytes)</td>
-              <td>Single .exe committed to the repo. Needs Microsoft Edge WebView2, which is not bundled (it ships with Windows 10 1803+ and 11).</td>
+              <td class="col-highlight">About 8.7 MB</td>
+              <td>Single .exe attached to the GitHub release. Needs Microsoft Edge WebView2, which is not bundled (it ships with Windows 10 1803+ and 11).</td>
             </tr>
             <tr>
               <td><strong>Background services</strong></td>
@@ -912,17 +911,17 @@
             <tr>
               <td><strong>Network use</strong></td>
               <td class="col-highlight">None in the app's own code</td>
-              <td>In this older build the Widgets tweak runs <code>winget</code>, which may contact Microsoft's package source. The current source no longer uses <code>winget</code>.</td>
+              <td>The app code does not call <code>winget</code>.</td>
             </tr>
             <tr>
               <td><strong>Source code</strong></td>
               <td class="col-highlight">Open (Rust backend + page + script)</td>
-              <td>Read it in <code>laptop-optimizer-tauri/</code> before you run it. The source on GitHub is newer than this download.</td>
+              <td>Read it in <code>laptop-optimizer-tauri/</code> before you run it. The release page names the commit the file was built from.</td>
             </tr>
             <tr>
               <td><strong>Rollback</strong></td>
               <td class="col-highlight">Restore Factory Defaults button</td>
-              <td>This older build returns Windows defaults, not your previous values. The current source saves each previous value before it changes anything, and Restore puts exactly that back. Deleted temp files and a removed Widgets package are never restored.</td>
+              <td>The app saves each previous value before it changes anything, and Restore puts exactly that back. Deleted temp files and a removed Widgets package are never restored.</td>
             </tr>
           </tbody>
         </table>
@@ -939,15 +938,15 @@
           Deploy to your laptop now.
         </h2>
         <p style="font-size: 15px; color: var(--text-muted); max-width: 600px; margin: 0 auto 28px;">
-          Download the standalone 64-bit .exe. It needs Microsoft Edge WebView2 (already included in Windows 10 1803+ and Windows 11). Windows SmartScreen may warn because the file is not code-signed. This is the older build described in the note at the top of the page.
+          Download the standalone 64-bit .exe. It needs Microsoft Edge WebView2 (already included in Windows 10 1803+ and Windows 11). Windows SmartScreen may warn because the file is not code-signed.
         </p>
 
-        <a href="https://github.com/GHOST-DEKU/laptop-optimizer/raw/main/LaptopOptimizer.exe" class="hero-btn-primary" style="font-size: 14px; padding: 18px 44px;">
-          ⚡ DOWNLOAD LAPTOPOPTIMIZER.EXE (9.2 MB)
+        <a href="https://github.com/GHOST-DEKU/laptop-optimizer/releases/latest/download/LaptopOptimizer.exe" class="hero-btn-primary" style="font-size: 14px; padding: 18px 44px;">
+          ⚡ DOWNLOAD LAPTOPOPTIMIZER.EXE (8.7 MB)
         </a>
 
         <div style="font-family: var(--font-mono); font-size: 11px; color: var(--text-dark); margin-top: 14px;">
-          SHA-256 of the committed LaptopOptimizer.exe: <code style="display:block;word-break:break-all;margin:4px 0">78d37c8061729af64eec2cb1c9f4564aebdc8d51e1da85cb95e8a3082d72ac34</code><br>Unsigned, and not scanned by any service. Compare this hash with the downloaded file (<code>Get-FileHash .\LaptopOptimizer.exe</code>).
+          Every release lists the SHA-256 of each file in <code>SHA256SUMS.txt</code> on the <a href="https://github.com/GHOST-DEKU/laptop-optimizer/releases/latest" style="color:inherit">release page</a>.<br>Unsigned, and not scanned by any service. Compare it with your download: <code>Get-FileHash .\LaptopOptimizer.exe</code>.
         </div>
       </div>
     </section>
@@ -1077,9 +1076,9 @@
       const root = document.getElementById('fp');
       if (!root) return;
       const STEPS = [
-        ['PRE-FLIGHT', 'Download the file', '9.2 MB', '<p>Download <code>LaptopOptimizer.exe</code>. It is one portable file. There is no installer to run.</p><p>Optional: compare its SHA-256 with the one shown above.</p>'],
+        ['PRE-FLIGHT', 'Download the file', '8.7 MB', '<p>Download <code>LaptopOptimizer.exe</code>. It is one portable file. There is no installer to run.</p><p>Optional: compare its SHA-256 with the one in <code>SHA256SUMS.txt</code> on the release page.</p>'],
         ['CLEARANCE', 'Pass the two Windows prompts', '2 prompts', '<p>The file is not code-signed, so SmartScreen may warn. Choose <b>More info</b>, then <b>Run anyway</b>.</p><p>Then accept the <b>User Account Control</b> prompt. The app needs administrator rights.</p><p class="fp-warn">If you decline the UAC prompt, some steps will fail later.</p>'],
-        ['ARMING', 'Choose your tweaks', '8 cards', '<p>All eight cards start <b>switched on</b>. Turn off any you do not want.</p><ul><li>Temp files: deletes everything it can in <code>%TEMP%</code>.</li><li>Widgets: removes a Windows package that Restore does not reinstall.</li></ul><p>The app does not make a restore point. You can make one in Windows first.</p>'],
+        ['ARMING', 'Choose your tweaks', '8 cards', '<p>All eight cards start <b>switched off</b>. Turn on the ones you want.</p><ul><li>Temp files: deletes everything it can in <code>%TEMP%</code>.</li><li>Widgets: removes a Windows package that Restore does not reinstall.</li></ul><p>The app does not make a restore point. You can make one in Windows first.</p>'],
         ['DEPLOY', 'Open the cover, launch', '1 click', '<p>Click the cover (<b>SILO: SEALED</b>). It becomes <b>WARHEAD: ARMED</b>. Then press <b>LAUNCH NUCLEAR DISPATCH</b>.</p><p>The console lists every step. A <code>[✗]</code> means that step failed.</p>'],
         ['POST-FLIGHT', 'After deployment', 'afterwards', '<p>Some changes, such as the menu delay, show after you sign out and back in.</p><ul><li><b>STARTUP APPS</b>: switch programs off for the next sign-in.</li><li><b>RESTORE FACTORY DEFAULTS</b>: puts Windows defaults back.</li><li>To remove the app, delete the file. Applied settings stay until you restore them.</li></ul>']
       ];
