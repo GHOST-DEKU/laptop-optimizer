@@ -370,10 +370,26 @@
     /* 3. 1:1 AUTHENTIC INTERACTIVE WORKSTATION MIRROR (LaptopOptimizer.exe)     */
     /* ========================================================================= */
     .app-mirror-stage {
-      max-width: 944px; /* 940px default Tauri window width + 2px frame border */
+      max-width: 100%; /* the demo window can be resized up to the width of this column */
       margin: 0 auto 70px;
       position: relative;
     }
+
+    /* The demo desktop: the app is a floating window that is resized, moved and maximized like a real one. */
+    .app-desktop {
+      position: relative;
+      width: 100%;
+      height: 800px;
+      border: 1px solid var(--border-dark);
+      border-radius: 12px;
+      background: radial-gradient(#1a2130 1px, transparent 1px) 0 0 / 18px 18px, #060810;
+      overflow: hidden;
+    }
+    .app-desktop .app-window-frame { position: absolute; }
+    /* Narrower than the 700 px minimum window: no desktop, the window is shown scaled down and cannot be resized. */
+    .app-mirror-stage.no-desk .app-desktop { height: auto; border: 0; background: none; border-radius: 0; }
+    .app-mirror-stage.no-desk .app-desktop .app-window-frame { position: relative; left: auto; top: auto; width: 100% !important; height: auto !important; }
+    .app-mirror-stage.no-desk .app-rz { display: none; }
 
     .app-window-frame {
       background: var(--bg-surface);
@@ -403,6 +419,20 @@
       background: #07090e;
       transform-origin: top left;
     }
+    /* While dragging, the page (not the demo inside) must receive the pointer, or the drag gets stuck on the iframe */
+    .app-window-frame.dragging .app-live-frame { pointer-events: none; }
+    /* Invisible resize zones along the four edges and in the four corners, like the border of a real window */
+    .app-rz { position: absolute; z-index: 6; touch-action: none; }
+    .rz-n  { top: 0; left: 14px; right: 14px; height: 6px; cursor: ns-resize; }
+    .rz-s  { bottom: 0; left: 14px; right: 14px; height: 6px; cursor: ns-resize; }
+    .rz-e  { right: 0; top: 14px; bottom: 14px; width: 6px; cursor: ew-resize; }
+    .rz-w  { left: 0; top: 14px; bottom: 14px; width: 6px; cursor: ew-resize; }
+    .rz-ne { top: 0; right: 0; width: 14px; height: 14px; cursor: nesw-resize; }
+    .rz-sw { bottom: 0; left: 0; width: 14px; height: 14px; cursor: nesw-resize; }
+    .rz-nw { top: 0; left: 0; width: 14px; height: 14px; cursor: nwse-resize; }
+    .rz-se { bottom: 0; right: 0; width: 14px; height: 14px; cursor: nwse-resize; }
+    .app-win-titlebar { cursor: default; touch-action: none; }
+    .app-window-frame:focus-visible { outline: 2px solid var(--acid-volt); outline-offset: 2px; }
     .app-preview-note {
       margin-top: 14px;
       text-align: center;
@@ -711,7 +741,7 @@
           <div class="pulse-dot"></div>
           <span id="utc-clock">UTC 00:00:00.000</span>
         </div>
-        <span style="color: var(--text-dark);">[HOST: LENOVO-82HS]</span>
+        <span style="color: var(--text-dark);">[PUBLIC DEMO PAGE]</span>
       </div>
 
       <div class="nav-links">
@@ -740,8 +770,15 @@
       </h1>
 
       <p class="hero-subtext">
-        Below is the real <code>LaptopOptimizer.exe</code> interface, running in demo mode in your browser. Try the switches and the deploy sequence. It cannot change anything on your computer.
+        Below is the interface of the <strong>current source code</strong> (newer than the downloadable <code>.exe</code>), running in demo mode in your browser. Try the switches and the deploy sequence, and resize the window by dragging its edges, just like the real app. It cannot change anything on your computer.
       </p>
+
+      <div style="max-width:760px;margin:0 auto 22px;padding:12px 16px;border:1px solid #ffb020;background:#2a1f00;color:#ffcf70;font-family:var(--font-mono);font-size:12px;line-height:1.6;text-align:left;border-radius:6px;">
+        <strong>NOTE: the downloadable <code>LaptopOptimizer.exe</code> is an older, unsigned build.</strong>
+        The preview below and the code on GitHub are newer: Restore puts back your own saved values, no tweak starts switched on,
+        tweaks that are already applied are skipped, and the Delivery Optimization tweak was fixed so Windows actually obeys it.
+        A new build has not been released yet. To get these changes today, build from source (see the README).
+      </div>
 
       <div class="hero-cta-cluster">
         <a href="https://github.com/GHOST-DEKU/laptop-optimizer/raw/main/LaptopOptimizer.exe" class="hero-btn-primary">
@@ -756,7 +793,7 @@
         <div class="spec-chip">Architecture: <span>Tauri v2 + Rust (WebView2)</span></div>
         <div class="spec-chip">Footprint: <span>9.2 MB (needs WebView2)</span></div>
         <div class="spec-chip">Compatibility: <span>Windows 11 / 10 (Intel & AMD)</span></div>
-        <div class="spec-chip">Safety: <span>1-Click Restore Defaults</span></div>
+        <div class="spec-chip">Safety: <span>1-Click Restore (see Rollback below)</span></div>
       </div>
     </section>
 
@@ -764,9 +801,10 @@
     <!-- 3. 1:1 AUTHENTIC INTERACTIVE WORKSTATION (Pixel-for-Pixel Matching App)  -->
     <!-- ========================================================================= -->
     <section class="app-mirror-stage" id="app-preview" aria-label="Live preview of the Laptop Optimizer desktop application">
-      <div class="app-window-frame">
+      <div class="app-desktop" id="app-desktop">
+      <div class="app-window-frame" id="app-window" tabindex="0" role="group" aria-label="Demo app window. Arrow keys move it, Shift plus arrow keys resize it, Enter maximizes or restores it.">
         <!-- Window titlebar: same title string as the real Tauri window (tauri.conf.json) -->
-        <div class="app-win-titlebar">
+        <div class="app-win-titlebar" id="app-titlebar">
           <div class="app-win-title">
             <span style="color: var(--acid-volt);">⚡</span>
             <span>// SYS.CORE-TUNER // [CYBERCORE TECHWEAR WORKSTATION]</span>
@@ -782,8 +820,13 @@
         <div class="app-live-wrap" id="app-live-wrap">
           <iframe class="app-live-frame" id="app-live-frame" src="laptop-optimizer-tauri/src/index.html" title="Laptop Optimizer desktop app (demo mode)" loading="lazy"></iframe>
         </div>
+        <i class="app-rz rz-n" data-dir="n" aria-hidden="true"></i><i class="app-rz rz-s" data-dir="s" aria-hidden="true"></i>
+        <i class="app-rz rz-e" data-dir="e" aria-hidden="true"></i><i class="app-rz rz-w" data-dir="w" aria-hidden="true"></i>
+        <i class="app-rz rz-ne" data-dir="ne" aria-hidden="true"></i><i class="app-rz rz-nw" data-dir="nw" aria-hidden="true"></i>
+        <i class="app-rz rz-se" data-dir="se" aria-hidden="true"></i><i class="app-rz rz-sw" data-dir="sw" aria-hidden="true"></i>
       </div>
-      <p class="app-preview-note">// LIVE PREVIEW &mdash; the real desktop UI in demo mode. Nothing on this page changes your system.</p>
+      </div>
+      <p class="app-preview-note">// LIVE PREVIEW &mdash; the desktop UI of the current source, in demo mode (newer than the downloadable .exe). Nothing on this page changes your system. The numbers in the CPU load map are samples. Tip: drag any edge or corner of the window to resize it, drag the title bar to move it, and double-click the title bar to maximize it.</p>
     </section>
 
     <!-- ========================================================================= -->
@@ -851,7 +894,7 @@
           <thead>
             <tr>
               <th>Item</th>
-              <th class="col-highlight">LaptopOptimizer.exe (Tauri v2 + Rust)</th>
+              <th class="col-highlight">Downloadable LaptopOptimizer.exe (older build)</th>
               <th>Good to know</th>
             </tr>
           </thead>
@@ -869,17 +912,17 @@
             <tr>
               <td><strong>Network use</strong></td>
               <td class="col-highlight">None in the app's own code</td>
-              <td>The Widgets tweak runs <code>winget</code>, which may contact Microsoft's package source.</td>
+              <td>In this older build the Widgets tweak runs <code>winget</code>, which may contact Microsoft's package source. The current source no longer uses <code>winget</code>.</td>
             </tr>
             <tr>
               <td><strong>Source code</strong></td>
-              <td class="col-highlight">Open (Rust backend + one HTML file)</td>
-              <td>Read it in <code>laptop-optimizer-tauri/</code> before you run it.</td>
+              <td class="col-highlight">Open (Rust backend + page + script)</td>
+              <td>Read it in <code>laptop-optimizer-tauri/</code> before you run it. The source on GitHub is newer than this download.</td>
             </tr>
             <tr>
               <td><strong>Rollback</strong></td>
               <td class="col-highlight">Restore Factory Defaults button</td>
-              <td>Returns Windows defaults, not your previous values. Deleted temp files and the removed Widgets package are not restored.</td>
+              <td>This older build returns Windows defaults, not your previous values. The current source saves each previous value before it changes anything, and Restore puts exactly that back. Deleted temp files and a removed Widgets package are never restored.</td>
             </tr>
           </tbody>
         </table>
@@ -896,7 +939,7 @@
           Deploy to your laptop now.
         </h2>
         <p style="font-size: 15px; color: var(--text-muted); max-width: 600px; margin: 0 auto 28px;">
-          Download the standalone 64-bit .exe. It needs Microsoft Edge WebView2 (already included in Windows 10 1803+ and Windows 11). Windows SmartScreen may warn because the file is not code-signed.
+          Download the standalone 64-bit .exe. It needs Microsoft Edge WebView2 (already included in Windows 10 1803+ and Windows 11). Windows SmartScreen may warn because the file is not code-signed. This is the older build described in the note at the top of the page.
         </p>
 
         <a href="https://github.com/GHOST-DEKU/laptop-optimizer/raw/main/LaptopOptimizer.exe" class="hero-btn-primary" style="font-size: 14px; padding: 18px 44px;">
@@ -1066,22 +1109,108 @@
     })();
 
     // --- 8. APP PREVIEW SCALING: the desktop window is never narrower than 700px, so shrink it instead of squeezing it ---
+    // The demo is a floating window on a small desktop and behaves like a real one: drag any edge or corner to
+    // resize it, drag the title bar to move it, double-click the title bar to maximize or restore it. The minimum
+    // size is the app's (700x500 inside the frame). On a screen narrower than that there is no desktop: the minimum
+    // window is shown scaled down and cannot be resized.
     (function () {
+      const stage = document.getElementById('app-preview');
+      const desk = document.getElementById('app-desktop');
+      const win = document.getElementById('app-window');
+      const bar = document.getElementById('app-titlebar');
       const wrap = document.getElementById('app-live-wrap');
       const frame = document.getElementById('app-live-frame');
-      if (!wrap || !frame) return;
-      const MIN_W = 700, H = 680;
-      function fit() {
-        const avail = wrap.parentElement.clientWidth;
-        const w = Math.max(avail, MIN_W);
-        const k = avail / w;
-        frame.style.width = w + 'px';
-        frame.style.transform = k < 1 ? 'scale(' + k + ')' : '';
-        wrap.style.height = (H * k) + 'px';
+      if (!stage || !desk || !win || !bar || !wrap || !frame) return;
+      const MIN_W = 700, MIN_H = 500, DEF_W = 940, DEF_H = 680, BORDER = 4;
+      const clamp = (v, lo, hi) => Math.min(Math.max(v, lo), Math.max(lo, hi));
+      let r = null;       // outer rectangle of the window on the desktop: { x, y, w, h }
+      let restore = null; // the rectangle before maximizing
+      const noDesk = () => stage.classList.contains('no-desk');
+      const minOuter = () => ({ w: MIN_W + BORDER, h: MIN_H + BORDER + bar.offsetHeight });
+
+      function paint() {
+        const dw = desk.clientWidth, dh = desk.clientHeight, t = bar.offsetHeight;
+        stage.classList.toggle('no-desk', dw < MIN_W + BORDER);
+        if (noDesk()) { // narrow screen: the minimum window, scaled down to fit
+          const k = Math.max(dw - BORDER, 1) / MIN_W;
+          frame.style.width = MIN_W + 'px';
+          frame.style.height = DEF_H + 'px';
+          frame.style.transform = k < 1 ? 'scale(' + k + ')' : '';
+          wrap.style.height = (DEF_H * k) + 'px';
+          return;
+        }
+        if (!r) { const w = DEF_W + BORDER; r = { x: Math.round((dw - w) / 2), y: 28, w, h: DEF_H + BORDER + t }; }
+        const m = minOuter();
+        r.w = clamp(r.w, m.w, dw); r.h = clamp(r.h, m.h, dh);
+        r.x = clamp(r.x, 0, dw - r.w); r.y = clamp(r.y, 0, dh - r.h);
+        win.style.left = r.x + 'px'; win.style.top = r.y + 'px';
+        win.style.width = r.w + 'px'; win.style.height = r.h + 'px';
+        frame.style.width = (r.w - BORDER) + 'px';
+        frame.style.height = (r.h - BORDER - t) + 'px';
+        frame.style.transform = '';
+        wrap.style.height = (r.h - BORDER - t) + 'px';
       }
-      fit();
-      if (window.ResizeObserver) new ResizeObserver(fit).observe(wrap.parentElement);
-      else window.addEventListener('resize', fit);
+
+      // dir is 'move', or the edge(s) being dragged: n, s, e, w, ne, nw, se, sw. The opposite edge never moves.
+      function begin(ev, dir) {
+        if ((ev.button !== undefined && ev.button !== 0) || noDesk()) return;
+        ev.preventDefault();
+        const el = ev.currentTarget, sx = ev.clientX, sy = ev.clientY, r0 = Object.assign({}, r);
+        const m = minOuter(), dw = desk.clientWidth, dh = desk.clientHeight;
+        el.setPointerCapture(ev.pointerId);
+        win.classList.add('dragging');
+        const move = (e) => {
+          const dx = e.clientX - sx, dy = e.clientY - sy;
+          if (dir === 'move') {
+            r = { x: clamp(r0.x + dx, 0, dw - r0.w), y: clamp(r0.y + dy, 0, dh - r0.h), w: r0.w, h: r0.h };
+          } else {
+            let left = r0.x, right = r0.x + r0.w, top = r0.y, bottom = r0.y + r0.h;
+            if (dir.indexOf('w') >= 0) left = clamp(r0.x + dx, 0, right - m.w);
+            if (dir.indexOf('e') >= 0) right = clamp(right + dx, left + m.w, dw);
+            if (dir.indexOf('n') >= 0) top = clamp(r0.y + dy, 0, bottom - m.h);
+            if (dir.indexOf('s') >= 0) bottom = clamp(bottom + dy, top + m.h, dh);
+            r = { x: left, y: top, w: right - left, h: bottom - top };
+          }
+          restore = null;
+          paint();
+        };
+        const up = () => {
+          win.classList.remove('dragging');
+          el.removeEventListener('pointermove', move);
+          el.removeEventListener('pointerup', up);
+          el.removeEventListener('pointercancel', up);
+        };
+        el.addEventListener('pointermove', move);
+        el.addEventListener('pointerup', up);
+        el.addEventListener('pointercancel', up);
+      }
+      win.querySelectorAll('.app-rz').forEach((z) => z.addEventListener('pointerdown', (ev) => begin(ev, z.dataset.dir)));
+      bar.addEventListener('pointerdown', (ev) => { if (!ev.target.closest('.app-win-controls')) begin(ev, 'move'); });
+
+      function toggleMaximize() {
+        if (noDesk()) return;
+        if (restore) { r = restore; restore = null; }
+        else { restore = Object.assign({}, r); r = { x: 0, y: 0, w: desk.clientWidth, h: desk.clientHeight }; }
+        paint();
+      }
+      bar.addEventListener('dblclick', (ev) => { if (!ev.target.closest('.app-win-controls')) toggleMaximize(); });
+
+      // Keyboard, for people who cannot drag: arrows move the focused window, Shift+arrows resize it, Enter maximizes.
+      win.addEventListener('keydown', (e) => {
+        if (e.target !== win || noDesk()) return;
+        if (e.key === 'Enter') { e.preventDefault(); toggleMaximize(); return; }
+        const d = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[e.key];
+        if (!d) return;
+        e.preventDefault();
+        restore = null;
+        if (e.shiftKey) r = { x: r.x, y: r.y, w: r.w + d[0] * 20, h: r.h + d[1] * 20 };
+        else r = { x: r.x + d[0] * 20, y: r.y + d[1] * 20, w: r.w, h: r.h };
+        paint();
+      });
+
+      paint();
+      if (window.ResizeObserver) new ResizeObserver(paint).observe(desk);
+      else window.addEventListener('resize', paint);
     })();
   </script>
 </body>
