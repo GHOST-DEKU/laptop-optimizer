@@ -4,7 +4,7 @@ on:
   push:
     tags:
       - 'v*'
-  workflow_dispatch:
+# Only tags build a release. A manual run from a branch would tag the release with the branch name.
 
 permissions:
   contents: write
@@ -17,6 +17,10 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+
+      - name: Remember the Cargo folder (its path is baked into the program otherwise)
+        shell: pwsh
+        run: echo "CARGO_HOME_DIR=$env:USERPROFILE\.cargo" >> $env:GITHUB_ENV
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -51,7 +55,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # Keeps the build machine's folder names out of the program.
-          RUSTFLAGS: --remap-path-prefix=${{ github.workspace }}=. --remap-path-prefix=${{ runner.temp }}=tmp
+          # In the first local build every C:\Users hit came from the Cargo folder, so it is remapped too.
+          RUSTFLAGS: --remap-path-prefix=${{ github.workspace }}=. --remap-path-prefix=${{ runner.temp }}=tmp --remap-path-prefix=${{ env.CARGO_HOME_DIR }}=cargo
         with:
           projectPath: './laptop-optimizer-tauri'
           tagName: ${{ github.ref_name }}
@@ -63,8 +68,9 @@ jobs:
             These files are **not code-signed**, so Windows SmartScreen may warn. A SHA-256 list is not produced by this workflow yet (planned task U33).
 
             ### Files
-            - `LaptopOptimizer_x64_en-US.msi`: Windows Installer package.
-            - `LaptopOptimizer_x64-setup.exe`: setup program (NSIS).
+            - the `.msi` file: Windows Installer package.
+            - the `-setup.exe` file: setup program (NSIS).
+            Both names contain the version number.
 
             ### Built from
             Commit `${{ github.sha }}`.

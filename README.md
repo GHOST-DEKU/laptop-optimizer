@@ -5,7 +5,7 @@ A Windows desktop app that applies a fixed set of eight performance and cleanup 
 **Live preview:** <https://ghost-deku.github.io/laptop-optimizer/> shows the real app UI running in demo mode. It cannot change anything on your computer.
 
 > [!WARNING]
-> The app changes Windows settings, uninstalls a Windows component, and deletes files. It does **not** create a restore point or save your previous values, and not every change can be undone. Read [What the tweaks do](#what-the-tweaks-do) before you deploy.
+> The app changes Windows settings, uninstalls a Windows component, and deletes files. Before it changes a registry value, power plan or hibernation, it saves the previous value to `%LOCALAPPDATA%\LaptopOptimizer\previous.json`, and Restore puts exactly that back. It does **not** create a Windows restore point, and not every change can be undone (deleted temp files, a removed Widgets pack). Read [What the tweaks do](#what-the-tweaks-do) before you deploy.
 
 ## Contents
 
@@ -35,9 +35,9 @@ These images are the app's own interface (`laptop-optimizer-tauri/src/index.html
 
 ## Features
 
-- **Eight tweaks** in one window, each with its own switch. All eight start switched on.
-- **Deploy** applies every switched-on tweak and prints a result line for each one in a console drawer. A safety cover over the Deploy button must be opened first.
-- **Restore Factory Defaults** puts the settings back to Windows defaults (see the limits in [What the tweaks do](#what-the-tweaks-do)).
+- **Eight tweaks** in one window, each with its own switch. No tweak starts switched on.
+- **Deploy** applies every switched-on tweak and prints a result line for each one in a console drawer. A safety cover over the Deploy button must be opened first. Widgets removal and hibernation each ask their own question first, unless they are already applied. A tweak that is already in place is reported as "no change" and nothing is written.
+- **Restore Saved Values** puts back the values the app saved before it changed them. A tweak the app never changed is skipped, with a message (see the limits in [What the tweaks do](#what-the-tweaks-do)).
 - **Startup applications manager** lists programs in the `Run` registry keys and turns them on or off without deleting the keys.
 - **Hardware summary** in the header: processor name, thread count, RAM and system drive size, and system model, read from the registry and Win32 calls.
 - **Sound effects** generated in the browser engine (Web Audio API), with a mute toggle in the header. No audio files are used.
@@ -49,22 +49,27 @@ This table is taken from the Rust backend in `laptop-optimizer-tauri/src-tauri/s
 
 | # | Tweak | What the code does | What Restore does |
 | :-: | :-- | :-- | :-- |
-| 01 | CPU frequency floor | Activates the Windows High Performance power scheme (falls back to a second scheme GUID if needed) and turns off power throttling (`powercfg /powerthrottling disable` and `PowerThrottlingOff=1` under `HKLM`). It does not set a processor-state value itself. | Turns throttling back on and activates the Balanced scheme. A duplicated scheme is not deleted. |
-| 02 | Game DVR | Sets `GameDVR_Enabled`, `AppCaptureEnabled` and `HistoricalCaptureEnabled` to 0 and writes two full-screen behaviour values under `HKCU`. | Sets the three enable values back to 1. The two behaviour values stay as written. |
-| 03 | Menu delay | Sets `MenuShowDelay` to `20` in `HKCU\Control Panel\Desktop`. | Sets it to `400`, even if you had a different value before. |
-| 04 | Widgets | Hides the taskbar Widgets button (`TaskbarDa=0`), ends `WidgetService.exe`, and removes the Windows Web Experience package with `winget`, or with PowerShell `Remove-AppxPackage` if `winget` fails. | Shows the Widgets button again. **The removed package is not reinstalled.** |
-| 05 | Hibernation file | Runs `powercfg -h off`, which also turns off Fast Startup and deletes `hiberfil.sys`. | Runs `powercfg -h on`. |
-| 06 | Bing in Start | Sets `BingSearchEnabled=0` under `HKCU` and ends `SearchHost.exe`. | Sets it to 1. |
-| 07 | Delivery Optimization | Sets `DODownloadMode=0` under `HKCU\Software\Microsoft\Windows\CurrentVersion\DeliveryOptimization`. | Sets it to 1. |
-| 08 | Temp files | Deletes **every** file and folder it can inside your `%TEMP%` folder. Items in use are skipped. The card says "older than 24h", but the code does not check age. | Nothing. Deleted files cannot be restored. |
+| 01 | CPU frequency floor | Activates the Windows High Performance power scheme with `powercfg -setactive` and sets `PowerThrottlingOff=1` under `HKLM` (needs administrator rights; applies after a restart). It does not set a processor-state value itself. | Reactivates the power plan that was active before, and puts back the saved `PowerThrottlingOff` value (or deletes it if it did not exist). |
+| 02 | Game DVR | Sets `GameDVR_Enabled`, `AppCaptureEnabled` and `HistoricalCaptureEnabled` to 0 and writes two full-screen behaviour values under `HKCU`. | Puts back all five saved values, or deletes the ones that did not exist. |
+| 03 | Menu delay | Sets `MenuShowDelay` to `20` in `HKCU\Control Panel\Desktop`. | Puts back the saved value (for example your own, not a fixed 400). |
+| 04 | Widgets | Tries to hide the taskbar Widgets button (`TaskbarDa=0`; **Windows 11 build 26320 refuses this write from any app**, so hide the button in Settings > Personalization > Taskbar), ends `WidgetService.exe`, and removes the Windows Web Experience package for the current account with PowerShell `Remove-AppxPackage` (never `winget`). Asks its own question first. | Puts back the saved `TaskbarDa` value. **The removed package is not reinstalled.** |
+| 05 | Hibernation file | Runs `powercfg -h off`, which also turns off Fast Startup and deletes `hiberfil.sys`. Asks its own question first. | Runs `powercfg -h on` or `off`, whichever it was before. |
+| 06 | Bing in Start | Sets `BingSearchEnabled=0` under `HKCU` and ends `SearchHost.exe`. | Puts back the saved value. |
+| 07 | Delivery Optimization | Sets the machine policy `HKLM\SOFTWARE\Policies\Microsoft\Windows\DeliveryOptimization\DODownloadMode=0` (HTTP only; needs administrator rights), then asks Windows (`Get-DOConfig`) whether the mode really changed, and reports success only if it did. Tested on Windows 11: the old per-user key left the mode at `Lan`; this policy makes Windows report `CdnOnly`. Settings may then say some settings are managed by your organization. | Deletes the policy value again if it did not exist before (and the policy key if that leaves it empty), or puts back the saved value. |
+| 08 | Temp files | Deletes items directly inside your own `%TEMP%` folder when everything in them is older than 24 hours. A folder with any recent file inside is kept. Items in use are skipped. | Nothing. Deleted files cannot be restored. |
 
-The labels in the app such as "−380ms", "−300MB" and "+7.5 GB FREED" are fixed text. The app does not measure them, and it does not check whether Windows honours each setting on your version.
+Restore works only from what the app saved before its first change to that tweak. If nothing was saved (for example changes made by an older version), Restore changes nothing and says so. If the saved-values file cannot be read or written, the app refuses to change anything.
+
+The labels in the app such as "−380ms" (400 − 20), "−300MB" and "+1.4GB CLEARED" are fixed text. Only the menu-delay number is arithmetic from the setting; the RAM and disk figures are **not measured**. The app also does not check whether Windows honours each setting on your version.
 
 ## Installation
 
-**Option 1: portable executable.** Download [`LaptopOptimizer.exe`](https://github.com/GHOST-DEKU/laptop-optimizer/raw/main/LaptopOptimizer.exe) from the repository root. It is a Tauri build (about 9 MB) committed to the repository. The website shows its SHA-256 (`scripts/check-site-hash.sh` checks it matches); the file is not code-signed, so Windows SmartScreen may warn about it. If you prefer not to trust a committed binary, build it yourself (see [Development](#development)).
+> [!IMPORTANT]
+> The `LaptopOptimizer.exe` committed in this repository is an **older, unsigned build** that does not have the changes described above (saved-value Restore, nothing switched on at start, the "already applied" check, the working Delivery Optimization policy, the live CPU load map). To get them, build from source (see [Development](#development)). A signed, CI-built release has not been made yet (tasks U16, U19, U33 in `PRODUCTION_READINESS_PLAN.md`).
 
-You can also run `Run-Optimizer.bat`, which unblocks the executable and starts it with administrator rights. It must sit in the same folder as `LaptopOptimizer.exe`.
+**Option 1: portable executable (older build, see the note above).** Download [`LaptopOptimizer.exe`](https://github.com/GHOST-DEKU/laptop-optimizer/raw/main/LaptopOptimizer.exe) from the repository root. It is a Tauri build (about 9 MB) committed to the repository. The website shows its SHA-256 (`scripts/check-site-hash.sh` checks it matches); the file is not code-signed, so Windows SmartScreen may warn about it. If you prefer not to trust a committed binary, build it yourself (see [Development](#development)).
+
+You can also run `Run-Optimizer.bat`, which starts the executable with administrator rights. It does not remove the "downloaded from the internet" mark. It must sit in the same folder as `LaptopOptimizer.exe`.
 
 **Option 2: installers.** The workflow in `.github/workflows/release.yml` builds an MSI and an NSIS installer and attaches them to a GitHub release when a tag starting with `v` is pushed. No such tag exists yet, so there are no installer downloads at the moment.
 
@@ -73,18 +78,18 @@ The app needs Microsoft Edge WebView2. It is included in Windows 10 (version 180
 ## Usage
 
 1. Start the app and accept the UAC prompt.
-2. Click a card to switch a tweak on or off, or use **TOGGLE ALL**. Remember that every tweak starts switched on.
+2. Click a card to switch a tweak on, or use **TOGGLE ALL**. No tweak starts switched on. Only switch on what you want.
 3. Click the cover over the Deploy button (**SILO: SEALED**). It changes to **WARHEAD: ARMED**.
 4. Click **LAUNCH NUCLEAR DISPATCH**. The console drawer opens and logs each step. Failed steps are marked `[✗]` with the error.
 5. To open or close the console by hand, click its header bar.
 6. **STARTUP APPS** opens the startup manager. Click a row to switch that program on or off for the next sign-in.
-7. **RESTORE FACTORY DEFAULTS** asks for confirmation, then applies the Restore column above.
+7. **RESTORE SAVED VALUES** asks for confirmation, then applies the Restore column above. Tweaks the app never changed are skipped.
 
 ## Supported platforms
 
 | Platform | Status |
 | :-- | :-- |
-| Windows 10 / 11, 64-bit | Target platform. The release workflow builds `x86_64-pc-windows-msvc`. There are no automated tests, so no test matrix exists. |
+| Windows 10 / 11, 64-bit | Target platform. The release workflow builds `x86_64-pc-windows-msvc`. Tested so far on **one Windows 11 PC** only (Rust tests, source checks, page tests, one tweak applied and restored by hand). Windows 10, a clean VM and a second user account are not tested. |
 | Other Windows builds (32-bit, ARM) | Not built by the workflow. Not verified. |
 | Linux, macOS | Not supported. The Rust backend uses Windows-only APIs (`winreg`, `std::os::windows`) and will not compile there. |
 
@@ -112,7 +117,7 @@ pnpm tauri build    # production build: MSI and NSIS installers
 
 `pnpm dev` and `pnpm build` are shortcuts for the same two commands. Build output is written under `laptop-optimizer-tauri/src-tauri/target/release/`, with installers in the `bundle` folder. Use `tauri build` rather than a plain `cargo build --release`, because the Tauri CLI is what prepares a production build.
 
-`pnpm install` was run against the committed lockfile and installs `@tauri-apps/cli` 2.12.4. The `tauri dev` and `tauri build` commands could not be run on the Linux machine used to write this document, so they are taken from `package.json`, `tauri.conf.json` and the release workflow rather than tested here.
+`pnpm install` and `pnpm tauri build` were run on Windows 11 on 2026-11-12 and produced an MSI and an NSIS installer. A local build contains the build machine's Cargo folder path; only the tagged CI build remaps it. `cargo test --lib` (in `src-tauri`) runs the Rust tests; `python tests/source_guards.py` and `python tests/ui_regression.py` (needs `playwright`) run the other checks.
 
 ### Try the interface without Tauri
 
@@ -124,34 +129,38 @@ Open `laptop-optimizer-tauri/src/index.html` in any browser. Outside Tauri the p
 .
 ├── laptop-optimizer-tauri/       Current application
 │   ├── package.json              pnpm scripts (dev, build) and the Tauri CLI
-│   ├── src/index.html            Whole interface: HTML, CSS and JavaScript in one file
+│   ├── src/index.html            Interface markup and styles
+│   ├── src/app.js                Interface logic (calls the Rust commands)
+│   ├── tests/                    source_guards.py and ui_regression.py
 │   └── src-tauri/
 │       ├── src/main.rs           Entry point, relaunches as administrator
 │       ├── src/lib.rs            Tauri commands exposed to the interface
 │       ├── src/optimizer.rs      Registry, powercfg and file operations
+│       ├── src/safety.rs         Lock, timeouts, confirmations, temp purge rules
+│       ├── src/journal.rs        Saved previous values used by Restore
 │       ├── tauri.conf.json       Window size, bundle targets, icons
 │       └── capabilities/         Tauri permission set
 ├── index.html                    Project website (GitHub Pages), embeds the app UI
 ├── LaptopOptimizer.exe           Committed portable build (Tauri)
-├── Run-Optimizer.bat             Unblock-and-run helper
+├── Run-Optimizer.bat             Run-as-administrator helper
 ├── docs/screenshots/             Images used in this README
 ├── scripts/check-site-hash.sh    Checks the SHA-256 on the website matches the .exe
 └── .github/workflows/             release.yml (build on `v*` tags), check-site-hash.yml
 ```
 
-The interface talks to Rust through seven commands: `get_system_info`, `get_live_telemetry`, `apply_tweak`, `restore_tweak`, `restore_all`, `get_startup_apps` and `toggle_startup_app`.
+The interface talks to Rust through nine commands: `get_system_info`, `get_live_telemetry`, `get_elevation`, `is_applied`, `apply_tweak`, `restore_tweak`, `restore_all`, `get_startup_apps` and `toggle_startup_app`. Only these are allowed (see `build.rs` and `capabilities/default.json`). The page currently uses `restore_all` and not `restore_tweak`.
 
 ## Known limitations
 
-- **Restore returns Windows defaults, not your previous values.** For example, a custom menu delay becomes 400.
+- **Restore uses what the app saved.** It cannot restore changes made before the app saved anything, or changes you made by hand after the app changed a setting (it would put the saved value back over yours).
 - **Some changes are permanent:** deleted temp files and the removed Web Experience package.
-- **The startup manager only covers the `Run` keys** under `HKCU` and `HKLM`. It does not cover the Startup folder, `RunOnce`, 32-bit registry views or scheduled tasks.
-- **Sample startup entries:** if no `Run` entries are found, the app shows four sample programs (OneDrive, Grammarly, UniGetUI, RiotClient). Switching one writes a real `StartupApproved` value under that name.
-- **Live telemetry is not shown.** The backend can report CPU speed, RAM use and free disk space, but the current interface has no elements that display them.
+- **The startup manager only covers the `Run` keys** under `HKCU` and `HKLM`. It does not cover the Startup folder, `RunOnce`, the 32-bit `Run` view or scheduled tasks. On/off is read from the first byte of the `StartupApproved` value: even means on, odd means off (inferred from one Windows 11 PC).
+- **Sample startup entries are shown only in the browser demo,** never in the installed app.
+- **Not every telemetry value is shown.** The window shows the device model, processor name, thread count, total RAM, and free/total space on the system drive (refreshed every 1.5 s). The backend also reads the processor's base clock (MHz) and RAM in use, but the page has no element for them.
 - **The "NVMe" label is fixed text** in the header, and the drive size is rounded to a common size (256, 512 or 1024 GB).
-- **Own file unblocking:** at startup the app deletes the `Zone.Identifier` stream of its own executable, which removes the "downloaded from the internet" mark.
-- **Network use:** the app's own code contains no analytics or network calls. The `winget` command in tweak 04 may contact Microsoft's package source, and the installers can download WebView2 if it is missing.
-- **Version numbers differ:** the interface shows V2.4, `tauri.conf.json` says 2.5.0, and `Cargo.toml` and `package.json` say 1.0.0.
+- **Download mark:** the app no longer removes the "downloaded from the internet" mark from its own file.
+- **Network use:** the app's own code contains no analytics or network calls. The installers can download WebView2 if it is missing.
+- **Version numbers:** `tauri.conf.json` and `Cargo.toml` say 2.5.0; `package.json` says 1.0.0 (not used for the release). The version shown in the interface was not checked.
 
 ## Troubleshooting
 
