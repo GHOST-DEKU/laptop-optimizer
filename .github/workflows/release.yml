@@ -41,8 +41,12 @@ jobs:
           $tag = if ($env:REF_TYPE -eq 'tag') { $env:REF_NAME } else { "v$conf" }
           Write-Host "tag=$tag tauri.conf.json=$conf Cargo.toml=$cargo"
           if ($tag -ne "v$conf" -or $conf -ne $cargo) { Write-Error "Tag and versions do not match. Fix the version or the tag."; exit 1 }
-          gh release view $tag *> $null
+          # `gh` prints an error and exits 1 when the release does not exist. That is the normal case here, so it must not fail the step:
+          # keep going on stderr text, and clear the exit code (GitHub fails a pwsh step whose last native exit code is not 0).
+          $ErrorActionPreference = 'Continue'
+          gh release view $tag 2>&1 | Out-Null
           $exists = ($LASTEXITCODE -eq 0)
+          $global:LASTEXITCODE = 0
           if ($exists -and $env:REF_TYPE -ne 'tag') { Write-Host "Release $tag already exists: nothing to do."; "skip=true" >> $env:GITHUB_OUTPUT }
           elseif ($exists) { Write-Error "Release $tag already exists; delete it first if you really want to rebuild it."; exit 1 }
           else { "skip=false" >> $env:GITHUB_OUTPUT }
