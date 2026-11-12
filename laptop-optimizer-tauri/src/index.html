@@ -257,35 +257,42 @@
       background: #080b11;
       border: 1px solid #1e2638;
       border-radius: 8px;
-      padding: 10px 16px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
+      padding: 8px 14px 10px;
+      display: block; /* title on one line, the boxes below it share the full width at every window size */
       flex-shrink: 0;
       width: 100%;
       max-width: 1600px;
     }
-    .die-visual {
+    .die-head {
       display: flex;
-      align-items: center;
+      align-items: baseline;
       gap: 10px;
+      margin-bottom: 7px;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+    .die-sub {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      min-width: 0;
+    }
+    /* One grid for the processors and the RAM box: equal-width cells, wrapping only when there are many. */
+    .die-visual {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(56px, 1fr));
+      gap: 6px;
     }
     .die-cores {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: flex-end;
-      gap: 6px;
-      max-width: 560px;
+      display: contents;
     }
     .die-note {
-      font-size: 9px;
+      grid-column: 1 / -1;
+      font-size: 10px;
       color: #6b7280;
     }
     /* Each box is filled from the bottom by its measured load (--load is 0-100). */
     .die-core-box {
-      width: 48px;
-      height: 34px;
+      height: 36px;
       background: linear-gradient(to top, rgba(204, 255, 0, 0.45) calc(var(--load, 0) * 1%), #101522 calc(var(--load, 0) * 1%));
       border: 1px solid #253147;
       border-radius: 4px;
@@ -293,9 +300,10 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      font-size: 8px;
+      font-size: 10px;
       font-weight: 900;
-      color: #9ca3af;
+      line-height: 1.2;
+      color: #b6bdc9;
       transition: background 0.4s ease;
     }
     .die-core-box.hot {
@@ -333,11 +341,7 @@
         grid-template-columns: repeat(4, 1fr);
       }
     }
-    @media (max-width: 860px) {
-      .tweak-list {
-        grid-template-columns: 1fr;
-      }
-    }
+    /* Rules for windows smaller than the design size are at the very end of this stylesheet (they must come last to win). */
 
     /* ========================================================
        STYLE 4: TACTICAL AVIONICS LOCK-BAY CARDS
@@ -1107,6 +1111,40 @@
       word-break: break-all;
       line-height: 1.3;
     }
+
+    /* ========================================================
+       SMALLER WINDOWS. Design size is 940x680, the window minimum is 700x500.
+       These rules are last on purpose: with equal priority the later rule wins,
+       so they must come after the base rules for the cards, footer and buttons.
+       ======================================================== */
+    @media (max-width: 900px) {
+      .tweak-viewport { padding: 14px 16px; }
+      .tweak-list { gap: 10px; }
+      .tweak-card { padding: 10px 10px 0 10px; }
+      .tweak-left { gap: 8px; padding-right: 56px; }
+      .tweak-title { font-size: 12px; }
+      .tweak-desc { font-size: 10.5px; }
+      .app-footer { padding: 10px 14px; gap: 8px; flex-wrap: nowrap; }
+      .btn-secondary { padding: 8px 10px; font-size: 10px; }
+      /* The launch box keeps its width: the LAUNCH button inside it needs about 220 px for its text. */
+    }
+    /* Only one card column when two would be too narrow. */
+    @media (max-width: 720px) {
+      .tweak-list { grid-template-columns: 1fr; }
+      .app-footer { padding: 8px 10px; gap: 6px; }
+      .btn-secondary { padding: 7px 8px; gap: 5px; }
+    }
+    /* A short window: give the height to the cards. */
+    @media (max-height: 640px) {
+      .app-header { padding: 8px 16px; gap: 8px; }
+      .silicon-die-hud { margin-bottom: 8px; padding: 6px 12px 8px; }
+      .die-head { margin-bottom: 5px; }
+      .die-core-box { height: 30px; }
+      .die-sub { display: none; }
+      .tweak-viewport { padding-top: 10px; padding-bottom: 10px; }
+      .app-footer { padding-top: 8px; padding-bottom: 8px; }
+      .drawer-header { height: 28px; }
+    }
   </style>
 </head>
 <body class="techwear-grid">
@@ -1163,9 +1201,9 @@
       
       <!-- Architectural Silicon Die Map (Option 2) -->
       <div class="silicon-die-hud" id="silicon-banner">
-        <div style="display:flex;align-items:center;gap:10px;">
+        <div class="die-head">
           <span style="font-size:10px;font-weight:900;color:var(--acid-volt);">// LIVE CPU LOAD MAP:</span>
-          <span style="font-size:9px;color:#6b7280;">Measured load of each logical processor and of RAM, refreshed every 1.5 s</span>
+          <span class="die-sub" style="font-size:9px;color:#6b7280;">Measured load of each logical processor and of RAM, refreshed every 1.5 s</span>
         </div>
         <div class="die-visual">
           <div class="die-cores" id="die-cores"><span class="die-note">reading CPU load...</span></div>

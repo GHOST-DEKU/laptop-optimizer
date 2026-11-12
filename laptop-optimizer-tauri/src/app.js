@@ -170,6 +170,9 @@
       } else {
         document.getElementById('system-model').textContent = '// DEMO DEVICE';
         document.getElementById('cpu-name').firstChild.textContent = 'DEMO PREVIEW ';
+        // Sample values, like the other demo numbers (8 processors in the load map, 477 GB drive); the demo bar says so.
+        document.getElementById('cpu-cores').textContent = '[8 Threads]';
+        document.getElementById('system-specs').textContent = '• 16 GB RAM • 477 GB disk';
         bar.className = 'mode-bar mode-demo';
         bar.textContent = 'DEMO MODE: this is a preview in a browser. Nothing on your device is changed.';
       }

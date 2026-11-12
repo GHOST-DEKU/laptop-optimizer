@@ -154,6 +154,49 @@ async def main():
         check("already-applied tweaks make no apply call", applied_calls == 0)
         check("already-applied tweaks are shown as no change", text.count("already applied; nothing was changed") == 2 and "NOTHING TO CHANGE" in await pg3.evaluate("document.getElementById('drawer-status-pill').innerText"))
         await pg3.close()
+        # load map layout at the real window size (940), the minimum (700), and with many processors
+        for width, n, max_rows in ((940, 8, 1), (700, 8, 1), (940, 16, 2)):
+            lp = await b.new_page(viewport={"width": width, "height": 680})
+            await lp.add_init_script(REAL.replace("cpu_load:[5,50,100,0]", "cpu_load:[" + ",".join(["40"] * n) + "]"))
+            await lp.goto(URL)
+            await lp.wait_for_timeout(700)
+            lay = await lp.evaluate("""(()=>{const bs=[...document.querySelectorAll('#die-cores .die-core-box'), document.getElementById('core-ram')];
+              const rows=new Set(bs.slice(0,-1).map(x=>Math.round(x.getBoundingClientRect().top))).size; // processors only; the RAM box sits beside them
+              const hud=document.getElementById('silicon-banner').getBoundingClientRect();
+              const inside=bs.every(x=>{const r=x.getBoundingClientRect();return r.left>=hud.left-1&&r.right<=hud.right+1});
+              return {count:bs.length-1, rows, inside, overflow:document.documentElement.scrollWidth>window.innerWidth};})()""")
+            check("load map: %d processors in %d px wide window fit in <=%d row(s), inside the panel, no sideways scroll" % (n, width, max_rows),
+                  lay["count"] == n and lay["rows"] <= max_rows and lay["inside"] and not lay["overflow"])
+            await lp.close()
+        # layout a little below the design size (940x680) down to the minimum (700x500)
+        SIZES = ((940, 680, 2), (900, 640, 2), (800, 560, 2), (760, 540, 2), (700, 500, 1))
+        for w, h, want_cols in SIZES:
+            sp = await b.new_page(viewport={"width": w, "height": h})
+            await sp.add_init_script(REAL)
+            await sp.goto(URL)
+            await sp.wait_for_timeout(700)
+            m = await sp.evaluate("""(()=>{
+              const foot=document.querySelector('.app-footer'); const items=[...foot.querySelectorAll('button.btn-secondary'), document.getElementById('safety-assembly')].map(e=>e.getBoundingClientRect());
+              let overlap=false; for(let i=0;i<items.length;i++)for(let j=i+1;j<items.length;j++){const a=items[i],c=items[j]; if(a.left<c.right-1&&c.left<a.right-1&&a.top<c.bottom-1&&c.top<a.bottom-1) overlap=true;}
+              const launch=document.getElementById('safety-assembly').getBoundingClientRect();
+              const title=document.querySelector('.die-head').getBoundingClientRect();
+              const boxes=[...document.querySelectorAll('#die-cores .die-core-box')].map(x=>x.getBoundingClientRect());
+              const vp=document.querySelector('.tweak-viewport').getBoundingClientRect();
+              return {footerFits: foot.scrollWidth<=foot.clientWidth, overlap, launchInside: launch.right<=window.innerWidth && launch.left>=0,
+                      cols:getComputedStyle(document.getElementById('tweak-grid')).gridTemplateColumns.split(' ').length,
+                      titleOneLine: title.height<22, mapRows:new Set(boxes.map(x=>Math.round(x.top))).size, boxW:Math.round(boxes[0].width),
+                      cardPct:Math.round(vp.height/window.innerHeight*100), sideways:document.documentElement.scrollWidth>window.innerWidth};})()""")
+            tag = "%dx%d" % (w, h)
+            check("%s: footer fits in one row, nothing overlaps, launch box inside the window" % tag, m["footerFits"] and not m["overlap"] and m["launchInside"])
+            check("%s: %d card column(s), no sideways scroll" % (tag, want_cols), m["cols"] == want_cols and not m["sideways"])
+            check("%s: load map title on one line, one row of boxes, boxes at least 60 px wide" % tag, m["titleOneLine"] and m["mapRows"] == 1 and m["boxW"] >= 60)
+            check("%s: cards get at least half of the window height" % tag, m["cardPct"] >= 50)
+            await sp.close()
+        # demo header shows sample values, not [--] placeholders
+        dp = await page(b, None)
+        dh = await dp.evaluate("({c:document.getElementById('cpu-cores').textContent, s:document.getElementById('system-specs').textContent})")
+        check("demo header shows sample threads and RAM/disk, not placeholders", dh["c"] == "[8 Threads]" and "--" not in dh["s"] and "16 GB RAM" in dh["s"])
+        await dp.close()
         # broken backend link
         pg = await page(b, BROKEN)
         bar = await pg.evaluate("document.getElementById('mode-bar').textContent")
