@@ -1,0 +1,44 @@
+name: Deploy website
+# Needs: repo Settings > Pages > Source = "GitHub Actions" (one click, done by the owner).
+on:
+  push:
+    branches: [main]
+    paths: [index.html, 'laptop-optimizer-tauri/src/**', .github/workflows/pages.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      # A broken page must not go live on its own.
+      - run: pip install playwright && playwright install --with-deps chromium
+      - run: python3 laptop-optimizer-tauri/tests/site_regression.py
+      # Only the files the page needs. Never the EXE, the Rust source or the plan.
+      - name: Copy only the site files
+        run: |
+          mkdir -p _site/laptop-optimizer-tauri
+          cp index.html _site/
+          cp -r laptop-optimizer-tauri/src _site/laptop-optimizer-tauri/src
+          touch _site/.nojekyll
+          find _site -type f
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@v4

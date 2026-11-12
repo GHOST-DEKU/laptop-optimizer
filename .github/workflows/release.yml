@@ -18,6 +18,17 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      # A tag like v2.6.0 on code that still says 2.5.0 would publish 2.5.0 files under the wrong name.
+      - name: Tag must match the app version
+        shell: pwsh
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          $conf = (Get-Content laptop-optimizer-tauri/src-tauri/tauri.conf.json -Raw | ConvertFrom-Json).version
+          $cargo = (Select-String -Path laptop-optimizer-tauri/src-tauri/Cargo.toml -Pattern '^version\s*=\s*"([^"]+)"' | Select-Object -First 1).Matches[0].Groups[1].Value
+          Write-Host "tag=$env:TAG tauri.conf.json=$conf Cargo.toml=$cargo"
+          if ($env:TAG -ne "v$conf" -or $conf -ne $cargo) { Write-Error "Tag and versions do not match. Fix the version or the tag."; exit 1 }
+
       - name: Remember the Cargo folder (its path is baked into the program otherwise)
         shell: pwsh
         run: echo "CARGO_HOME_DIR=$env:USERPROFILE\.cargo" >> $env:GITHUB_ENV
@@ -64,16 +75,41 @@ jobs:
           releaseBody: |
             ## Laptop Optimizer ${{ github.ref_name }}
 
-            **Draft: not tested on Windows yet.** Read PRODUCTION_READINESS_PLAN.md in the repository before publishing.
-            These files are **not code-signed**, so Windows SmartScreen may warn. A SHA-256 list is not produced by this workflow yet (planned task U33).
+            Built automatically by GitHub Actions from the source code in this repository. The Rust tests (`cargo test --lib`) passed in this run.
+            Nobody has opened these exact files on a clean Windows machine yet. The plan in `PRODUCTION_READINESS_PLAN.md` lists what is tested and what is not.
+            The files are **not code-signed**, so Windows SmartScreen may warn.
 
             ### Files
+            - `LaptopOptimizer.exe`: portable program, one file, nothing to install.
             - the `.msi` file: Windows Installer package.
             - the `-setup.exe` file: setup program (NSIS).
-            Both names contain the version number.
+            - `SHA256SUMS.txt`: the SHA-256 of the three files above. Check yours with `Get-FileHash .\LaptopOptimizer.exe`.
 
             ### Built from
             Commit `${{ github.sha }}`.
-          # A person publishes the draft after checking it.
+          # Built as a hidden draft. The last step uploads the rest and publishes it,
+          # so a failed run never leaves a public release with missing files.
           releaseDraft: true
           prerelease: false
+
+      - name: Add the portable program and checksums, then publish
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          $rel = "laptop-optimizer-tauri/src-tauri/target/release"
+          $portable = Get-ChildItem $rel -Filter laptop-optimizer-tauri.exe | Select-Object -First 1
+          $msi = Get-ChildItem "$rel/bundle/msi" -Filter *.msi | Select-Object -First 1
+          $setup = Get-ChildItem "$rel/bundle/nsis" -Filter *-setup.exe | Select-Object -First 1
+          if (-not ($portable -and $msi -and $setup)) { Write-Error "A build file is missing."; exit 1 }
+          New-Item -ItemType Directory -Force out | Out-Null
+          Copy-Item $portable.FullName out/LaptopOptimizer.exe
+          Copy-Item $msi.FullName out/
+          Copy-Item $setup.FullName out/
+          # LF line ends, so `sha256sum -c` also works on Linux and macOS.
+          $lines = Get-ChildItem out -File | Sort-Object Name | ForEach-Object { "$((Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLower())  $($_.Name)" }
+          [IO.File]::WriteAllText("$PWD/out/SHA256SUMS.txt", (($lines -join "`n") + "`n"))
+          Get-Content out/SHA256SUMS.txt
+          gh release upload $env:TAG out/LaptopOptimizer.exe out/SHA256SUMS.txt --clobber
+          gh release edit $env:TAG --draft=false --latest
