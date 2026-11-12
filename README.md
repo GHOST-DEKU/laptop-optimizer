@@ -37,6 +37,8 @@ These images are the app's own interface (`laptop-optimizer-tauri/src/index.html
 
 - **Eight tweaks** in one window, each with its own switch. No tweak starts switched on.
 - **Deploy** applies every switched-on tweak and prints a result line for each one in a console drawer. A safety cover over the Deploy button must be opened first. Widgets removal and hibernation each ask their own question first, unless they are already applied. A tweak that is already in place is reported as "no change" and nothing is written.
+- **Deploy plan** (top right of the header) shows what a deploy would do before you press it: how many tweaks are switched on, how many need administrator rights (and whether the app is running as administrator), how many will ask you to confirm, and the free space on the system drive with the rise since the app opened. It is a card beside the title when there is room and one compact line when the window is narrow.
+- **Capacity battery** (the CPU load map) shows the overall CPU load with a plain-language word ("Running calm", "Working", "Busy", "Straining"; these thresholds are the app's own wording, at 25%, 60% and 85% average load), the busiest processor, one cell per logical processor filled by its measured load, and a RAM meter. Values come from Windows' own per-processor counters, refreshed every 1.5 s.
 - **Restore Saved Values** puts back the values the app saved before it changed them. A tweak the app never changed is skipped, with a message (see the limits in [What the tweaks do](#what-the-tweaks-do)).
 - **Startup applications manager** lists programs in the `Run` registry keys and turns them on or off without deleting the keys.
 - **Hardware summary** in the header: processor name, thread count, RAM and system drive size, and system model, read from the registry and Win32 calls.
@@ -65,7 +67,7 @@ The labels in the app such as "−380ms" (400 − 20), "−300MB" and "+1.4GB CL
 ## Installation
 
 > [!IMPORTANT]
-> The `LaptopOptimizer.exe` committed in this repository is an **older, unsigned build** that does not have the changes described above (saved-value Restore, nothing switched on at start, the "already applied" check, the working Delivery Optimization policy, the live CPU load map). To get them, build from source (see [Development](#development)). A signed, CI-built release has not been made yet (tasks U16, U19, U33 in `PRODUCTION_READINESS_PLAN.md`).
+> The `LaptopOptimizer.exe` committed in this repository is an **older, unsigned build** that does not have the changes described above (saved-value Restore, nothing switched on at start, the "already applied" check, the working Delivery Optimization policy, the Capacity battery CPU load map, the Deploy plan). To get them, build from source (see [Development](#development)). A signed, CI-built release has not been made yet (tasks U16, U19, U33 in `PRODUCTION_READINESS_PLAN.md`).
 
 **Option 1: portable executable (older build, see the note above).** Download [`LaptopOptimizer.exe`](https://github.com/GHOST-DEKU/laptop-optimizer/raw/main/LaptopOptimizer.exe) from the repository root. It is a Tauri build (about 9 MB) committed to the repository. The website shows its SHA-256 (`scripts/check-site-hash.sh` checks it matches); the file is not code-signed, so Windows SmartScreen may warn about it. If you prefer not to trust a committed binary, build it yourself (see [Development](#development)).
 
@@ -156,7 +158,7 @@ The interface talks to Rust through nine commands: `get_system_info`, `get_live_
 - **Some changes are permanent:** deleted temp files and the removed Web Experience package.
 - **The startup manager only covers the `Run` keys** under `HKCU` and `HKLM`. It does not cover the Startup folder, `RunOnce`, the 32-bit `Run` view or scheduled tasks. On/off is read from the first byte of the `StartupApproved` value: even means on, odd means off (inferred from one Windows 11 PC).
 - **Sample startup entries are shown only in the browser demo,** never in the installed app.
-- **Not every telemetry value is shown.** The window shows the device model, processor name, thread count, total RAM, and free/total space on the system drive (refreshed every 1.5 s). The backend also reads the processor's base clock (MHz) and RAM in use, but the page has no element for them.
+- **Not every telemetry value is shown.** The window shows the device model, processor name, thread count, total RAM, per-processor CPU load, RAM use, and the free space on the system drive (refreshed every 1.5 s). The backend also reads the processor's base clock (MHz), but the page has no element for it. The old wave in the header was decoration (it only reacted to the number of switched-on tweaks) and has been removed.
 - **The "NVMe" label is fixed text** in the header, and the drive size is rounded to a common size (256, 512 or 1024 GB).
 - **Download mark:** the app no longer removes the "downloaded from the internet" mark from its own file.
 - **Network use:** the app's own code contains no analytics or network calls. The installers can download WebView2 if it is missing.
