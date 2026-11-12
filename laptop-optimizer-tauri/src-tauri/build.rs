@@ -4,6 +4,7 @@ const COMMANDS: &[&str] = &[
     "get_system_info",
     "get_live_telemetry",
     "get_elevation",
+    "is_applied",
     "apply_tweak",
     "restore_tweak",
     "restore_all",

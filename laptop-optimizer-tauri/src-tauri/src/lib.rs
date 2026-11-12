@@ -1,3 +1,4 @@
+mod journal;
 mod optimizer;
 mod safety;
 
@@ -29,18 +30,20 @@ fn run_tweak(id: u32, restoring: bool) -> TweakResult {
     if requires_admin(id, restoring) && !OptimizerEngine::is_elevated() {
         return TweakResult::skipped("Needs administrator rights. Restart the app with 'Run as administrator'.");
     }
+    // Already in the wanted state: write nothing, save nothing, and say so.
+    if !restoring && OptimizerEngine::already_applied(id) {
+        return TweakResult::no_change("Already applied; nothing was changed.");
+    }
     if restoring {
         match id {
-            1 => OptimizerEngine::restore_power_plan(),
-            2 => OptimizerEngine::restore_game_dvr(),
-            3 => OptimizerEngine::restore_menu_delay(),
-            4 => OptimizerEngine::restore_widgets(),
-            5 => OptimizerEngine::restore_fast_startup(),
-            6 => OptimizerEngine::restore_bing_search(),
-            7 => OptimizerEngine::restore_delivery_optimization(),
+            1..=7 => OptimizerEngine::restore_saved(id),
             _ => TweakResult::skipped("Nothing to restore: deleted temporary files cannot be brought back."),
         }
     } else {
+        // Save the previous values first. If that fails, nothing is changed.
+        if let Err(why) = OptimizerEngine::remember_before(id) {
+            return TweakResult::skipped(format!("Nothing was changed: {}.", why));
+        }
         match id {
             1 => OptimizerEngine::optimize_power_plan(),
             2 => OptimizerEngine::optimize_game_dvr(),
@@ -54,7 +57,15 @@ fn run_tweak(id: u32, restoring: bool) -> TweakResult {
     }
 }
 
-const BUSY_MSG: &str = "Another change is still running. Wait for it to finish.";
+// Read-only: lets the page skip the confirmation question for a tweak that is already applied.
+#[tauri::command]
+async fn is_applied(id: u32) -> Result<bool, String> {
+    tauri::async_runtime::spawn_blocking(move || TWEAK_IDS.contains(&id) && OptimizerEngine::already_applied(id))
+        .await
+        .map_err(|e| e.to_string())
+}
+
+const BUSY_MSG: &str ="Another change is still running. Wait for it to finish.";
 
 // async + spawn_blocking keeps slow system commands off the thread that draws the window.
 #[tauri::command]
@@ -120,6 +131,7 @@ pub fn run() {
             get_system_info,
             get_live_telemetry,
             get_elevation,
+            is_applied,
             apply_tweak,
             restore_tweak,
             restore_all,

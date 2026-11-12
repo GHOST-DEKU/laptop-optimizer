@@ -10,6 +10,7 @@
     "allow-get-system-info",
     "allow-get-live-telemetry",
     "allow-get-elevation",
+    "allow-is-applied",
     "allow-apply-tweak",
     "allow-restore-tweak",
     "allow-restore-all",

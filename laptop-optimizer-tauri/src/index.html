@@ -269,12 +269,24 @@
     .die-visual {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 10px;
     }
+    .die-cores {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 6px;
+      max-width: 560px;
+    }
+    .die-note {
+      font-size: 9px;
+      color: #6b7280;
+    }
+    /* Each box is filled from the bottom by its measured load (--load is 0-100). */
     .die-core-box {
       width: 48px;
       height: 34px;
-      background: #101522;
+      background: linear-gradient(to top, rgba(204, 255, 0, 0.45) calc(var(--load, 0) * 1%), #101522 calc(var(--load, 0) * 1%));
       border: 1px solid #253147;
       border-radius: 4px;
       display: flex;
@@ -283,24 +295,13 @@
       justify-content: center;
       font-size: 8px;
       font-weight: 900;
-      color: #6b7280;
-      transition: all 0.25s ease;
+      color: #9ca3af;
+      transition: background 0.4s ease;
     }
-    .die-core-box.active {
-      background: #182314;
+    .die-core-box.hot {
       border-color: var(--acid-volt);
       color: var(--acid-volt);
       box-shadow: 0 0 10px rgba(204, 255, 0, 0.3);
-    }
-    .die-bus-line {
-      width: 20px;
-      height: 2px;
-      background: #253147;
-      transition: background 0.25s ease;
-    }
-    .die-bus-line.active {
-      background: var(--acid-volt);
-      box-shadow: 0 0 6px var(--acid-volt);
     }
 
     /* Main Content Stage */
@@ -671,6 +672,10 @@
       overflow-y: auto;
       background: #05070a;
       font-family: var(--font-mono);
+      /* The page blocks text selection; the console log must stay selectable so errors can be copied. */
+      user-select: text;
+      -webkit-user-select: text;
+      cursor: text;
     }
     .log-line {
       margin-bottom: 3px;
@@ -1147,7 +1152,7 @@
           <div class="telemetry-val" id="gov-text">NOTHING SELECTED</div>
         </div>
         <div class="telemetry-col">
-          <div class="telemetry-label">DISK FREE // GAINED</div>
+          <div class="telemetry-label" title="Free space / total size of the system drive. The number in brackets is how much the free space has risen since the app opened, from any cause (not only this app).">DISK FREE // SINCE APP OPENED</div>
           <div class="telemetry-val" id="telem-storage-gain">-- GB</div>
         </div>
       </div>
@@ -1159,19 +1164,12 @@
       <!-- Architectural Silicon Die Map (Option 2) -->
       <div class="silicon-die-hud" id="silicon-banner">
         <div style="display:flex;align-items:center;gap:10px;">
-          <span style="font-size:10px;font-weight:900;color:var(--acid-volt);">// ARCHITECTURAL SILICON DIE MAP:</span>
-          <span style="font-size:9px;color:#6b7280;">Core activity map (illustrative layout)</span>
+          <span style="font-size:10px;font-weight:900;color:var(--acid-volt);">// LIVE CPU LOAD MAP:</span>
+          <span style="font-size:9px;color:#6b7280;">Measured load of each logical processor and of RAM, refreshed every 1.5 s</span>
         </div>
         <div class="die-visual">
-          <div class="die-core-box active" id="core-0">C0</div>
-          <div class="die-bus-line active" id="bus-0"></div>
-          <div class="die-core-box active" id="core-1">C1</div>
-          <div class="die-bus-line active" id="bus-1"></div>
-          <div class="die-core-box active" id="core-2">C2</div>
-          <div class="die-bus-line active" id="bus-2"></div>
-          <div class="die-core-box active" id="core-3">C3</div>
-          <div class="die-bus-line active" id="bus-ram"></div>
-          <div class="die-core-box active" id="core-ram">RAM<br>--</div>
+          <div class="die-cores" id="die-cores"><span class="die-note">reading CPU load...</span></div>
+          <div class="die-core-box" id="core-ram">RAM<br>--</div>
         </div>
       </div>
 
@@ -1199,7 +1197,7 @@
     <!-- Bottom Action Dock -->
     <div class="app-footer">
       <button class="btn-secondary" data-action="restoreDefaults">
-        <span>↺</span> RESTORE FACTORY DEFAULTS
+        <span>↺</span> RESTORE SAVED VALUES
       </button>
 
       <div style="display: flex; align-items: center; gap: 10px;">

@@ -80,7 +80,7 @@
         desc: "Locks minimum processor floor to 100% on AC to bypass frequency ramp-up latency.", 
         gain: "GAIN: \u2212380ms DPC LATENCY",
         lockProtocol: "GOV_LOCK_AC",
-        on: true 
+        on: false 
       },
       { 
         id: 2,
@@ -90,7 +90,7 @@
         desc: "Disables continuous DirectX background video recording and capture hooks.", 
         gain: "GAIN: ZERO VRAM OVERHEAD",
         lockProtocol: "DWM_HOOK_KILL",
-        on: true 
+        on: false 
       },
       { 
         id: 3,
@@ -100,17 +100,17 @@
         desc: "Reduces MenuShowDelay from 400ms to 20ms for instant desktop responsiveness.", 
         gain: "GAIN: \u2212380ms DELAY CUT",
         lockProtocol: "WIN32_DISPATCH",
-        on: true 
+        on: false 
       },
       { 
         id: 4,
         sys: "SYS: WEBVIEW2_DAEMON [RAM_PURGE]",
         title: "Purge Windows 11 Widget Daemon Pack", 
         tag: "\u2212300MB RAM", 
-        desc: "Uninstalls WebExperience package to permanently kill 20+ idle child processes.", 
+        desc: "Removes the Widgets (WebExperience) package for your account. Windows 11 may block apps from hiding the taskbar button; if so, hide it in Settings > Personalization > Taskbar.",
         gain: "GAIN: \u2212300MB LEAK RECLAIMED",
         lockProtocol: "VFS_ISOLATION",
-        on: true 
+        on: false 
       },
       { 
         id: 5,
@@ -120,7 +120,7 @@
         desc: "Turns off hibernation and Fast Startup and deletes hiberfil.sys. Hibernate stops working until restored.", 
         gain: "GAIN: frees hiberfil.sys (size depends on your RAM)",
         lockProtocol: "KERNEL_FASTBOOT",
-        on: true 
+        on: false 
       },
       { 
         id: 6,
@@ -130,17 +130,17 @@
         desc: "Eliminates remote cloud latency on Start search; makes app launch search instant.", 
         gain: "GAIN: 0ms CLOUD ROUNDTRIP",
         lockProtocol: "OFFLINE_SEARCH",
-        on: true 
+        on: false 
       },
       { 
         id: 7,
         sys: "SYS: BITS_P2P [NETWORK_ISOLATE]",
         title: "Halt Delivery Optimization P2P Seeding", 
         tag: "HTTP ONLY", 
-        desc: "Blocks Windows Update peer-to-peer telemetry and upload bandwidth consumption.", 
-        gain: "GAIN: 0ms P2P OVERHEAD",
+        desc: "Sets Delivery Optimization to HTTP only, so Windows Update does not exchange updates with other PCs. Needs administrator rights. Settings may then say some settings are managed by your organization.",
+        gain: "CHECKED WITH WINDOWS AFTER APPLY",
         lockProtocol: "NET_P2P_DECOUPLE",
-        on: true 
+        on: false 
       },
       { 
         id: 8,
@@ -150,7 +150,7 @@
         desc: "Wipes stale %TEMP% artifacts older than 24h; frees disk space.", 
         gain: "GAIN: +1.4GB CLEARED",
         lockProtocol: "IO_TRIM_CACHE",
-        on: true 
+        on: false 
       }
     ];
 
@@ -269,13 +269,42 @@
         scopeStatus.style.color = "#00f0ff";
       }
 
-      // Silicon Die Visual Update
-      const cpuOn = tweaks[0].on;
-      for (let i = 0; i < 4; i++) {
-        const c = document.getElementById("core-" + i);
-        const b = document.getElementById("bus-" + i);
-        if (c) c.className = "die-core-box " + (cpuOn ? "active" : "");
-        if (b) b.className = "die-bus-line " + (cpuOn ? "active" : "");
+    }
+
+    // Draws the load map from measured values only: one box per logical processor, and the RAM box.
+    // Nothing here depends on which tweaks are switched on.
+    function renderLoadMap(cpuLoad, ramTotalGb, ramPct) {
+      const cores = document.getElementById('die-cores');
+      const load = Array.isArray(cpuLoad) ? cpuLoad : [];
+      if (load.length === 0) {
+        cores.replaceChildren(Object.assign(document.createElement('span'), { className: 'die-note', textContent: 'CPU load unavailable' }));
+      } else {
+        if (cores.querySelectorAll('.die-core-box').length !== load.length) {
+          cores.replaceChildren(...load.map((_, i) => {
+            const box = document.createElement('div');
+            box.className = 'die-core-box';
+            box.id = 'core-' + i;
+            return box;
+          }));
+        }
+        load.forEach((v, i) => {
+          const box = document.getElementById('core-' + i);
+          box.style.setProperty('--load', String(v));
+          box.classList.toggle('hot', v >= 70);
+          box.textContent = `T${i} ${v}%`;
+          box.title = `Logical processor ${i}: ${v}% busy`;
+        });
+      }
+      const ram = document.getElementById('core-ram');
+      if (ramTotalGb > 0) {
+        ram.style.setProperty('--load', String(ramPct));
+        ram.classList.toggle('hot', ramPct >= 85);
+        ram.innerHTML = `RAM<br>${Math.round(ramTotalGb)}GB ${ramPct}%`;
+        ram.title = `RAM in use: ${ramPct}%`;
+      } else {
+        ram.style.setProperty('--load', '0');
+        ram.classList.remove('hot');
+        ram.innerHTML = 'RAM<br>--';
       }
     }
 
@@ -405,7 +434,7 @@
 
     // Shows one backend result with a marker that matches what really happened.
     function logResult(r) {
-      const marks = { ok: ['[✓]', 'success'], partial: ['[!]', 'warn'], skipped: ['[-]', 'warn'], failed: ['[✗]', 'err'] };
+      const marks = { ok: ['[✓]', 'success'], nochange: ['[=]', 'info'], partial: ['[!]', 'warn'], skipped: ['[-]', 'warn'], failed: ['[✗]', 'err'] };
       const [mark, type] = marks[r.status] || marks.failed;
       logToDrawer(`[${(performance.now()/1000).toFixed(3)}s] ${mark} ${r.message}`, type);
     }
@@ -443,7 +472,7 @@
       const activeTweaks = tweaks.filter(t => t.on);
       logToDrawer(`[${(performance.now()/1000).toFixed(3)}s] // STARTING DISPATCH: ${activeTweaks.length} PROTOCOLS ARMED`, 'info');
 
-      const counts = { ok: 0, partial: 0, skipped: 0, failed: 0 };
+      const counts = { ok: 0, nochange: 0, partial: 0, skipped: 0, failed: 0 };
       const inApp = MODE === 'real';
       for (let i = 0; i < activeTweaks.length; i++) {
         const item = activeTweaks[i];
@@ -453,7 +482,10 @@
         if (inApp) {
           try {
             const ask = CONFIRMATIONS[item.id];
-            if (ask && !confirm(ask.text)) {
+            if (ask && (await backend('is_applied', { id: item.id })) === true) {
+              // Nothing to remove or switch off, so there is nothing to ask.
+              r = { status: 'nochange', message: `${item.title}: already applied; nothing was changed.` };
+            } else if (ask && !confirm(ask.text)) {
               r = { status: 'skipped', message: `${item.title}: you chose not to continue. Nothing was changed.` };
             } else {
               r = await backend('apply_tweak', { id: item.id, confirmation: ask ? ask.word : null });
@@ -474,10 +506,10 @@
       const issues = counts.partial + counts.skipped + counts.failed;
       if (issues === 0) {
         playAudio('success');
-        statusPill.innerText = inApp ? "[ALL APPLIED]" : "[DEMO // NOTHING CHANGED]";
+        statusPill.innerText = inApp ? (counts.ok === 0 && counts.nochange > 0 ? "[NOTHING TO CHANGE]" : "[ALL APPLIED]") : "[DEMO // NOTHING CHANGED]";
         statusPill.style.color = "var(--acid-volt)";
         logToDrawer(inApp
-          ? `// DONE: ${counts.ok} of ${total} changes applied and checked.`
+          ? `// DONE: ${counts.ok} applied and checked, ${counts.nochange} already in place (of ${total}).`
           : `// DEMO ONLY: no changes were made. Download the app to apply them.`, 'success');
       } else {
         statusPill.innerText = `[${counts.ok} OK // ${issues} NEED ATTENTION]`;
@@ -486,11 +518,11 @@
       }
     }
 
-    // Restore factory defaults
+    // Restore the values the app saved before it changed them
     async function restoreDefaults() {
       if (working || blockedByMode('Restore')) return;
       playAudio('vault');
-      if (!confirm("Are you sure you want to restore all settings to default Windows configurations?")) return;
+      if (!confirm("Put back the values this app saved before it changed them?\n\nTweaks the app never changed are skipped. Deleted temporary files and a removed Widgets pack cannot be brought back.")) return;
 
       const drawer = document.getElementById("docked-drawer");
       const arrow = document.getElementById("drawer-arrow");
@@ -498,7 +530,7 @@
       drawerExpanded = true;
       arrow.innerText = "▼";
 
-      logToDrawer(`[${(performance.now()/1000).toFixed(3)}s] // RESTORING WINDOWS FACTORY DEFAULTS...`, 'info');
+      logToDrawer(`[${(performance.now()/1000).toFixed(3)}s] // RESTORING THE VALUES SAVED BEFORE THE CHANGES...`, 'info');
       working = true;
 
       try {
@@ -514,8 +546,8 @@
           });
           const bad = results.filter(r => r.status !== 'ok').length;
           logToDrawer(bad === 0
-            ? '// RESTORE DONE: all settings back to Windows defaults.'
-            : `// RESTORE DONE WITH PROBLEMS: ${bad} of ${results.length} not fully restored.`, bad === 0 ? 'success' : 'warn');
+            ? '// RESTORE DONE: every saved value was put back.'
+            : `// RESTORE DONE: ${results.length - bad} of ${results.length} put back; the others were skipped or need attention (see the lines above).`, bad === 0 ? 'success' : 'warn');
         } else {
           await new Promise(r => setTimeout(r, 400));
           logToDrawer(`// DEMO ONLY: nothing was changed on this device.`, 'success');
@@ -692,7 +724,9 @@
           }
           const info = await backend('get_system_info');
           if (info) {
-            if (info.cpu_name) document.getElementById('cpu-name').innerText = info.cpu_name;
+            // #cpu-name also contains the cores and specs spans, so only its first text node is replaced.
+            // (Setting innerText wiped those spans, the next line threw, and the model stayed on "READING DEVICE...".)
+            if (info.cpu_name) document.getElementById('cpu-name').firstChild.textContent = info.cpu_name + ' ';
             if (info.cores) document.getElementById('cpu-cores').innerText = info.cores;
             if (info.specs) document.getElementById('system-specs').innerText = info.specs;
             if (info.model) document.getElementById('system-model').innerText = info.model;
@@ -713,8 +747,7 @@
             const cpuEl = document.getElementById("telem-cpu-mhz");
             const ramEl = document.getElementById("telem-ram-val");
             const ssdEl = document.getElementById("telem-ssd-val");
-            const ramBox = document.getElementById('core-ram');
-            if (ramBox) ramBox.innerHTML = telem.ram_total_gb > 0 ? `RAM<br>${Math.round(telem.ram_total_gb)}GB` : 'RAM<br>--';
+            renderLoadMap(telem.cpu_load, telem.ram_total_gb, telem.ram_usage_pct);
             if (cpuEl) cpuEl.innerText = telem.cpu_mhz > 0 ? `${telem.cpu_mhz} MHz` : '-- MHz';
             if (ramEl) ramEl.innerText = `${telem.ram_used_gb.toFixed(1)} / ${telem.ram_total_gb.toFixed(1)} GB (${telem.ram_usage_pct}%)`;
             const diskKnown = telem.ssd_total_gb > 0;
@@ -737,6 +770,7 @@
           if (ssdEl) ssdEl.innerText = `116.1 GB`;
           const diskEl = document.getElementById("telem-storage-gain");
           if (diskEl) diskEl.innerText = `116.1 / 476.9 GB`; // demo sample
+          renderLoadMap([12, 48, 30, 76, 22, 9, 55, 31], 16, 51); // demo sample, not measured (the demo bar says so)
         }
       } catch (e) {
         console.warn("Live telemetry query error:", e);

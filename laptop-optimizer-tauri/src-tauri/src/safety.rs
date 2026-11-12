@@ -16,6 +16,8 @@ pub enum Status {
     Partial,
     Skipped,
     Failed,
+    /// Already in the wanted state, so nothing was written.
+    NoChange,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -36,6 +38,9 @@ impl TweakResult {
     }
     pub fn failed(msg: impl Into<String>) -> Self {
         Self { status: Status::Failed, message: msg.into() }
+    }
+    pub fn no_change(msg: impl Into<String>) -> Self {
+        Self { status: Status::NoChange, message: msg.into() }
     }
     /// `Ok` when every check passed, `Partial` when some did, `Failed` when none did.
     pub fn from_counts(passed: usize, total: usize, msg: impl Into<String>) -> Self {
@@ -71,6 +76,44 @@ impl Outcome {
             Outcome::CouldNotStart(e) => format!("could not start ({})", e),
         }
     }
+}
+
+/// What the "is the Widgets pack installed?" question answered.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PackState {
+    Gone,
+    Installed,
+    Unknown,
+}
+
+/// The check script exits 0 = not installed, 1 = installed. Anything else (error, timeout, could not start)
+/// means Windows was not really asked, so it is `Unknown` and must never be shown as "removed".
+pub fn pack_state(outcome: &Outcome) -> PackState {
+    match outcome {
+        Outcome::Success => PackState::Gone,
+        Outcome::ExitCode(1) => PackState::Installed,
+        _ => PackState::Unknown,
+    }
+}
+
+/// Load of one processor between two readings of its time counters, as a whole percent (0-100).
+/// Each reading is `(idle time, total time)` in Windows ticks; total includes idle.
+/// A counter that did not move, or went backwards, counts as 0 rather than a made-up number.
+pub fn load_percent(before: (u64, u64), now: (u64, u64)) -> u8 {
+    let total = now.1.saturating_sub(before.1);
+    if total == 0 {
+        return 0;
+    }
+    let idle = now.0.saturating_sub(before.0).min(total);
+    (((total - idle) as f64 / total as f64) * 100.0).round() as u8
+}
+
+/// Windows keeps a startup entry's state in the first byte of its StartupApproved value:
+/// an even number means on (02 and 06 are on, 04 is what SecurityHealth uses while running), an odd number means off (03, 07).
+/// A missing value means on.
+/// shortcut: the rule is inferred from the values seen on one Windows 11 PC; confirm 01 and 04 on other builds.
+pub fn startup_entry_enabled(first_byte: Option<u8>) -> bool {
+    first_byte.map_or(true, |b| b & 1 == 0)
 }
 
 /// Runs `cmd` and stops it if it takes longer than `timeout`.
@@ -207,9 +250,10 @@ pub fn confirmation_ok(id: u32, given: Option<&str>) -> bool {
 
 /// Tweaks that cannot work without administrator rights (HKLM writes, hibernation, app removal).
 /// Restoring the Widgets button only touches the user's own registry, so it needs no admin.
+/// Delivery Optimization is a machine policy under HKLM, so it needs admin both ways.
 pub fn requires_admin(id: u32, restoring: bool) -> bool {
     match id {
-        1 | 5 => true,
+        1 | 5 | 7 => true,
         4 => !restoring,
         _ => false,
     }
@@ -241,7 +285,25 @@ pub struct PurgeReport {
     pub failed: usize,
 }
 
-/// Deletes entries directly inside `dir` that were last changed at least `min_age` before `now`.
+/// Newest change time of `path` and everything inside it (links are not followed).
+/// A folder's own time changes only when its direct children are added or removed, so it says nothing about files deeper down.
+/// `None` when anything cannot be read, so the caller keeps the item.
+fn newest_change(path: &Path) -> Option<SystemTime> {
+    let meta = fs::symlink_metadata(path).ok()?;
+    let mut newest = meta.modified().ok()?;
+    if meta.is_dir() {
+        for entry in fs::read_dir(path).ok()? {
+            let entry = entry.ok()?;
+            if entry.file_type().ok()?.is_symlink() {
+                continue;
+            }
+            newest = newest.max(newest_change(&entry.path())?);
+        }
+    }
+    Some(newest)
+}
+
+/// Deletes entries directly inside `dir` whose newest change (including everything inside a folder) is at least `min_age` before `now`.
 /// Links (symbolic links and junctions) are never followed or removed.
 pub fn purge_old_entries(dir: &Path, min_age: Duration, now: SystemTime) -> std::io::Result<PurgeReport> {
     let mut report = PurgeReport::default();
@@ -255,9 +317,7 @@ pub fn purge_old_entries(dir: &Path, min_age: Duration, now: SystemTime) -> std:
             report.skipped_links += 1;
             continue;
         }
-        let old_enough = entry
-            .metadata()
-            .and_then(|m| m.modified())
+        let old_enough = newest_change(&path)
             .map(|t| now.duration_since(t).map(|age| age >= min_age).unwrap_or(false))
             .unwrap_or(false);
         if !old_enough {
@@ -326,7 +386,8 @@ mod tests {
         assert!(requires_admin(1, false) && requires_admin(1, true));
         assert!(requires_admin(5, false) && requires_admin(5, true));
         assert!(requires_admin(4, false) && !requires_admin(4, true));
-        for id in [2, 3, 6, 7, 8] {
+        assert!(requires_admin(7, false) && requires_admin(7, true), "machine policy under HKLM");
+        for id in [2, 3, 6, 8] {
             assert!(!requires_admin(id, false) && !requires_admin(id, true));
         }
     }
@@ -335,6 +396,8 @@ mod tests {
     fn status_serialises_lowercase() {
         let j = serde_json::to_string(&TweakResult::skipped("no admin")).unwrap();
         assert_eq!(j, r#"{"status":"skipped","message":"no admin"}"#);
+        let j = serde_json::to_string(&TweakResult::no_change("already set")).unwrap();
+        assert_eq!(j, r#"{"status":"nochange","message":"already set"}"#);
     }
 
     #[test]
@@ -348,7 +411,9 @@ mod tests {
         fs::create_dir_all(a.join("child")).unwrap();
         assert!(!dir_is_allowed(&a.join("child"), &[a.clone()]));
         // the filesystem root is never allowed unless listed
-        assert!(!dir_is_allowed(Path::new("/"), &[a]));
+        assert!(!dir_is_allowed(Path::new("/"), &[a.clone()]));
+        let _ = fs::remove_dir_all(&a);
+        let _ = fs::remove_dir_all(&b);
     }
 
     #[test]
@@ -362,7 +427,9 @@ mod tests {
         fs::create_dir_all(old_dir.join("inner")).unwrap();
         File::create(old_dir.join("inner").join("f")).unwrap();
         age(&old_file, 48);
-        // directories: age the directory entry itself
+        // a folder counts as old only when everything inside it is old too
+        age(&old_dir.join("inner").join("f"), 48);
+        age_dir(&old_dir.join("inner"), 48);
         age_dir(&old_dir, 48);
 
         // a link to a folder outside the purge area must survive, and its target must be untouched
@@ -384,6 +451,47 @@ mod tests {
             assert_eq!(report.skipped_links, 1);
             assert!(dir.join("link").exists());
         }
+        let _ = fs::remove_dir_all(&dir);
+        let _ = fs::remove_dir_all(&outside);
+    }
+
+    #[test]
+    fn purge_keeps_an_old_folder_that_holds_a_recent_file() {
+        // The folder's own time stays old when a file deeper down is rewritten (audit finding 3).
+        let dir = scratch("purge-nested");
+        let app = dir.join("MyApp");
+        fs::create_dir_all(app.join("cache")).unwrap();
+        let live = app.join("cache").join("db.tmp");
+        File::create(&live).unwrap();
+        age_dir(&app.join("cache"), 48);
+        age_dir(&app, 48);
+        let report = purge_old_entries(&dir, Duration::from_secs(24 * 3600), SystemTime::now()).unwrap();
+        assert!(live.exists(), "a recently changed file must survive");
+        assert!(app.exists());
+        assert_eq!((report.deleted, report.kept_recent), (0, 1));
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn purge_skips_directory_links_on_windows() {
+        let dir = scratch("purge-link");
+        let outside = scratch("purge-link-outside");
+        File::create(outside.join("precious.txt")).unwrap();
+        age_dir(&outside, 48);
+        age(&outside.join("precious.txt"), 48);
+        if std::os::windows::fs::symlink_dir(&outside, dir.join("link")).is_err() {
+            eprintln!("skipped: creating a symbolic link needs administrator rights or Developer Mode");
+            let _ = fs::remove_dir_all(&dir);
+            let _ = fs::remove_dir_all(&outside);
+            return;
+        }
+        let report = purge_old_entries(&dir, Duration::ZERO, SystemTime::now()).unwrap();
+        assert_eq!(report.skipped_links, 1);
+        assert!(outside.join("precious.txt").exists(), "the link target must be untouched");
+        let _ = fs::remove_dir(dir.join("link")); // the link itself first, so nothing can follow it
+        let _ = fs::remove_dir_all(&dir);
+        let _ = fs::remove_dir_all(&outside);
     }
 
     #[test]
@@ -413,6 +521,35 @@ mod tests {
         assert_eq!(text_or_unknown("Default string", "Unknown model"), "Unknown model");
         assert_eq!(text_or_unknown("To Be Filled By O.E.M.", "Unknown model"), "Unknown model");
         assert_eq!(text_or_unknown(" 82HS ", "Unknown model"), "82HS");
+    }
+
+    #[test]
+    fn widgets_check_never_calls_a_failed_question_removed() {
+        assert_eq!(pack_state(&Outcome::Success), PackState::Gone);
+        assert_eq!(pack_state(&Outcome::ExitCode(1)), PackState::Installed);
+        assert_eq!(pack_state(&Outcome::ExitCode(2)), PackState::Unknown, "script error");
+        assert_eq!(pack_state(&Outcome::TimedOut), PackState::Unknown);
+        assert_eq!(pack_state(&Outcome::CouldNotStart("x".into())), PackState::Unknown);
+    }
+
+    #[test]
+    fn processor_load_is_computed_from_the_time_counters() {
+        assert_eq!(load_percent((0, 0), (50, 100)), 50, "half idle");
+        assert_eq!(load_percent((10, 100), (10, 200)), 100, "never idle");
+        assert_eq!(load_percent((0, 0), (100, 100)), 0, "fully idle");
+        assert_eq!(load_percent((0, 0), (1, 3)), 67, "rounded");
+        assert_eq!(load_percent((5, 50), (5, 50)), 0, "no time passed");
+        assert_eq!(load_percent((100, 100), (50, 200)), 100, "idle counter went backwards");
+        assert_eq!(load_percent((0, 0), (500, 100)), 0, "idle larger than total is clamped");
+    }
+
+    #[test]
+    fn startup_state_reads_the_bytes_seen_on_a_real_pc() {
+        // 02 OneDrive (running), 03 WingetUI (off), 04 SecurityHealth (running), 01 Opera, 06/07 documented values
+        for (byte, on) in [(0x02, true), (0x03, false), (0x04, true), (0x06, true), (0x07, false), (0x01, false)] {
+            assert_eq!(startup_entry_enabled(Some(byte)), on, "{byte:#04x}");
+        }
+        assert!(startup_entry_enabled(None), "no value means on");
     }
 
     #[test]
