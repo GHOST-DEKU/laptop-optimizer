@@ -1,6 +1,6 @@
 [package]
 name = "laptop-optimizer-tauri"
-version = "1.0.0"
+version = "2.5.0"
 description = "Cybercore Techwear Windows Laptop Optimizer"
 authors = ["GHOST-DEKU"]
 license = "MIT"
@@ -20,3 +20,8 @@ log = "0.4"
 tauri = { version = "2.12.5", features = [] }
 tauri-plugin-log = "2"
 winreg = "0.52"
+
+[profile.release]
+strip = true
+lto = true
+codegen-units = 1

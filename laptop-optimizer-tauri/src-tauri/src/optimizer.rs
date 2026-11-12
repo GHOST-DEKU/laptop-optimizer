@@ -248,7 +248,8 @@ impl OptimizerEngine {
         }
     }
 
-    // 04. Widgets: hide the taskbar button, stop the service, remove the Web Experience pack (needs admin)
+    // 04. Widgets: hide the taskbar button, stop the service, remove the Web Experience pack (needs admin).
+    // The pack is removed only through the System32 PowerShell; no program is started from a user-writable folder.
     pub fn optimize_widgets() -> TweakResult {
         let button_hidden = Self::set_dword_verified(
             HKEY_CURRENT_USER,
@@ -259,17 +260,6 @@ impl OptimizerEngine {
         // Not running is fine, so the result of taskkill is ignored.
         let _ = Self::system32("taskkill.exe", &["/f", "/im", "WidgetService.exe"], 10);
 
-        let winget = std::env::var("LOCALAPPDATA")
-            .map(|p| PathBuf::from(p).join("Microsoft\\WindowsApps\\winget.exe"))
-            .ok()
-            .filter(|p| p.exists());
-        if let Some(winget) = winget {
-            let _ = Self::run(
-                &winget.to_string_lossy(),
-                &["uninstall", "--id", "MicrosoftWindows.Client.WebExperience_cw5n1h2txyewy", "--silent", "--accept-source-agreements"],
-                120,
-            );
-        }
         let mut gone = Self::webexperience_installed_check().succeeded();
         if !gone {
             let _ = Self::powershell(&format!("Get-AppxPackage -Name {} | Remove-AppxPackage", WEBEXPERIENCE), 120);

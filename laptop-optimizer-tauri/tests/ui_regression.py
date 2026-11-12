@@ -73,6 +73,22 @@ async def main():
         await pg.wait_for_timeout(300)
         check("confirmed toggle moves the switch", await pg.evaluate("!document.getElementById('su-track-0').classList.contains('sw-track-on')"))
         await pg.close()
+        # confirmation for tweaks 4 and 5
+        for accept in (False, True):
+            pg2 = await b.new_page()
+            pg2.on("dialog", lambda d, a=accept: asyncio.ensure_future(d.accept() if a else d.dismiss()))
+            await pg2.add_init_script(REAL)
+            await pg2.goto(URL)
+            await pg2.wait_for_timeout(300)
+            await pg2.evaluate("tweaks.forEach(t=>t.on=[4,5].includes(t.id)); coverOpen=true")
+            await pg2.evaluate("deployTuning()")
+            await pg2.wait_for_timeout(600)
+            calls = await pg2.evaluate("window.__calls.filter(c=>c[0]==='apply_tweak').map(c=>c[1])")
+            if accept:
+                check("accepted dialogs send the matching word", calls == [{"id": 4, "confirmation": "remove-widgets"}, {"id": 5, "confirmation": "turn-off-hibernation"}])
+            else:
+                check("declined dialogs make no backend call", calls == [])
+            await pg2.close()
         # broken backend link
         pg = await page(b, BROKEN)
         bar = await pg.evaluate("document.getElementById('mode-bar').textContent")

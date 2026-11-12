@@ -179,6 +179,12 @@
       logToDrawer(`// BLOCKED: backend not connected, so "${what}" was not run.`, 'err');
       return true;
     }
+    // These two remove or switch off a Windows feature, so each asks its own question.
+    // The backend refuses them without the matching word (see safety.rs).
+    const CONFIRMATIONS = {
+      4: { word: 'remove-widgets', text: 'Remove Windows Widgets?\n\nThis hides the Widgets button and uninstalls the Widgets component. Restore brings the button back, but the component must be reinstalled from the Microsoft Store.' },
+      5: { word: 'turn-off-hibernation', text: 'Turn off hibernation and Fast Startup?\n\nHibernate stops working and hiberfil.sys is deleted. Restore turns hibernation back on.' }
+    };
     let working = false; // the backend lock is the real guard; this only avoids double clicks
 
     // --- RENDER 4. TACTICAL LOCK-BAY CARDS GRID ---
@@ -446,7 +452,12 @@
         let r;
         if (inApp) {
           try {
-            r = await backend('apply_tweak', { id: item.id });
+            const ask = CONFIRMATIONS[item.id];
+            if (ask && !confirm(ask.text)) {
+              r = { status: 'skipped', message: `${item.title}: you chose not to continue. Nothing was changed.` };
+            } else {
+              r = await backend('apply_tweak', { id: item.id, confirmation: ask ? ask.word : null });
+            }
           } catch (err) {
             r = { status: 'failed', message: String(err) };
           }

@@ -188,6 +188,23 @@ pub fn text_or_unknown(raw: &str, unknown: &str) -> String {
     }
 }
 
+/// Tweaks that remove or turn off a Windows feature must be confirmed for that exact operation.
+/// The backend refuses them without the matching word, so a stray call cannot run them.
+pub fn required_confirmation(id: u32) -> Option<&'static str> {
+    match id {
+        4 => Some("remove-widgets"),
+        5 => Some("turn-off-hibernation"),
+        _ => None,
+    }
+}
+
+pub fn confirmation_ok(id: u32, given: Option<&str>) -> bool {
+    match required_confirmation(id) {
+        None => true,
+        Some(word) => given == Some(word),
+    }
+}
+
 /// Tweaks that cannot work without administrator rights (HKLM writes, hibernation, app removal).
 /// Restoring the Widgets button only touches the user's own registry, so it needs no admin.
 pub fn requires_admin(id: u32, restoring: bool) -> bool {
@@ -274,6 +291,18 @@ mod tests {
         File::options().write(true).open(path).unwrap().set_modified(t).unwrap();
     }
 
+    // A folder can only be opened this way on Windows with the "backup semantics" flag.
+    fn age_dir(path: &Path, hours: u64) {
+        let t = SystemTime::now() - Duration::from_secs(hours * 3600);
+        #[cfg(unix)]
+        File::open(path).unwrap().set_modified(t).unwrap();
+        #[cfg(windows)]
+        {
+            use std::os::windows::fs::OpenOptionsExt;
+            File::options().write(true).custom_flags(0x0200_0000).open(path).unwrap().set_modified(t).unwrap();
+        }
+    }
+
     #[test]
     fn system32_path_is_absolute_and_tidy() {
         assert_eq!(system32_exe("C:\\Windows", "powercfg.exe"), "C:\\Windows\\System32\\powercfg.exe");
@@ -334,8 +363,7 @@ mod tests {
         File::create(old_dir.join("inner").join("f")).unwrap();
         age(&old_file, 48);
         // directories: age the directory entry itself
-        let t = SystemTime::now() - Duration::from_secs(48 * 3600);
-        File::open(&old_dir).unwrap().set_modified(t).unwrap();
+        age_dir(&old_dir, 48);
 
         // a link to a folder outside the purge area must survive, and its target must be untouched
         let outside = scratch("purge-outside");
@@ -385,6 +413,16 @@ mod tests {
         assert_eq!(text_or_unknown("Default string", "Unknown model"), "Unknown model");
         assert_eq!(text_or_unknown("To Be Filled By O.E.M.", "Unknown model"), "Unknown model");
         assert_eq!(text_or_unknown(" 82HS ", "Unknown model"), "82HS");
+    }
+
+    #[test]
+    fn risky_tweaks_need_their_own_confirmation() {
+        assert!(confirmation_ok(1, None));
+        assert!(!confirmation_ok(4, None));
+        assert!(!confirmation_ok(4, Some("turn-off-hibernation")), "another operation's word must not work");
+        assert!(confirmation_ok(4, Some("remove-widgets")));
+        assert!(!confirmation_ok(5, Some("")));
+        assert!(confirmation_ok(5, Some("turn-off-hibernation")));
     }
 
     #[test]
@@ -456,6 +494,26 @@ mod tests {
         assert!(started.elapsed() < Duration::from_secs(5), "must stop the program promptly");
 
         let missing = Command::new("/no/such/program");
+        assert!(matches!(run_with_timeout(missing, Duration::from_secs(1)), Outcome::CouldNotStart(_)));
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn timeout_reports_each_outcome_on_windows() {
+        let root = std::env::var("SystemRoot").unwrap_or_else(|_| "C:\\Windows".into());
+        let ping = system32_exe(&root, "ping.exe");
+
+        let mut ok = Command::new(&ping);
+        ok.args(["-n", "1", "127.0.0.1"]);
+        assert_eq!(run_with_timeout(ok, Duration::from_secs(20)), Outcome::Success);
+
+        let mut slow = Command::new(&ping);
+        slow.args(["-n", "30", "127.0.0.1"]);
+        let started = Instant::now();
+        assert_eq!(run_with_timeout(slow, Duration::from_millis(500)), Outcome::TimedOut);
+        assert!(started.elapsed() < Duration::from_secs(5));
+
+        let missing = Command::new("C:\\definitely\\not\\here.exe");
         assert!(matches!(run_with_timeout(missing, Duration::from_secs(1)), Outcome::CouldNotStart(_)));
     }
 }

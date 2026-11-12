@@ -2,7 +2,7 @@ mod optimizer;
 mod safety;
 
 use optimizer::{HardwareInfo, LiveTelemetry, OptimizerEngine, StartupAppEntry};
-use safety::{requires_admin, StartupHive, TweakResult, CHANGE_LOCK};
+use safety::{confirmation_ok, requires_admin, StartupHive, TweakResult, CHANGE_LOCK};
 
 #[tauri::command]
 fn get_system_info() -> HardwareInfo {
@@ -58,8 +58,11 @@ const BUSY_MSG: &str = "Another change is still running. Wait for it to finish."
 
 // async + spawn_blocking keeps slow system commands off the thread that draws the window.
 #[tauri::command]
-async fn apply_tweak(id: u32) -> Result<TweakResult, String> {
+async fn apply_tweak(id: u32, confirmation: Option<String>) -> Result<TweakResult, String> {
     tauri::async_runtime::spawn_blocking(move || match CHANGE_LOCK.try_acquire() {
+        Some(_guard) if !confirmation_ok(id, confirmation.as_deref()) => {
+            TweakResult::skipped("This change needs your confirmation for this exact operation. Nothing was changed.")
+        }
         Some(_guard) => run_tweak(id, false),
         None => TweakResult::skipped(BUSY_MSG),
     })
