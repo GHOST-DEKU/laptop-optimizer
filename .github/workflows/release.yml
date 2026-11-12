@@ -4,7 +4,15 @@ on:
   push:
     tags:
       - 'v*'
-# Only tags build a release. A manual run from a branch would tag the release with the branch name.
+    # Automatic: changing the version in tauri.conf.json on main releases it (the tag is made from that version).
+    branches: [main]
+    paths: ['laptop-optimizer-tauri/src-tauri/tauri.conf.json']
+# No manual run from a branch: the tag is derived from the version, never from a branch name.
+
+# One run at a time: a hand-pushed tag and the automatic run for the same version cannot clash.
+concurrency:
+  group: release
+  cancel-in-progress: false
 
 permissions:
   contents: write
@@ -18,50 +26,69 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # A tag like v2.6.0 on code that still says 2.5.0 would publish 2.5.0 files under the wrong name.
-      - name: Tag must match the app version
+      # The tag is v<version>. A tag pushed by hand must match the version; a push to main makes the tag from it.
+      # If that release already exists (any other change to tauri.conf.json), the run stops here and builds nothing.
+      - name: Work out the tag and skip if it is already released
+        id: plan
         shell: pwsh
         env:
-          TAG: ${{ github.ref_name }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REF_TYPE: ${{ github.ref_type }}
+          REF_NAME: ${{ github.ref_name }}
         run: |
           $conf = (Get-Content laptop-optimizer-tauri/src-tauri/tauri.conf.json -Raw | ConvertFrom-Json).version
           $cargo = (Select-String -Path laptop-optimizer-tauri/src-tauri/Cargo.toml -Pattern '^version\s*=\s*"([^"]+)"' | Select-Object -First 1).Matches[0].Groups[1].Value
-          Write-Host "tag=$env:TAG tauri.conf.json=$conf Cargo.toml=$cargo"
-          if ($env:TAG -ne "v$conf" -or $conf -ne $cargo) { Write-Error "Tag and versions do not match. Fix the version or the tag."; exit 1 }
+          $tag = if ($env:REF_TYPE -eq 'tag') { $env:REF_NAME } else { "v$conf" }
+          Write-Host "tag=$tag tauri.conf.json=$conf Cargo.toml=$cargo"
+          if ($tag -ne "v$conf" -or $conf -ne $cargo) { Write-Error "Tag and versions do not match. Fix the version or the tag."; exit 1 }
+          gh release view $tag *> $null
+          $exists = ($LASTEXITCODE -eq 0)
+          if ($exists -and $env:REF_TYPE -ne 'tag') { Write-Host "Release $tag already exists: nothing to do."; "skip=true" >> $env:GITHUB_OUTPUT }
+          elseif ($exists) { Write-Error "Release $tag already exists; delete it first if you really want to rebuild it."; exit 1 }
+          else { "skip=false" >> $env:GITHUB_OUTPUT }
+          "tag=$tag" >> $env:GITHUB_OUTPUT
 
       - name: Remember the Cargo folder (its path is baked into the program otherwise)
+        if: steps.plan.outputs.skip != 'true'
         shell: pwsh
         run: echo "CARGO_HOME_DIR=$env:USERPROFILE\.cargo" >> $env:GITHUB_ENV
 
       - name: Setup Node.js
+        if: steps.plan.outputs.skip != 'true'
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
       - name: Setup pnpm
+        if: steps.plan.outputs.skip != 'true'
         uses: pnpm/action-setup@v4
         with:
           version: 12.18.0
 
       - name: Setup Rust Toolchain
+        if: steps.plan.outputs.skip != 'true'
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: x86_64-pc-windows-msvc
 
       - name: Rust Cache
+        if: steps.plan.outputs.skip != 'true'
         uses: swatinem/rust-cache@v2
         with:
           workspaces: './laptop-optimizer-tauri/src-tauri -> target'
 
       - name: Install Frontend Dependencies
+        if: steps.plan.outputs.skip != 'true'
         working-directory: ./laptop-optimizer-tauri
         run: pnpm install
 
       - name: Run Rust tests
+        if: steps.plan.outputs.skip != 'true'
         working-directory: ./laptop-optimizer-tauri/src-tauri
         run: cargo test --lib
 
       - name: Build Tauri Desktop and installers (MSI, NSIS)
+        if: steps.plan.outputs.skip != 'true'
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -70,10 +97,11 @@ jobs:
           RUSTFLAGS: --remap-path-prefix=${{ github.workspace }}=. --remap-path-prefix=${{ runner.temp }}=tmp --remap-path-prefix=${{ env.CARGO_HOME_DIR }}=cargo
         with:
           projectPath: './laptop-optimizer-tauri'
-          tagName: ${{ github.ref_name }}
-          releaseName: 'Laptop Optimizer ${{ github.ref_name }}'
+          tagName: ${{ steps.plan.outputs.tag }}
+          commitish: ${{ github.sha }}
+          releaseName: 'Laptop Optimizer ${{ steps.plan.outputs.tag }}'
           releaseBody: |
-            ## Laptop Optimizer ${{ github.ref_name }}
+            ## Laptop Optimizer ${{ steps.plan.outputs.tag }}
 
             Built automatically by GitHub Actions from the source code in this repository. The Rust tests (`cargo test --lib`) passed in this run.
             Nobody has opened these exact files on a clean Windows machine yet. The plan in `PRODUCTION_READINESS_PLAN.md` lists what is tested and what is not.
@@ -93,10 +121,11 @@ jobs:
           prerelease: false
 
       - name: Add the portable program and checksums, then publish
+        if: steps.plan.outputs.skip != 'true'
         shell: pwsh
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ github.ref_name }}
+          TAG: ${{ steps.plan.outputs.tag }}
         run: |
           $rel = "laptop-optimizer-tauri/src-tauri/target/release"
           $portable = Get-ChildItem $rel -Filter laptop-optimizer-tauri.exe | Select-Object -First 1

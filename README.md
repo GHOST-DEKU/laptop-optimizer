@@ -25,9 +25,9 @@ A Windows desktop app that applies a fixed set of eight performance and cleanup 
 
 ## Screenshots
 
-These images are the app's own interface (`laptop-optimizer-tauri/src/index.html`) rendered in a browser in demo mode, so the hardware details shown (Lenovo 82HS, i7-1165G7) are sample data, not read from the machine that took the screenshot.
+These images are the app's own interface (`laptop-optimizer-tauri/src/index.html`) rendered in a browser in demo mode, so the device name, thread count, RAM, drive space, CPU load and startup programs shown are sample data, not read from the machine that took the screenshot. In the first image three tweaks are switched on, so the Deploy plan is filled in. The Deploy button's safety cover is still closed there.
 
-| Main window | After deploying |
+| Main window (three tweaks switched on) | After deploying (demo: nothing is changed) |
 | :-- | :-- |
 | ![Main window with eight tweak cards](docs/screenshots/main-window.png) | ![Console drawer showing deployment log](docs/screenshots/dispatch-console.png) |
 
@@ -39,7 +39,7 @@ These images are the app's own interface (`laptop-optimizer-tauri/src/index.html
 - **Deploy** applies every switched-on tweak and prints a result line for each one in a console drawer. A safety cover over the Deploy button must be opened first. Widgets removal and hibernation each ask their own question first, unless they are already applied. A tweak that is already in place is reported as "no change" and nothing is written.
 - **Deploy plan** (top right of the header) shows what a deploy would do before you press it: how many tweaks are switched on, how many need administrator rights (and whether the app is running as administrator), how many will ask you to confirm, and the free space on the system drive with the rise since the app opened. It is a card beside the title when there is room and one compact line when the window is narrow.
 - **Capacity battery** (the CPU load map) shows the overall CPU load with a plain-language word ("Running calm", "Working", "Busy", "Straining"; these thresholds are the app's own wording, at 25%, 60% and 85% average load), the busiest processor, one cell per logical processor filled by its measured load, and a RAM meter. Values come from Windows' own per-processor counters, refreshed every 1.5 s.
-- **Restore Saved Values** puts back the values the app saved before it changed them. A tweak the app never changed is skipped, with a message (see the limits in [What the tweaks do](#what-the-tweaks-do)).
+- **Restore Saved Values** puts back the values the app saved before it changed them. A tweak the app never changed is skipped, with a message (see the limits in [What the tweaks do](#what-the-tweaks-do)). If you changed a value yourself after the app set it, Restore asks before it puts the older saved value back over yours.
 - **Startup applications manager** lists programs in the `Run` registry keys and turns them on or off without deleting the keys.
 - **Hardware summary** in the header: processor name, thread count, RAM and system drive size, and system model, read from the registry and Win32 calls.
 - **Sound effects** generated in the browser engine (Web Audio API), with a mute toggle in the header. No audio files are used.
@@ -67,13 +67,13 @@ The labels in the app such as "−380ms" (400 − 20), "−300MB" and "+1.4GB CL
 ## Installation
 
 > [!IMPORTANT]
-> The files on the [Releases page](https://github.com/GHOST-DEKU/laptop-optimizer/releases/latest) are built automatically by GitHub Actions from the source in this repository when a tag starting with `v` is pushed. They are **not code-signed**, so Windows SmartScreen may warn. `v2.5.0` was started and checked on one Windows 11 PC (SHA-256 matches, the app opens). It has not been tested on Windows 10 or on a clean PC. `PRODUCTION_READINESS_PLAN.md` lists what is tested and what is not.
+> The files on the [Releases page](https://github.com/GHOST-DEKU/laptop-optimizer/releases/latest) are built automatically by GitHub Actions from the source in this repository when the version changes on `main` (see [Making a release](#making-a-release-automatic)). They are **not code-signed**, so Windows SmartScreen may warn. `v2.5.0` was checked on one Windows 11 PC: the SHA-256 of every file matches `SHA256SUMS.txt`, the portable file, the MSI and the setup file start, and deploy, deploy again and restore were run in the real window for tweaks 1, 2, 3, 5, 6 and 7. It has not been tested on Windows 10, on a clean PC or on a second user account. Later releases are built the same way; `PRODUCTION_READINESS_PLAN.md` lists what is tested and what is not.
 
 **Option 1: portable executable.** Download [`LaptopOptimizer.exe`](https://github.com/GHOST-DEKU/laptop-optimizer/releases/latest/download/LaptopOptimizer.exe) from the latest release. It is one file (about 9 MB), nothing to install. Every release has a `SHA256SUMS.txt`; compare it with your download using `Get-FileHash .\LaptopOptimizer.exe`. If you prefer not to trust a prebuilt file, build it yourself (see [Development](#development)).
 
 You can also run `Run-Optimizer.bat` (from this repository), which starts the executable with administrator rights. It does not remove the "downloaded from the internet" mark. It must sit in the same folder as `LaptopOptimizer.exe`.
 
-**Option 2: installers.** The same release has an MSI and an NSIS setup file (`.msi`, `-setup.exe`), also listed in `SHA256SUMS.txt`. The installers have not been run on a clean PC yet.
+**Option 2: installers.** The same release has an MSI and an NSIS setup file (`.msi`, `-setup.exe`), also listed in `SHA256SUMS.txt`. On one Windows 11 PC both were installed silently, started and uninstalled: nothing was left behind except your own saved-values file (`previous.json`), which an uninstall keeps on purpose. The setup file installs for the current user only, into `%LOCALAPPDATA%\LaptopOptimizer`, the same folder that holds `previous.json`. Neither installer has been run on a clean PC.
 
 The app needs Microsoft Edge WebView2. It is included in Windows 10 (version 1803 and later) and Windows 11.
 
@@ -85,13 +85,13 @@ The app needs Microsoft Edge WebView2. It is included in Windows 10 (version 180
 4. Click **LAUNCH NUCLEAR DISPATCH**. The console drawer opens and logs each step. Failed steps are marked `[✗]` with the error.
 5. To open or close the console by hand, click its header bar.
 6. **STARTUP APPS** opens the startup manager. Click a row to switch that program on or off for the next sign-in.
-7. **RESTORE SAVED VALUES** asks for confirmation, then applies the Restore column above. Tweaks the app never changed are skipped.
+7. **RESTORE SAVED VALUES** asks for confirmation, then applies the Restore column above. Tweaks the app never changed are skipped. If some tweaks were changed after the app set them (by you or by Windows), a second question names them: **OK** replaces them with the saved original, **Cancel** leaves them as they are and still restores everything else. A tweak you leave alone keeps its saved value, so you can run Restore again.
 
 ## Supported platforms
 
 | Platform | Status |
 | :-- | :-- |
-| Windows 10 / 11, 64-bit | Target platform. The release workflow builds `x86_64-pc-windows-msvc`. Tested so far on **one Windows 11 PC** only (Rust tests, source checks, page tests, one tweak applied and restored by hand). Windows 10, a clean VM and a second user account are not tested. |
+| Windows 10 / 11, 64-bit | Target platform. The release workflow builds `x86_64-pc-windows-msvc`. Tested so far on **one Windows 11 PC** only: Rust tests, source checks, page tests, the release files (checksums, MSI and setup install and uninstall) and deploy, deploy again and restore of tweaks 1, 2, 3, 5, 6 and 7 in the real window. Tweaks 4 and 8 were not run in the real window. Windows 10, a clean VM and a second user account are not tested. |
 | Other Windows builds (32-bit, ARM) | Not built by the workflow. Not verified. |
 | Linux, macOS | Not supported. The Rust backend uses Windows-only APIs (`winreg`, `std::os::windows`) and will not compile there. |
 
@@ -119,7 +119,30 @@ pnpm tauri build    # production build: MSI and NSIS installers
 
 `pnpm dev` and `pnpm build` are shortcuts for the same two commands. Build output is written under `laptop-optimizer-tauri/src-tauri/target/release/`, with installers in the `bundle` folder. Use `tauri build` rather than a plain `cargo build --release`, because the Tauri CLI is what prepares a production build.
 
-`pnpm install` and `pnpm tauri build` were run on Windows 11 on 2026-11-12 and produced an MSI and an NSIS installer. A local build contains the build machine's Cargo folder path; only the tagged CI build remaps it. `cargo test --lib` (in `src-tauri`) runs the Rust tests; `python tests/source_guards.py` and `python tests/ui_regression.py` (needs `playwright`) run the other checks.
+`pnpm tauri build --no-bundle` builds only the program (faster, no installers). `pnpm install` and `pnpm tauri build` were run on Windows 11 and produced an MSI and an NSIS installer. A plain local build contains the build machine's Cargo folder path inside the program; the release workflow removes it with `--remap-path-prefix` flags in `RUSTFLAGS`, and you can set the same flags locally.
+
+### Testing
+
+Run these from `laptop-optimizer-tauri`:
+
+| Command | What it checks |
+| :-- | :-- |
+| `cd src-tauri` then `cargo test --lib` | 29 Rust tests (Windows): safety rules, the saved-values file, the Restore rule, the temp purge, parsing. |
+| `cargo test --lib -- --ignored --test-threads=1` | 4 opt-in tests: three change real settings for a moment and put them back (power plan and hibernation, the Delivery Optimization policy, and `MenuShowDelay` for Restore's check); one only prints the CPU load. Run as administrator, on a PC you are happy to test on. |
+| `python tests/source_guards.py` | Source patterns that must never appear (for example `winget`). |
+| `python tests/ui_regression.py` | The app page in a browser (needs `pip install playwright` and `playwright install chromium`): switches, confirmations, Restore questions, layout at several window sizes. |
+| `python tests/site_regression.py` | The website: resizable demo window, download buttons, no stale text. |
+
+GitHub Actions (`ci.yml`) runs the Rust tests on Windows and the three Python checks on Linux for every push and pull request. Nothing automatic tests the real window on Windows; that was done by hand (see `PRODUCTION_READINESS_PLAN.md`).
+
+### Making a release (automatic)
+
+1. Change `version` to the new number in **both** `laptop-optimizer-tauri/src-tauri/tauri.conf.json` and `laptop-optimizer-tauri/src-tauri/Cargo.toml` (and `Cargo.lock`, which `cargo build` updates).
+2. Push to `main`.
+
+`.github/workflows/release.yml` then runs by itself: it makes the tag `v<version>`, runs the Rust tests, builds the portable `LaptopOptimizer.exe`, the MSI and the setup EXE, writes `SHA256SUMS.txt`, and publishes the release. If any step fails, nothing public appears. If a release for that version already exists, the run stops without building. Pushing a tag by hand (`v2.5.1`) works too, but the tag must match the version in both files.
+
+The website does not need an edit: its download buttons point to `releases/latest/download/LaptopOptimizer.exe`, so they always serve the newest release. The pages show no version number, so none can go out of date. The files are not code-signed.
 
 ### Try the interface without Tauri
 
@@ -133,34 +156,38 @@ Open `laptop-optimizer-tauri/src/index.html` in any browser. Outside Tauri the p
 │   ├── package.json              pnpm scripts (dev, build) and the Tauri CLI
 │   ├── src/index.html            Interface markup and styles
 │   ├── src/app.js                Interface logic (calls the Rust commands)
-│   ├── tests/                    source_guards.py and ui_regression.py
+│   ├── tests/                    source_guards.py, ui_regression.py, site_regression.py
 │   └── src-tauri/
 │       ├── src/main.rs           Entry point, relaunches as administrator
 │       ├── src/lib.rs            Tauri commands exposed to the interface
 │       ├── src/optimizer.rs      Registry, powercfg and file operations
 │       ├── src/safety.rs         Lock, timeouts, confirmations, temp purge rules
 │       ├── src/journal.rs        Saved previous values used by Restore
-│       ├── tauri.conf.json       Window size, bundle targets, icons
+│       ├── build.rs              Allow-list of the commands the page may call
+│       ├── tauri.conf.json       Window size, bundle targets, icons, the app version
 │       └── capabilities/         Tauri permission set
 ├── index.html                    Project website (GitHub Pages), embeds the app UI
 ├── Run-Optimizer.bat             Run-as-administrator helper
-├── docs/screenshots/             Images used in this README
-└── .github/workflows/             ci.yml (tests), pages.yml (website), release.yml (build and publish on `v*` tags)
+├── docs/                         screenshots/ (images in this README) and WINDOWS_TEST_GUIDE.md
+├── PRODUCTION_READINESS_PLAN.md  Every task, test result and open decision
+├── AGENTS.md, CLAUDE.md          Standing rules for AI assistants working in this repository
+└── .github/workflows/             ci.yml (tests), pages.yml (website), release.yml (builds and publishes a release when the version changes on `main`, or on a `v*` tag)
 ```
 
-The interface talks to Rust through nine commands: `get_system_info`, `get_live_telemetry`, `get_elevation`, `is_applied`, `apply_tweak`, `restore_tweak`, `restore_all`, `get_startup_apps` and `toggle_startup_app`. Only these are allowed (see `build.rs` and `capabilities/default.json`). The page currently uses `restore_all` and not `restore_tweak`.
+The interface talks to Rust through ten commands: `get_system_info`, `get_live_telemetry`, `get_elevation`, `is_applied`, `apply_tweak`, `restore_tweak`, `restore_needs_confirmation`, `restore_all`, `get_startup_apps` and `toggle_startup_app`. Only these are allowed (see `build.rs` and `capabilities/default.json`). The page uses `restore_needs_confirmation` and `restore_all`, not `restore_tweak`. The backend enforces the confirmations (Widgets, hibernation) and the Restore question itself, so the window cannot skip them.
 
 ## Known limitations
 
-- **Restore uses what the app saved.** It cannot restore changes made before the app saved anything, or changes you made by hand after the app changed a setting (it would put the saved value back over yours).
+- **Restore uses what the app saved.** It cannot restore changes made before the app saved anything. If you changed a setting by hand after the app set it, Restore asks before it puts the saved value back over yours.
+- **The first save wins.** A saved value stays in `previous.json` until a full Restore of that tweak succeeds; applying a tweak again never replaces it. So a later Restore goes back to the state from before the app's first change.
 - **Some changes are permanent:** deleted temp files and the removed Web Experience package.
 - **The startup manager only covers the `Run` keys** under `HKCU` and `HKLM`. It does not cover the Startup folder, `RunOnce`, the 32-bit `Run` view or scheduled tasks. On/off is read from the first byte of the `StartupApproved` value: even means on, odd means off (inferred from one Windows 11 PC).
 - **Sample startup entries are shown only in the browser demo,** never in the installed app.
 - **Not every telemetry value is shown.** The window shows the device model, processor name, thread count, total RAM, per-processor CPU load, RAM use, and the free space on the system drive (refreshed every 1.5 s). The backend also reads the processor's base clock (MHz), but the page has no element for it. The old wave in the header was decoration (it only reacted to the number of switched-on tweaks) and has been removed.
-- **The "NVMe" label is fixed text** in the header, and the drive size is rounded to a common size (256, 512 or 1024 GB).
+- **Some labels are decoration, not measurements:** card tags such as `SYS: NVME_VFS` and the gain labels. The drive size is rounded to whole GB.
 - **Download mark:** the app no longer removes the "downloaded from the internet" mark from its own file.
 - **Network use:** the app's own code contains no analytics or network calls. The installers can download WebView2 if it is missing.
-- **Version numbers:** `tauri.conf.json` and `Cargo.toml` say 2.5.0; `package.json` says 1.0.0 (not used for the release). The version shown in the interface was not checked.
+- **Version numbers:** the real version is `version` in `tauri.conf.json` and `Cargo.toml`, kept equal (the release workflow stops if they differ). `package.json` says 1.0.0 and is not used. The website and the app header show no version number, so none can go out of date.
 
 ## Troubleshooting
 
@@ -169,6 +196,8 @@ The interface talks to Rust through nine commands: `get_system_info`, `get_live_
 | SmartScreen warns about the file | The executable is unsigned. Choose "More info", then "Run anyway", or build from source. |
 | Some deploy steps show `[✗]` | The app probably is not elevated, for example after declining the UAC prompt. Close it and start it again, accepting the prompt. |
 | Window stays blank or the app will not start | Install the [WebView2 Evergreen runtime](https://developer.microsoft.com/microsoft-edge/webview2/). |
+| Restore says "Not restored: this was changed after the app set it" | You chose Cancel on the second question, or the check could not run. Press Restore again and choose OK to replace your newer value with the saved one. |
+| I changed the version but no release appeared | Check that `tauri.conf.json` and `Cargo.toml` have the same version, that the change reached `main`, and the run on the repository's Actions page. A version that already has a release is skipped on purpose. |
 | Widgets button or panel is gone after Restore | Restore does not reinstall the package. Reinstall "Windows Web Experience Pack" from the Microsoft Store. |
 | `pnpm install` complains about the package manager version | Run `corepack enable` and use pnpm 12.18.0. |
 | MSI build fails | Check that VBSCRIPT is enabled (Settings, Apps, Optional features, More Windows features). |
@@ -176,7 +205,7 @@ The interface talks to Rust through nine commands: `get_system_info`, `get_live_
 
 ## Contributing
 
-Issues and pull requests are welcome at <https://github.com/GHOST-DEKU/laptop-optimizer>. The repository has no automated tests or contribution guide yet, so please:
+Issues and pull requests are welcome at <https://github.com/GHOST-DEKU/laptop-optimizer>. GitHub Actions runs the tests on every push and pull request (see [Testing](#testing)); there is no separate contribution guide yet. Please:
 
 - keep each pull request focused on one change,
 - describe how you tested it, since the Tauri app only runs on Windows,
