@@ -54,7 +54,7 @@ async def main():
 
         txt = await pg.evaluate("document.body.innerText")
         check("the author's computer name is not shown", "LENOVO-82HS" not in txt)
-        check("the notice says the file is built by GitHub Actions and is not code-signed", "built automatically by GitHub Actions" in txt and "not code-signed" in txt)
+        check("the big top-of-page notice is gone; the download section says unsigned and where it was checked", "built automatically by GitHub Actions" not in txt and "Unsigned" in txt and "Checked on one Windows 11 PC" in txt)
         html = await pg.content()
         hrefs = await pg.evaluate("[...document.querySelectorAll('a')].map(a => a.href)")
         dl = [h for h in hrefs if h.endswith("LaptopOptimizer.exe")]
