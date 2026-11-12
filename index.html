@@ -736,17 +736,9 @@
         </div>
       </a>
 
-      <div class="nav-telemetry">
-        <div class="pulse-pill">
-          <div class="pulse-dot"></div>
-          <span id="utc-clock">UTC 00:00:00.000</span>
-        </div>
-        <span style="color: var(--text-dark);">[PUBLIC DEMO PAGE]</span>
-      </div>
-
       <div class="nav-links">
         <button onclick="toggleAudio()" class="btn-sound" id="sound-btn">
-          🔊 Sound: ON
+          🔇 Sound: OFF
         </button>
         <a href="https://github.com/GHOST-DEKU/laptop-optimizer/releases/latest/download/LaptopOptimizer.exe" class="btn-nav-download">
           ⚡ GET .EXE (8.7 MB)
@@ -766,7 +758,7 @@
       </div>
 
       <h1 class="hero-headline">
-        TRIM THE <span class="highlight">EXTRAS</span> OUT OF WINDOWS 10 &amp; 11.
+        TRIM THE <span class="highlight">EXTRAS</span> OUT OF WINDOWS.
       </h1>
 
       <p class="hero-subtext">
@@ -827,8 +819,8 @@
     <!-- ========================================================================= -->
     <section class="dyno-section">
       <div class="section-header">
-        <span class="section-tag">// HARDWARE BENCHMARKING</span>
-        <h2 class="section-title">Telemetry & Latency Dyno Cell</h2>
+        <span class="section-tag">// WHAT TWO TWEAKS CHANGE</span>
+        <h2 class="section-title">Two tweaks, explained</h2>
       </div>
 
       <div class="dyno-grid">
@@ -853,10 +845,10 @@
         <!-- NVMe SSD Purge Chamber -->
         <div class="dyno-bench-card">
           <div>
-            <span class="header-pill">// STORAGE RECLAMATION</span>
-            <h3 style="font-size: 20px; font-weight: 800; color: #fff; margin-top: 8px;">Storage Purge Chamber</h3>
+            <span class="header-pill">// HIBERNATION FILE</span>
+            <h3 style="font-size: 20px; font-weight: 800; color: #fff; margin-top: 8px;">Hibernation file</h3>
             <p style="font-size: 13px; color: var(--text-muted); margin-top: 6px;">
-              Windows Fast Startup hibernates your kernel state into a massive <code>hiberfil.sys</code> file, wasting NVMe write cycles and trapping memory leaks.
+              Turning off hibernation (and Fast Startup) deletes <code>hiberfil.sys</code>, a file Windows keeps on the system drive. Its size depends on your RAM. Hibernate stops working until you turn it on again, for example with Restore.
             </p>
           </div>
 
@@ -865,8 +857,7 @@
               <div class="storage-fill"></div>
             </div>
             <div style="display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 11px;">
-              <span style="color: var(--text-dark);">Example: hiberfil.sys 6.22 GB removed</span>
-              <span style="color: var(--acid-volt); font-weight: bold;">Example total: 7.50 GB</span>
+              <span style="color: var(--text-dark);">Illustration only: the real size of hiberfil.sys depends on your PC.</span>
             </div>
           </div>
         </div>
@@ -905,7 +896,7 @@
             <tr>
               <td><strong>Network use</strong></td>
               <td class="col-highlight">None in the app's own code</td>
-              <td>The app code does not call <code>winget</code>.</td>
+              <td>The app's own code makes no network calls and has no analytics. The installers can download WebView2 if it is missing.</td>
             </tr>
             <tr>
               <td><strong>Source code</strong></td>
@@ -914,7 +905,7 @@
             </tr>
             <tr>
               <td><strong>Rollback</strong></td>
-              <td class="col-highlight">Restore Factory Defaults button</td>
+              <td class="col-highlight">Restore Saved Values button</td>
               <td>The app saves each previous value before it changes anything, and Restore puts exactly that back. Deleted temp files and a removed Widgets package are never restored.</td>
             </tr>
           </tbody>
@@ -983,21 +974,9 @@
       spotlight.style.top = e.clientY + 'px';
     });
 
-    // --- 2. LIVE UTC TELEMETRY CLOCK ---
-    function updateClock() {
-      const now = new Date();
-      const h = String(now.getUTCHours()).padStart(2, '0');
-      const m = String(now.getUTCMinutes()).padStart(2, '0');
-      const s = String(now.getUTCSeconds()).padStart(2, '0');
-      const ms = String(now.getUTCMilliseconds()).padStart(3, '0');
-      document.getElementById('utc-clock').innerText = `UTC ${h}:${m}:${s}.${ms}`;
-    }
-    setInterval(updateClock, 40);
-    updateClock();
-
     // --- 3. PROCEDURAL MECHANICAL AUDIO SYNTHESIS (WEB AUDIO API) ---
     let audioCtx = null;
-    let audioEnabled = true;
+    let audioEnabled = false; // a website should not make noise until the visitor asks for it
 
     function getAudioCtx() {
       if (!audioCtx) {
@@ -1070,11 +1049,11 @@
       const root = document.getElementById('fp');
       if (!root) return;
       const STEPS = [
-        ['PRE-FLIGHT', 'Download the file', '8.7 MB', '<p>Download <code>LaptopOptimizer.exe</code>. It is one portable file. There is no installer to run.</p><p>Optional: compare its SHA-256 with the one in <code>SHA256SUMS.txt</code> on the release page.</p>'],
+        ['PRE-FLIGHT', 'Download the file', '8.7 MB', '<p>Download <code>LaptopOptimizer.exe</code>. It is one portable file, so nothing needs installing. The release page also has an MSI and a setup file if you prefer an installer.</p><p>Optional: compare its SHA-256 with the one in <code>SHA256SUMS.txt</code> on the release page.</p>'],
         ['CLEARANCE', 'Pass the two Windows prompts', '2 prompts', '<p>The file is not code-signed, so SmartScreen may warn. Choose <b>More info</b>, then <b>Run anyway</b>.</p><p>Then accept the <b>User Account Control</b> prompt. The app needs administrator rights.</p><p class="fp-warn">If you decline the UAC prompt, some steps will fail later.</p>'],
-        ['ARMING', 'Choose your tweaks', '8 cards', '<p>All eight cards start <b>switched off</b>. Turn on the ones you want.</p><ul><li>Temp files: deletes everything it can in <code>%TEMP%</code>.</li><li>Widgets: removes a Windows package that Restore does not reinstall.</li></ul><p>The app does not make a restore point. You can make one in Windows first.</p>'],
+        ['ARMING', 'Choose your tweaks', '8 cards', '<p>All eight cards start <b>switched off</b>. Turn on the ones you want.</p><ul><li>Temp files: deletes items in <code>%TEMP%</code> that are older than 24 hours.</li><li>Widgets: removes a Windows package that Restore does not reinstall.</li></ul><p>The app does not make a restore point. You can make one in Windows first.</p>'],
         ['DEPLOY', 'Open the cover, launch', '1 click', '<p>Click the cover (<b>SILO: SEALED</b>). It becomes <b>WARHEAD: ARMED</b>. Then press <b>LAUNCH NUCLEAR DISPATCH</b>.</p><p>The console lists every step. A <code>[✗]</code> means that step failed.</p>'],
-        ['POST-FLIGHT', 'After deployment', 'afterwards', '<p>Some changes, such as the menu delay, show after you sign out and back in.</p><ul><li><b>STARTUP APPS</b>: switch programs off for the next sign-in.</li><li><b>RESTORE FACTORY DEFAULTS</b>: puts Windows defaults back.</li><li>To remove the app, delete the file. Applied settings stay until you restore them.</li></ul>']
+        ['POST-FLIGHT', 'After deployment', 'afterwards', '<p>Some changes, such as the menu delay, show after you sign out and back in.</p><ul><li><b>STARTUP APPS</b>: switch programs off for the next sign-in.</li><li><b>RESTORE SAVED VALUES</b>: puts back the values the app saved before it changed them.</li><li>To remove the app, delete the file. Applied settings stay until you restore them.</li></ul>']
       ];
       let cur = 0;
       STEPS.forEach((s, i) => {
