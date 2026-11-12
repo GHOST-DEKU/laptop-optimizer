@@ -3,7 +3,7 @@ mod optimizer;
 mod safety;
 
 use optimizer::{HardwareInfo, LiveTelemetry, OptimizerEngine, StartupAppEntry};
-use safety::{confirmation_ok, requires_admin, StartupHive, TweakResult, CHANGE_LOCK};
+use safety::{confirmation_ok, requires_admin, RestoreCheck, StartupHive, TweakResult, CHANGE_LOCK};
 
 #[tauri::command]
 fn get_system_info() -> HardwareInfo {
@@ -23,7 +23,8 @@ fn get_elevation() -> bool {
 }
 
 // Checked here in the backend, so the window cannot talk its way past it.
-fn run_tweak(id: u32, restoring: bool) -> TweakResult {
+// `overwrite` only matters when restoring: it says the user agreed to replace a value that was changed after the app set it.
+fn run_tweak(id: u32, restoring: bool, overwrite: bool) -> TweakResult {
     if !TWEAK_IDS.contains(&id) {
         return TweakResult::failed("Invalid tweak ID");
     }
@@ -36,7 +37,13 @@ fn run_tweak(id: u32, restoring: bool) -> TweakResult {
     }
     if restoring {
         match id {
-            1..=7 => OptimizerEngine::restore_saved(id),
+            1..=7 => {
+                if !overwrite && OptimizerEngine::restore_check(id) == RestoreCheck::ChangedSince {
+                    // The saved entry stays, so Restore can be run again and the question asked again.
+                    return TweakResult::skipped("Not restored: this was changed after the app set it, and overwriting it was not agreed. The saved original is kept.");
+                }
+                OptimizerEngine::restore_saved(id)
+            }
             _ => TweakResult::skipped("Nothing to restore: deleted temporary files cannot be brought back."),
         }
     } else {
@@ -74,7 +81,7 @@ async fn apply_tweak(id: u32, confirmation: Option<String>) -> Result<TweakResul
         Some(_guard) if !confirmation_ok(id, confirmation.as_deref()) => {
             TweakResult::skipped("This change needs your confirmation for this exact operation. Nothing was changed.")
         }
-        Some(_guard) => run_tweak(id, false),
+        Some(_guard) => run_tweak(id, false, false),
         None => TweakResult::skipped(BUSY_MSG),
     })
         .await
@@ -82,22 +89,35 @@ async fn apply_tweak(id: u32, confirmation: Option<String>) -> Result<TweakResul
 }
 
 #[tauri::command]
-async fn restore_tweak(id: u32) -> Result<TweakResult, String> {
+async fn restore_tweak(id: u32, overwrite: Option<bool>) -> Result<TweakResult, String> {
     tauri::async_runtime::spawn_blocking(move || match CHANGE_LOCK.try_acquire() {
-        Some(_guard) => run_tweak(id, true),
+        Some(_guard) => run_tweak(id, true, overwrite.unwrap_or(false)),
         None => TweakResult::skipped(BUSY_MSG),
     })
         .await
         .map_err(|e| e.to_string())
+}
+
+// Read-only: which tweaks would Restore overwrite with an older value, because they were changed after the app set them?
+// The page asks the user about exactly these, then passes the agreed ones to `restore_all`.
+#[tauri::command]
+async fn restore_needs_confirmation() -> Result<Vec<u32>, String> {
+    tauri::async_runtime::spawn_blocking(|| {
+        TWEAK_IDS.iter().copied().filter(|id| *id != 8 && OptimizerEngine::restore_check(*id) == RestoreCheck::ChangedSince).collect()
+    })
+    .await
+    .map_err(|e| e.to_string())
 }
 
 // One result per tweak, in id order; failures are reported, not swallowed.
+// `overwrite` lists the tweaks the user agreed to restore even though they were changed after the app set them.
 #[tauri::command]
-async fn restore_all() -> Result<Vec<TweakResult>, String> {
-    tauri::async_runtime::spawn_blocking(|| {
+async fn restore_all(overwrite: Option<Vec<u32>>) -> Result<Vec<TweakResult>, String> {
+    let overwrite = overwrite.unwrap_or_default();
+    tauri::async_runtime::spawn_blocking(move || {
         let ids: Vec<u32> = TWEAK_IDS.iter().copied().filter(|id| *id != 8).collect();
         match CHANGE_LOCK.try_acquire() {
-            Some(_guard) => ids.iter().map(|id| run_tweak(*id, true)).collect(),
+            Some(_guard) => ids.iter().map(|id| run_tweak(*id, true, overwrite.contains(id))).collect(),
             None => ids.iter().map(|_| TweakResult::skipped(BUSY_MSG)).collect(),
         }
     })
@@ -134,6 +154,7 @@ pub fn run() {
             is_applied,
             apply_tweak,
             restore_tweak,
+            restore_needs_confirmation,
             restore_all,
             get_startup_apps,
             toggle_startup_app
