@@ -7,6 +7,7 @@ const COMMANDS: &[&str] = &[
     "is_applied",
     "apply_tweak",
     "restore_tweak",
+    "restore_needs_confirmation",
     "restore_all",
     "get_startup_apps",
     "toggle_startup_app",

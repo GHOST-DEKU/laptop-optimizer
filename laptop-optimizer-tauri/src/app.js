@@ -528,7 +528,19 @@
 
       try {
         if (hasApi) {
-          const results = await backend('restore_all');
+          // A value the user (or Windows) changed after this app set it would be replaced by the older saved one.
+          // The backend lists those; only the ones the user agrees to are passed on. The backend skips the rest by itself.
+          let overwrite = [];
+          try {
+            const changed = await backend('restore_needs_confirmation');
+            if (changed.length) {
+              const names = changed.map(id => { const t = tweaks.find(x => x.id === id); return '- ' + (t ? t.title : 'Tweak ' + id); }).join('\n');
+              if (confirm("These were changed after this app set them:\n\n" + names + "\n\nRestore would replace your newer value with the one saved before the app's change.\n\nOK = replace them too.\nCancel = leave them as they are (everything else is still restored).")) overwrite = changed;
+            }
+          } catch (e) {
+            logToDrawer(`[${(performance.now()/1000).toFixed(3)}s] [!] Could not check for values changed since: ${e}. Nothing will be overwritten.`, 'warn');
+          }
+          const results = await backend('restore_all', { overwrite });
           const ids = [1, 2, 3, 4, 5, 6, 7]; // same order the backend returns them
           results.forEach((r, i) => {
             logResult(r);

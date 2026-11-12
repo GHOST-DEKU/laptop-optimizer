@@ -259,6 +259,28 @@ pub fn requires_admin(id: u32, restoring: bool) -> bool {
     }
 }
 
+/// What Restore should do with one tweak, decided from three facts about the current state.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum RestoreCheck {
+    /// The app never saved a value for this tweak, so there is nothing to put back.
+    NothingSaved,
+    /// Putting the saved original back overwrites nothing that was chosen after the app's change.
+    SafeToRestore,
+    /// The value is neither what the app set nor the saved original: it was changed since (by the user or by Windows).
+    /// Restore must ask before overwriting it.
+    ChangedSince,
+}
+
+pub fn restore_check(has_saved: bool, matches_saved: bool, matches_applied: bool) -> RestoreCheck {
+    if !has_saved {
+        RestoreCheck::NothingSaved
+    } else if matches_saved || matches_applied {
+        RestoreCheck::SafeToRestore
+    } else {
+        RestoreCheck::ChangedSince
+    }
+}
+
 /// `<SystemRoot>\System32\<name>`, written with backslashes because the target is Windows.
 pub fn system32_exe(system_root: &str, name: &str) -> String {
     format!("{}\\System32\\{}", system_root.trim_end_matches(['\\', '/']), name)
@@ -652,5 +674,17 @@ mod tests {
 
         let missing = Command::new("C:\\definitely\\not\\here.exe");
         assert!(matches!(run_with_timeout(missing, Duration::from_secs(1)), Outcome::CouldNotStart(_)));
+    }
+
+    #[test]
+    fn restore_asks_only_when_the_value_changed_since_the_app_set_it() {
+        use RestoreCheck::*;
+        // (has_saved, matches_saved, matches_applied) -> decision
+        assert_eq!(restore_check(false, false, false), NothingSaved, "nothing saved: nothing to do, never ask");
+        assert_eq!(restore_check(false, true, true), NothingSaved, "nothing saved wins over everything");
+        assert_eq!(restore_check(true, false, true), SafeToRestore, "still what the app set: put the original back");
+        assert_eq!(restore_check(true, true, false), SafeToRestore, "already back to the original: nothing is overwritten");
+        assert_eq!(restore_check(true, true, true), SafeToRestore, "original and applied look the same: safe");
+        assert_eq!(restore_check(true, false, false), ChangedSince, "neither: changed since, so ask");
     }
 }

@@ -13,6 +13,7 @@
     "allow-is-applied",
     "allow-apply-tweak",
     "allow-restore-tweak",
+    "allow-restore-needs-confirmation",
     "allow-restore-all",
     "allow-get-startup-apps",
     "allow-toggle-startup-app"

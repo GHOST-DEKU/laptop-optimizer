@@ -47,7 +47,7 @@ async def main():
     check("withGlobalTauri is on", conf["app"].get("withGlobalTauri") is True)
     caps = json.loads((ROOT / "src-tauri" / "capabilities" / "default.json").read_text())["permissions"]
     cmds = re.findall(r'"([a-z_]+)",', (ROOT / "src-tauri" / "build.rs").read_text().split("fn main")[0])
-    check("every listed command is granted", all("allow-" + c.replace("_", "-") in caps for c in cmds) and len(cmds) == 9)
+    check("every listed command is granted", all("allow-" + c.replace("_", "-") in caps for c in cmds) and len(cmds) == 10)
     lib = (ROOT / "src-tauri" / "src" / "lib.rs").read_text()
     reg = re.search(r"generate_handler!\[(.*?)\]", lib, re.S).group(1)
     check("handler list equals allowed commands", sorted(x.strip() for x in reg.split(",") if x.strip()) == sorted(cmds))
@@ -176,6 +176,40 @@ async def main():
         check("already-applied tweaks make no apply call", applied_calls == 0)
         check("already-applied tweaks are shown as no change", text.count("already applied; nothing was changed") == 2 and "NOTHING TO CHANGE" in await pg3.evaluate("document.getElementById('drawer-status-pill').innerText"))
         await pg3.close()
+        # Restore asks a second question only for tweaks changed after the app set them, and passes on only the agreed ones
+        async def restore_run(changed, answers, check_fails=False):
+            pgr = await b.new_page()
+            msgs = []
+            async def on_dialog(d):
+                msgs.append(d.message)
+                await (d.accept() if answers[len(msgs) - 1] else d.dismiss())
+            pgr.on("dialog", lambda d: asyncio.ensure_future(on_dialog(d)))
+            init = REAL.replace(
+                "if(c==='apply_tweak')",
+                ("if(c==='restore_needs_confirmation')throw new Error('check failed'); " if check_fails else "if(c==='restore_needs_confirmation')return " + json.dumps(changed) + "; ")
+                + "if(c==='restore_all')return [1,2,3,4,5,6,7].map(()=>({status:'ok',message:'put back'})); if(c==='apply_tweak')")
+            await pgr.add_init_script(init)
+            await pgr.goto(URL)
+            await pgr.wait_for_timeout(300)
+            await pgr.evaluate("restoreDefaults()")
+            await pgr.wait_for_timeout(300)
+            sent = await pgr.evaluate("window.__calls.filter(c=>c[0]==='restore_all').map(c=>c[1])")
+            text = await pgr.evaluate("document.getElementById('drawer-logs').innerText")
+            await pgr.close()
+            return msgs, sent, text
+        msgs, sent, _ = await restore_run([], [True])
+        check("Restore with nothing changed since asks one question only", len(msgs) == 1)
+        check("Restore with nothing changed since overwrites nothing extra", sent == [{"overwrite": []}])
+        msgs, sent, _ = await restore_run([3, 6], [True, False])
+        check("Restore names the tweaks changed since the app set them in a second question", len(msgs) == 2 and "Instant Desktop Context Menus" in msgs[1] and "Decouple Bing Cloud" in msgs[1])
+        check("declining the second question restores the rest but overwrites none", sent == [{"overwrite": []}])
+        msgs, sent, _ = await restore_run([3, 6], [True, True])
+        check("accepting the second question passes exactly those tweaks", sent == [{"overwrite": [3, 6]}])
+        msgs, sent, _ = await restore_run([3], [False])
+        check("declining the first question stops everything: no second question, no restore call", len(msgs) == 1 and sent == [])
+        msgs, sent, text = await restore_run([], [True], check_fails=True)
+        check("if the check fails nothing is overwritten, the user is told, and Restore still runs", sent == [{"overwrite": []}] and "Nothing will be overwritten" in text and len(msgs) == 1)
+
         # load map layout at the real window size (940), the minimum (700), and with many processors
         for width, n, max_rows in ((940, 8, 1), (700, 8, 1), (940, 16, 2)):
             lp = await b.new_page(viewport={"width": width, "height": 680})

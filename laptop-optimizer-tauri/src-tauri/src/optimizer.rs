@@ -1,5 +1,5 @@
 use crate::safety::{
-    dir_is_allowed, format_specs, harden, load_percent, pack_state, startup_entry_enabled, text_or_unknown, powershell_exe, valid_startup_name, PackState, StartupHive, purge_old_entries, run_with_timeout, system32_exe, Outcome, TweakResult,
+    dir_is_allowed, format_specs, harden, load_percent, pack_state, restore_check, RestoreCheck, startup_entry_enabled, text_or_unknown, powershell_exe, valid_startup_name, PackState, StartupHive, purge_old_entries, run_with_timeout, system32_exe, Outcome, TweakResult,
 };
 use crate::journal::{self, valid_guid, Journal, SavedValue, TweakState};
 use crate::safety::Status;
@@ -290,6 +290,41 @@ impl OptimizerEngine {
         saved.save(&path).map_err(|e| format!("the previous values could not be saved ({})", e))
     }
 
+    // True when every saved value already equals what the PC has now, so restoring would change nothing.
+    fn matches_saved(id: u32, state: &TweakState) -> bool {
+        for t in Self::targets_for(id) {
+            match (Self::read_saved(&t), state.values.get(&Self::target_id(&t))) {
+                (Ok(now), Some(saved)) if now == *saved => {}
+                _ => return false, // different, not saved, or not readable: do not claim it matches
+            }
+        }
+        if id == 1 {
+            if let Some(plan) = &state.power_plan {
+                if Self::active_power_scheme() != plan.to_lowercase() {
+                    return false;
+                }
+            }
+        }
+        if id == 5 {
+            if let Some(on) = state.hibernate {
+                if Self::get_registry_dword(HKEY_LOCAL_MACHINE, POWER_KEY, "HibernateEnabled", NOT_FOUND) != u32::from(on) {
+                    return false;
+                }
+            }
+        }
+        true
+    }
+
+    // Read-only. Would putting back the saved values overwrite something changed after the app set it?
+    // An unreadable saved-values file counts as "nothing saved" here; `restore_saved` reports the real problem.
+    pub fn restore_check(id: u32) -> RestoreCheck {
+        let saved = journal::default_path().and_then(|p| Journal::load(&p).ok()).and_then(|j| j.tweaks.get(&id).cloned());
+        match saved {
+            None => restore_check(false, false, false),
+            Some(state) => restore_check(true, Self::matches_saved(id, &state), Self::values_set_by_app(id)),
+        }
+    }
+
     // Puts back what `remember_before` saved. With nothing saved it changes nothing and says so.
     pub fn restore_saved(id: u32) -> TweakResult {
         let Some(path) = journal::default_path() else {
@@ -465,9 +500,10 @@ impl OptimizerEngine {
         Self::powershell(script, 30).succeeded()
     }
 
-    // True when the tweak's wanted state is already in place, so applying it would change nothing.
-    // Reads only. Anything that cannot be read counts as "not applied yet".
-    pub fn already_applied(id: u32) -> bool {
+    // The values the app writes for a tweak, read from the registry and power settings only (fast, no Windows service calls).
+    // One list of the wanted numbers: `already_applied` and Restore's "changed since?" check both use it.
+    // Reads only. Anything that cannot be read counts as "not set".
+    fn values_set_by_app(id: u32) -> bool {
         const GCS: &str = "System\\GameConfigStore";
         const DVR: &str = "Software\\Microsoft\\Windows\\CurrentVersion\\GameDVR";
         const EXPLORER: &str = "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced";
@@ -483,11 +519,21 @@ impl OptimizerEngine {
                     && is(HKEY_CURRENT_USER, DVR, "HistoricalCaptureEnabled", 0)
             }
             3 => Self::get_registry_string(HKEY_CURRENT_USER, "Control Panel\\Desktop", "MenuShowDelay") == "20",
-            4 => is(HKEY_CURRENT_USER, EXPLORER, "TaskbarDa", 0) && Self::webexperience_state() == PackState::Gone,
+            4 => is(HKEY_CURRENT_USER, EXPLORER, "TaskbarDa", 0),
             5 => is(HKEY_LOCAL_MACHINE, POWER_KEY, "HibernateEnabled", 0),
             6 => is(HKEY_CURRENT_USER, SEARCH, "BingSearchEnabled", 0),
-            7 => is(HKEY_LOCAL_MACHINE, DELIVERY_POLICY, "DODownloadMode", 0) && Self::delivery_mode_is_http_only(),
+            7 => is(HKEY_LOCAL_MACHINE, DELIVERY_POLICY, "DODownloadMode", 0),
             _ => false, // 8 (temp files) can always find something new to remove
+        }
+    }
+
+    // True when the tweak's wanted state is already in place, so applying it would change nothing.
+    // Tweaks 4 and 7 also ask Windows (slower), because the registry value alone does not prove the result.
+    pub fn already_applied(id: u32) -> bool {
+        match id {
+            4 => Self::values_set_by_app(4) && Self::webexperience_state() == PackState::Gone,
+            7 => Self::values_set_by_app(7) && Self::delivery_mode_is_http_only(),
+            _ => Self::values_set_by_app(id),
         }
     }
 
@@ -857,7 +903,7 @@ mod tests {
         let applied = OptimizerEngine::optimize_delivery_optimization();
         assert_eq!(applied.status, Status::Ok, "{}", applied.message);
         assert!(OptimizerEngine::already_applied(7), "Windows reports HTTP-only, so it reads as applied");
-        let again = crate::run_tweak(7, false);
+        let again = crate::run_tweak(7, false, false);
         assert_eq!(again.status, Status::NoChange, "applying twice changes nothing: {}", again.message);
         let restored = OptimizerEngine::restore_saved(7);
         assert_eq!(restored.status, Status::Ok, "{}", restored.message);
@@ -994,6 +1040,57 @@ mod tests {
         let restored = OptimizerEngine::restore_saved(5);
         assert_eq!(restored.status, Status::Ok, "{}", restored.message);
         assert_eq!(OptimizerEngine::get_registry_dword(HKEY_LOCAL_MACHINE, POWER_KEY, "HibernateEnabled", NOT_FOUND), 1);
+
+        let _ = std::fs::remove_dir_all(&scratch);
+    }
+
+    // Puts MenuShowDelay back to how it was, even when an assert below fails.
+    struct PutBackDelay(Option<SavedValue>);
+    impl Drop for PutBackDelay {
+        fn drop(&mut self) {
+            let t = Target { root: HKEY_CURRENT_USER, key: "Control Panel\\Desktop", name: "MenuShowDelay" };
+            let _ = OptimizerEngine::write_saved(&t, self.0.as_ref());
+        }
+    }
+
+    fn sz(text: &str) -> SavedValue {
+        let bytes: Vec<u8> = text.encode_utf16().chain(std::iter::once(0)).flat_map(|u| u.to_le_bytes()).collect();
+        SavedValue { vtype: 1, bytes }
+    }
+
+    // Opt-in system test (changes only your own MenuShowDelay for a moment, then puts it back):
+    //   cargo test --lib system_restore_check -- --ignored --test-threads=1
+    // The saved-values file goes to a scratch folder, never the real one.
+    #[test]
+    #[ignore]
+    fn system_restore_check_notices_a_value_changed_after_the_app_set_it() {
+        let scratch = std::env::temp_dir().join(format!("lo-restorecheck-test-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&scratch);
+        std::env::set_var("LOCALAPPDATA", &scratch);
+        let t = Target { root: HKEY_CURRENT_USER, key: "Control Panel\\Desktop", name: "MenuShowDelay" };
+        let _put_back = PutBackDelay(OptimizerEngine::read_saved(&t).unwrap());
+
+        assert!(OptimizerEngine::write_saved(&t, Some(&sz("400"))), "test setup: start from 400");
+        assert_eq!(OptimizerEngine::restore_check(3), RestoreCheck::NothingSaved, "nothing saved yet");
+        OptimizerEngine::remember_before(3).unwrap();
+        assert_ne!(OptimizerEngine::optimize_menu_delay().status, Status::Failed);
+        assert_eq!(OptimizerEngine::restore_check(3), RestoreCheck::SafeToRestore, "still what the app set: no question");
+
+        assert!(OptimizerEngine::write_saved(&t, Some(&sz("100"))), "the user picks their own value");
+        assert_eq!(OptimizerEngine::restore_check(3), RestoreCheck::ChangedSince, "changed by hand: ask first");
+
+        assert!(OptimizerEngine::write_saved(&t, Some(&sz("400"))), "the user sets it back to the original");
+        assert_eq!(OptimizerEngine::restore_check(3), RestoreCheck::SafeToRestore, "already the original: nothing is overwritten");
+
+        assert!(OptimizerEngine::write_saved(&t, Some(&sz("100"))));
+        let declined = crate::run_tweak(3, true, false);
+        assert_eq!(declined.status, Status::Skipped, "overwriting was not agreed: {}", declined.message);
+        assert_eq!(OptimizerEngine::read_saved(&t).unwrap(), Some(sz("100")), "the user's own value is untouched");
+        assert_eq!(OptimizerEngine::restore_check(3), RestoreCheck::ChangedSince, "the saved entry is kept, so Restore can ask again");
+        let restored = crate::run_tweak(3, true, true);
+        assert_eq!(restored.status, Status::Ok, "agreed to overwrite: {}", restored.message);
+        assert_eq!(OptimizerEngine::read_saved(&t).unwrap(), Some(sz("400")));
+        assert_eq!(OptimizerEngine::restore_check(3), RestoreCheck::NothingSaved, "the saved entry is used up");
 
         let _ = std::fs::remove_dir_all(&scratch);
     }
